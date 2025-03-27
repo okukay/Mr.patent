@@ -1,5 +1,6 @@
 package com.d208.mr_patent_backend.domain.fcm.controller;
 
+import com.d208.mr_patent_backend.domain.fcm.dto.FcmTokenRequestDto;
 import com.d208.mr_patent_backend.domain.fcm.service.FcmTokenService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -16,13 +17,9 @@ public class FcmTokenController {
     private final FcmTokenService fcmTokenService;
 
     @PostMapping("/token")
-    public void saveFcmToken(@RequestBody FcmTokenRequest request) {
+    public void saveFcmToken(@RequestBody FcmTokenRequestDto request) {
         fcmTokenService.saveOrUpdateToken(request.getUserId(), request.getFcmToken());
     }
 
-    @Data
-    static class FcmTokenRequest {
-        private Integer userId;
-        private String fcmToken;
-    }
+
 }
