@@ -16,7 +16,7 @@ public class ChatMessageDto {
     private Integer receiverId;        // 수신자
     private String message;            // 메시지 내용
     private LocalDateTime timestamp;   // 보낸 시간
-    private boolean isRead;            // 읽음 여부
+    private boolean read;            // 읽음 여부
     private String type;                //메세지 타입
 
     public static ChatMessageDto fromEntity(ChatMessage entity) {
@@ -27,7 +27,7 @@ public class ChatMessageDto {
                 .receiverId(entity.getReceiverId())
                 .message(entity.getMessage())
                 .timestamp(entity.getTimestamp())
-                .isRead(entity.isRead())
+                .read(entity.isRead())
                 .type(entity.getType())
                 .build();
     }

@@ -34,7 +34,7 @@ public class ChatService {
                 .userId(dto.getUserId()) // 보낸 사람
                 .message(dto.getMessage())
                 .timestamp(now)
-                .isRead(false) // 처음 저장 시 읽음 여부는 false
+                .read(dto.isRead()) // 클라이언트가 보내주는데로 0 or 1 로 저장
                 .type("CHAT")
                 .build();
                      //메세지 타입

@@ -14,7 +14,12 @@
     <label>User ID: <input type="text" id="userId" value="user1"></label><br>
     <label>Receiver ID: <input type="text" id="receiverId" value="user2"></label><br>
     <label>Message: <input type="text" id="message"></label><br>
-
+    <label>상대방 온라인 상태:
+        <select id="isRead">
+            <option value="true">온라인</option>
+            <option value="false">오프라인</option>
+        </select>
+    </label><br>
     <button onclick="sendMessage()">메시지 전송</button>
 </div>
 
@@ -67,6 +72,7 @@
         const userId = document.getElementById('userId').value;
         const receiverId = document.getElementById('receiverId').value;
         const message = document.getElementById('message').value;
+        const isRead = document.getElementById('isRead').value === 'true';
 
         stompClient.send('/pub/chat/message', {}, JSON.stringify({
             roomId: roomId,
@@ -74,7 +80,7 @@
             receiverId: receiverId,
             message: message,
             timestamp: null,
-            isRead: "N"
+            read: isRead
         }));
     }
     connect();

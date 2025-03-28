@@ -21,6 +21,7 @@ public class ChatController {
     @MessageMapping("/chat/message")
     public void sendMessage(ChatMessageDto message) {
         System.out.println("💬 받은 메시지: " + message.getMessage()); // 로그 찍히는지 확인용
+        System.out.println("💬 읽음처리: " + message.isRead()); // 로그 찍히는지 확인용
 
         //DB 저장
         chatService.saveMessage(message);

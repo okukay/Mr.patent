@@ -46,3 +46,6 @@ out/
 
 ### pem 키 파일 ###
 *.pem
+
+### json 파일 ###
+**/firebase/*.json
