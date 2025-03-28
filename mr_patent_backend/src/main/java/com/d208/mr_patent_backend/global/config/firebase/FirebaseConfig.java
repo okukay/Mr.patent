@@ -1,4 +1,4 @@
-package com.d208.mr_patent_backend.global.config.firebaseConfig;
+package com.d208.mr_patent_backend.global.config.firebase;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
