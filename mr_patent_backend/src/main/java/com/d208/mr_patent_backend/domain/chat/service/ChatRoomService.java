@@ -74,7 +74,7 @@ public class ChatRoomService {
                         .roomId(room.getRoomId())
                         .unreadCount(room.getUnreadCount())
                         .lastMessage(room.getLastMessage())
-
+                        .receiverId(room.getReceiverId())
                         .lastTimestamp(room.getLastTimestamp())
                         .build())
                 .collect(Collectors.toList());

@@ -13,7 +13,7 @@ public class ChatListDto {
     private String roomId;
     private Integer unreadCount;
     private String lastMessage;
-    private String receiverId;
+    private Integer receiverId;
     private LocalDateTime lastTimestamp;
 
 }
