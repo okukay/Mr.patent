@@ -51,10 +51,11 @@ public class ChatRoomController {
             @RequestParam(required = false) Long lastMessageId // 파라미터 없어도 괜찮음(첫 대화 불러오기 때문에)
     ) {
         int size = 10;
-
         List<ChatMessageDto> messages = chatService.getMessages(roomId, lastMessageId, size);
         return ResponseEntity.ok(messages);
     }
+
+    //sse 연결요청
     @GetMapping("/subscribe/{userId}")
     public SseEmitter subscribe(@PathVariable Integer userId) {
         return sseService.subscribe(userId);

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>채팅방 목록 + SSE 연결</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #chatList { margin-top: 20px; }
+        .chat-room {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .chat-room .unread {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h2>💬 채팅방 목록 + 실시간 업데이트</h2>
+<label>유저 ID: <input type="number" id="userId" placeholder="ex) 1" /></label>
+<button onclick="getChatList()">조회 및 SSE 연결</button>
+
+<div id="chatList"></div>
+
+<script>
+    let eventSource = null;
+
+    function getChatList() {
+        const userId = document.getElementById("userId").value;
+        if (!userId) {
+            alert("유저 ID를 입력해주세요");
+            return;
+        }
+
+        const chatListDiv = document.getElementById("chatList");
+        chatListDiv.innerHTML = "📡 채팅방 목록을 불러오는 중...";
+
+        // 채팅방 목록 조회
+        fetch(`http://localhost:8080/api/chat/rooms/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                const chatRooms = data.data;
+
+                if (!chatRooms || chatRooms.length === 0) {
+                    chatListDiv.innerHTML = "<p>❌ 채팅방이 없습니다.</p>";
+                    return;
+                }
+
+                chatListDiv.innerHTML = "";
+                chatRooms.forEach(room => {
+                    const div = document.createElement("div");
+                    div.className = "chat-room";
+                    div.id = `room-${room.roomId}`;
+
+                    div.innerHTML = `
+              <p><strong>채팅방 ID:</strong> ${room.roomId}</p>
+              <p><strong>마지막 메시지:</strong> <span class="last-message">${room.lastMessage || "(없음)"}</span></p>
+              <p><strong>시간:</strong> <span class="timestamp">${room.lastTimestamp || "-"}</span></p>
+              <p><strong>안읽은 메시지:</strong> <span class="unread-count">${room.unreadCount}</span>
+              ${room.unreadCount > 0 ? '<span class="unread">(안읽음)</span>' : ''}</p>
+            `;
+
+                    chatListDiv.appendChild(div);
+                });
+            });
+
+        // SSE 연결 시작
+        if (eventSource) {
+            eventSource.close(); // 기존 연결 닫기
+        }
+
+        eventSource = new EventSource(`http://localhost:8080/api/chat/rooms/subscribe/${userId}`);
+
+        eventSource.onopen = () => {
+            console.log("✅ SSE 연결 완료");
+        };
+
+        eventSource.onmessage = (event) => {
+            console.log("📨 SSE 메시지 도착:", event.data);
+            const data = JSON.parse(event.data);
+
+            if (data.type === "CHAT_UPDATE") {
+                const roomDiv = document.getElementById(`room-${data.roomId}`);
+                if (roomDiv) {
+                    roomDiv.querySelector(".last-message").textContent = data.lastMessage;
+                    roomDiv.querySelector(".timestamp").textContent = data.timestamp;
+                    roomDiv.querySelector(".unread-count").textContent = data.unreadCount;
+
+                    if (data.unreadCount > 0) {
+                        roomDiv.querySelector(".unread-count").insertAdjacentHTML('afterend', '<span class="unread">(안읽음)</span>');
+                    }
+                }
+            }
+        };
+
+        eventSource.onerror = (err) => {
+            console.error("❌ SSE 에러 발생", err);
+        };
+    }
+</script>
+
+</body>
+</html>
