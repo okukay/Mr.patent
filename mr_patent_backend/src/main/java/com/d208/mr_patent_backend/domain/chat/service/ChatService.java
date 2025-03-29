@@ -57,7 +57,9 @@ public class ChatService {
         // 5. receiverRoom 업데이트
         receiverRoom.setLastMessage(dto.getMessage());
         receiverRoom.setLastTimestamp(now);
-        receiverRoom.setUnreadCount(receiverRoom.getUnreadCount() + 1); // 안읽은 메시지 1 증가
+        if (!dto.isRead()) {
+            receiverRoom.setUnreadCount(receiverRoom.getUnreadCount() + 1);
+        }
         receiverRoom.setUpdated(now);
 
         // 6. 저장

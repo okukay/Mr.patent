@@ -15,5 +15,9 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Intege
 
     // 무한 스크롤: 특정 메시지 ID 이전 메시지들 최신순 조회
     Page<ChatMessage> findByRoomIdAndChatIdLessThanOrderByChatIdDesc(String roomId, Long chatId, Pageable pageable);
+
+    // roomId 중에서 userId가 보낸 메시지 중에 안읽은 메세지만 가져오가
+    List<ChatMessage> findByRoomIdAndUserIdAndReadFalse(String roomId, Integer userId);
+
 }
 
