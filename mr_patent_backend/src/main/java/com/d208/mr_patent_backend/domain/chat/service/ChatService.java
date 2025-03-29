@@ -33,6 +33,7 @@ public class ChatService {
                 .roomId(dto.getRoomId())
                 .userId(dto.getUserId()) // 보낸 사람
                 .message(dto.getMessage())
+                .receiverId(dto.getReceiverId())
                 .timestamp(now)
                 .read(dto.isRead()) // 클라이언트가 보내주는데로 0 or 1 로 저장
                 .type("CHAT")
