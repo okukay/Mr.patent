@@ -10,6 +10,7 @@ import com.d208.mr_patent_backend.domain.chat.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(response);
     }
 
+    // 채팅방목 대화내용 불러오기
     @GetMapping("/message/{roomId}")
     public ResponseEntity<List<ChatMessageDto>> getMessages(
             @PathVariable String roomId,
@@ -51,5 +53,9 @@ public class ChatRoomController {
 
         List<ChatMessageDto> messages = chatService.getMessages(roomId, lastMessageId, size);
         return ResponseEntity.ok(messages);
+    }
+    @GetMapping("/subscribe/{userId}")
+    public SseEmitter subscribe(@PathVariable Integer userId) {
+        return sseService.subscribe(userId);
     }
 }
