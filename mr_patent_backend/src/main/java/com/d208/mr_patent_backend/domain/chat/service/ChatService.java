@@ -72,15 +72,18 @@ public class ChatService {
 
         System.out.println("채팅방 메타데이터 업데이트 완료");
 
+        // 상대방 오프라인일 경우 -> sse연결되어있다면 -> sse전송
         if (!dto.isRead()) {
-            // ✅ SSE 전송 로직 추가
-            sseService.sendToUser(dto.getReceiverId(), Map.of(
-                    "type", "CHAT_UPDATE",
-                    "roomId", dto.getRoomId(),
-                    "lastMessage", dto.getMessage(),
-                    "timestamp", now,
-                    "unreadCount", receiverRoom.getUnreadCount()
-            ));
+            if(sseService.isConnected(dto.getReceiverId())) {
+                // SSE 전송 로직 추가
+                sseService.sendToUser(dto.getReceiverId(), Map.of(
+                        "type", "CHAT_UPDATE",
+                        "roomId", dto.getRoomId(),
+                        "lastMessage", dto.getMessage(),
+                        "timestamp", now,
+                        "unreadCount", receiverRoom.getUnreadCount()
+                ));
+            }
         }
     }
 

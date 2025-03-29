@@ -28,5 +28,7 @@ public class ChatController {
 
         // 특정 구독자들에게 메시지 전송 (구독 주소: /sub/chat/room/{roomId})
         messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
+
+        //여기서 read 여부에 따라 fcm으로 처리해버리면 되지 않을까?
     }
 }
