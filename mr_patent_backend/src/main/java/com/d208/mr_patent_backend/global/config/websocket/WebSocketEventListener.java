@@ -88,7 +88,6 @@ public class WebSocketEventListener {
             Map<String, Object> statusMessage = Map.of(
                     "type", "LEAVE",
                     "status", totalStatus
-
             );
             // 2. STOMP 상태 전송
             messagingTemplate.convertAndSend("/sub/chat/room/" + room.getRoomId(),statusMessage);
