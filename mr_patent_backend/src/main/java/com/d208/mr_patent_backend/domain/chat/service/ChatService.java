@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,10 +21,12 @@ public class ChatService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final SseService sseService;
 
-    public ChatService(ChatMessageRepository chatMessageRepository, ChatRoomRepository chatRoomRepository) {
+    public ChatService(ChatMessageRepository chatMessageRepository, ChatRoomRepository chatRoomRepository, SseService sseService) {
         this.chatMessageRepository = chatMessageRepository;
         this.chatRoomRepository = chatRoomRepository;
+        this.sseService = sseService;
     }
     @Transactional
     public void saveMessage(ChatMessageDto dto) {
@@ -31,14 +34,14 @@ public class ChatService {
 
         ChatMessage message = ChatMessage.builder()
                 .roomId(dto.getRoomId())
-                .userId(dto.getUserId()) // 보낸 사람
+                .userId(dto.getUserId())
                 .message(dto.getMessage())
                 .receiverId(dto.getReceiverId())
                 .timestamp(now)
                 .read(dto.isRead()) // 클라이언트가 보내주는데로 0 or 1 로 저장
                 .type("CHAT")
                 .build();
-                     //메세지 타입
+
         chatMessageRepository.save(message);
         System.out.println(" 메시지 DB 저장 완료: " + dto.getMessage());
 
@@ -68,6 +71,17 @@ public class ChatService {
         chatRoomRepository.save(receiverRoom);
 
         System.out.println("채팅방 메타데이터 업데이트 완료");
+
+        if (!dto.isRead()) {
+            // ✅ SSE 전송 로직 추가
+            sseService.sendToUser(dto.getReceiverId(), Map.of(
+                    "type", "CHAT_UPDATE",
+                    "roomId", dto.getRoomId(),
+                    "lastMessage", dto.getMessage(),
+                    "timestamp", now,
+                    "unreadCount", receiverRoom.getUnreadCount()
+            ));
+        }
     }
 
     public List<ChatMessageDto> getMessages(String roomId, Long lastMessageId, int size) {

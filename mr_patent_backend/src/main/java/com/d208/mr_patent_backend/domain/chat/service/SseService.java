@@ -30,7 +30,7 @@ public class SseService {
                 emitter.send(SseEmitter.event()
                         .name("chat-update")
                         .data(data));
-                
+
             } catch (IOException e) {
                 emitters.remove(userId);
             }

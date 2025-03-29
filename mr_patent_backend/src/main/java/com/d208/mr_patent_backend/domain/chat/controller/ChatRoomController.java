@@ -7,6 +7,7 @@ import com.d208.mr_patent_backend.domain.chat.service.ChatRoomService;
 
 
 import com.d208.mr_patent_backend.domain.chat.service.ChatService;
+import com.d208.mr_patent_backend.domain.chat.service.SseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
     private final ChatService chatService;
-
+    private final SseService sseService;
 
     // 채팅방 목록 조회
     @GetMapping("/{userId}")
