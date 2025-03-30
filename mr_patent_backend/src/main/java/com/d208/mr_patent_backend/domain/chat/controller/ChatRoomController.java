@@ -55,6 +55,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(messages);
     }
 
+
     //sse 연결요청
     @GetMapping("/subscribe/{userId}")
     public SseEmitter subscribe(@PathVariable Integer userId) {

@@ -11,10 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SseService {
     private final Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
 
+    // SSE 연결 확인( true or false)
     public boolean isConnected(Integer userId) {
         return emitters.containsKey(userId);
     }
 
+    // sse 연결
     public SseEmitter subscribe(Integer userId) {
         SseEmitter emitter = new SseEmitter(60 * 60 * 1000L); // 1시간 유효
         emitters.put(userId, emitter); //emitter를 만들어서 eemitters에 넣음
