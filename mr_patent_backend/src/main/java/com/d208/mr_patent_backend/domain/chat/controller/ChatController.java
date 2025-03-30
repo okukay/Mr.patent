@@ -2,20 +2,24 @@ package com.d208.mr_patent_backend.domain.chat.controller;
 
 import com.d208.mr_patent_backend.domain.chat.dto.ChatMessageDto;
 import com.d208.mr_patent_backend.domain.chat.service.ChatService;
+import com.d208.mr_patent_backend.domain.fcm.service.FcmService;
+import com.d208.mr_patent_backend.domain.fcm.service.FcmTokenService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.util.Map;
+
 @Controller
+@RequiredArgsConstructor
 public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
+    private final FcmTokenService fcmTokenService;
+    private final FcmService fcmService;
 
-    public ChatController(SimpMessagingTemplate messagingTemplate, ChatService chatService) {
-        this.messagingTemplate = messagingTemplate;
-        this.chatService = chatService;
-    }
 
     // 클라이언트가 "/pub/chat/message"로 메시지를 보내면 이 메서드가 처리(브로드 캐스트)
     @MessageMapping("/chat/message")
@@ -27,8 +31,26 @@ public class ChatController {
         chatService.saveMessage(message);
 
         // 특정 구독자들에게 메시지 전송 (구독 주소: /sub/chat/room/{roomId})
-        messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
+        if(message.isRead()){
+            messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
+        }
+        //fcm 보내기
+        else {
+            Integer receiverId = message.getReceiverId();
+            String token = fcmTokenService.getTokenByUserId(receiverId);
 
-        //여기서 read 여부에 따라 fcm으로 처리해버리면 되지 않을까?
+            if (token != null) {
+                fcmService.sendMessageToToken(
+                        token,
+                        "💬 새 메시지 도착!",
+                        message.getMessage(),
+                        Map.of(
+                                "roomId", message.getRoomId(),
+                                "userId", message.getUserId().toString(),
+                                "type", "CHAT"
+                        )
+                );
+            }
+        }
     }
 }

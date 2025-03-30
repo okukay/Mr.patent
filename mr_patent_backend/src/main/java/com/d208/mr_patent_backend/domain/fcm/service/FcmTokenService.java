@@ -29,6 +29,7 @@ public class FcmTokenService {
         fcmTokenRepository.save(fcmToken);
     }
 
+    // userId 에 따른 토큰 가져오기
     public String getTokenByUserId(Integer userId) {
         return fcmTokenRepository.findByUserId(userId)
                 .map(FcmToken::getToken)

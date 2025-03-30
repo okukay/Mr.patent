@@ -16,6 +16,7 @@ public class FcmTokenController {
 
     private final FcmTokenService fcmTokenService;
 
+    //클라이언트에게 받은 fcmtoken 저장
     @PostMapping("/token")
     public void saveFcmToken(@RequestBody FcmTokenRequestDto request) {
         fcmTokenService.saveOrUpdateToken(request.getUserId(), request.getFcmToken());
