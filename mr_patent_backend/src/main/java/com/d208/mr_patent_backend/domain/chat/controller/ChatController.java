@@ -34,6 +34,7 @@ public class ChatController {
         if(message.isRead()){
             messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
         }
+
         //fcm 보내기
         else {
             Integer receiverId = message.getReceiverId();
@@ -46,8 +47,8 @@ public class ChatController {
                         message.getMessage(),
                         Map.of(
                                 "roomId", message.getRoomId(),
-                                "userId", message.getUserId().toString(),
-                                "type", "CHAT"
+//                                "userId", message.getUserId().toString(),
+                                "type", "FCM"
                         )
                 );
             }

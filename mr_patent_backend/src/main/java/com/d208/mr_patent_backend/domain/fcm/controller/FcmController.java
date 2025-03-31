@@ -13,8 +13,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FcmController {
 
-    private final FcmService fcmService;
-    private final FcmTokenService fcmTokenService;
+//    private final FcmService fcmService;
+//    private final FcmTokenService fcmTokenService;
 
     // 테스트용: userId로 저장된 토큰 조회 → 알림 전송
 //    @PostMapping("/send/{userId}")

@@ -18,7 +18,7 @@ public class SseService {
 
     // sse 연결
     public SseEmitter subscribe(Integer userId) {
-        SseEmitter emitter = new SseEmitter(60 * 60 * 1000L); // 1시간 유효
+        SseEmitter emitter = new SseEmitter(60 * 60 * 1000L); // 1시간 유효// 유효시간을 꼭 설정해야하는지?//다른페이지로 갔을때 자동으로 해제가 되는지?
         emitters.put(userId, emitter); //emitter를 만들어서 eemitters에 넣음
 
         // 연결 끊겼을 때 제거

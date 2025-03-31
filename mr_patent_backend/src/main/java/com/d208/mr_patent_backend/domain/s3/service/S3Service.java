@@ -38,32 +38,31 @@ public class S3Service {
 
         // Presigned URL 생성
         PresignedPutObjectRequest presignedRequest = presigner.presignPutObject(presignRequest);
-
         return presignedRequest.url().toString();
     }
 
 
 
     //파일 다운로드용 Presigned URL 생성
-    public String generatePresignedDownloadUrl(String fileName) {
-        S3Presigner presigner = awsS3Config.s3Presigner();
-
-        // 다운로드할 파일 정보
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(awsS3Config.getBucket())
-                .key(fileName)
-                .build();
-
-        // Presigned GET URL 생성 설정
-        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5)) // 유효 시간 설정
-                .getObjectRequest(getObjectRequest)
-                .build();
-
-        // Presigned URL 생성
-        PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
-
-        return presignedRequest.url().toString();
-    }
+//    public String generatePresignedDownloadUrl(String fileName) {
+//        S3Presigner presigner = awsS3Config.s3Presigner();
+//
+//        // 다운로드할 파일 정보
+//        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+//                .bucket(awsS3Config.getBucket())
+//                .key(fileName)
+//                .build();
+//
+//        // Presigned GET URL 생성 설정
+//        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+//                .signatureDuration(Duration.ofMinutes(5)) // 유효 시간 설정
+//                .getObjectRequest(getObjectRequest)
+//                .build();
+//
+//        // Presigned URL 생성
+//        PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
+//
+//        return presignedRequest.url().toString();
+//    }
 
 }
