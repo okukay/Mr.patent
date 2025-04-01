@@ -29,7 +29,7 @@ public class ChatService {
     //메세지 저장
     @Transactional
     public void saveMessage(ChatMessageDto dto) {
-        LocalDateTime now = dto.getTimestamp() != null ? dto.getTimestamp() : LocalDateTime.now();
+        LocalDateTime now = dto.getTimeStamp() != null ? dto.getTimeStamp() : LocalDateTime.now();
 
         ChatMessage message = ChatMessage.builder()
                 .roomId(dto.getRoomId())

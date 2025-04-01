@@ -29,14 +29,14 @@ public class S3Controller {
     }
 
     // 다운로드용 Presigned URL 발급
-//    @GetMapping("/download-url")
-//    public ResponseEntity<Map<String, Object>> getPresignedDownloadUrl(
-//            @RequestParam String filename
-//    ) {
-//        String presignedUrl = s3Service.generatePresignedDownloadUrl(filename);
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("data", presignedUrl);
-//
-//        return ResponseEntity.ok(response);
-//    }
+    @GetMapping("/download-url")
+    public ResponseEntity<Map<String, Object>> getPresignedDownloadUrl(
+            @RequestParam String filename
+    ) {
+        String presignedUrl = s3Service.generatePresignedDownloadUrl(filename);
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", presignedUrl);
+
+        return ResponseEntity.ok(response);
+    }
 }

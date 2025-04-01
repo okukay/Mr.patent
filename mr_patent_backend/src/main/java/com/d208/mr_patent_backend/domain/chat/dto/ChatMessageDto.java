@@ -15,9 +15,12 @@ public class ChatMessageDto {
     private Integer userId;            // 보낸 사람 ID
     private Integer receiverId;        // 수신자
     private String message;            // 메시지 내용
-    private LocalDateTime timestamp;   // 보낸 시간
+    private LocalDateTime timeStamp;   // 보낸 시간
     private boolean read;            // 읽음 여부
-    private String type;                //메세지 타입
+    private String messageType;                //메세지 타입
+    private String fileUrl;
+    private String fileName;
+
 
     public static ChatMessageDto fromEntity(ChatMessage entity) {
         return ChatMessageDto.builder()
@@ -26,9 +29,9 @@ public class ChatMessageDto {
                 .userId(entity.getUserId())
                 .receiverId(entity.getReceiverId())
                 .message(entity.getMessage())
-                .timestamp(entity.getTimestamp())
+                .timeStamp(entity.getTimestamp())
                 .read(entity.isRead())
-                .type(entity.getType())
+                .messageType(entity.getType())
                 .build();
     }
 }
