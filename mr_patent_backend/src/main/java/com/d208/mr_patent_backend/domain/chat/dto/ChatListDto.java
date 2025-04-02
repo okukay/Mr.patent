@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class ChatListDto {
     private Integer userId;
     private Integer expertId;
-    
+
 
     private String roomId;
     private Integer unreadCount;
