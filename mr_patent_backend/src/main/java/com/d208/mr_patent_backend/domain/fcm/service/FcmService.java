@@ -10,9 +10,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FcmService {
 
-    //마지막 data는 보이지 않지만 클릭 시 사용할 데이터 (무조건 문자열)
     public void sendMessageToToken(String targetToken, String title, String body, Map<String, String> data) {
-        Notification notification = Notification.builder() //화면에 보이는 알림 내용 (푸시 상단에 뜨는 제목/내용)
+        Notification notification = Notification.builder() // 화면에 보이는 알림 내용 (푸시 상단에 뜨는 제목/내용)
                 .setTitle(title)
                 .setBody(body)
                 .build();
@@ -25,9 +24,9 @@ public class FcmService {
 
         try {
             String response = FirebaseMessaging.getInstance().send(message); //Firebase 서버에 메시지를 전송
-            System.out.println("✅ FCM 메시지 전송 성공: " + response);
+            System.out.println("FCM 메시지 전송 성공: " + response);
         } catch (FirebaseMessagingException e) {
-            System.out.println("❌ FCM 메시지 전송 실패: " + e.getMessage());
+            System.out.println("FCM 메시지 전송 실패: " + e.getMessage());
             e.printStackTrace();
         }
     }
