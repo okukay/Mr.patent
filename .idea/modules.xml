@@ -3,9 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/S12P21D208.iml" filepath="$PROJECT_DIR$/.idea/S12P21D208.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mr_patent_backend.iml" filepath="$PROJECT_DIR$/.idea/modules/mr_patent_backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mr_patent_backend.main.iml" filepath="$PROJECT_DIR$/.idea/modules/mr_patent_backend.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mr_patent_backend.test.iml" filepath="$PROJECT_DIR$/.idea/modules/mr_patent_backend.test.iml" />
     </modules>
   </component>
 </project>

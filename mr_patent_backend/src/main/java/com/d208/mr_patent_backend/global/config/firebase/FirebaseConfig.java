@@ -16,7 +16,7 @@ import java.io.InputStream;
 @Component
 public class FirebaseConfig {
 
-    @Value("${firebase.key-path}") //application.yml에 정의된 값을 주입 받을 수 있게함
+    @Value("${spring.firebase.key-path}") //application.yml에 정의된 값을 주입 받을 수 있게함
     String fcmKeyPath;
 
     //의존성 주입이 끝난 후에 자동으로 실행되는 메서드
