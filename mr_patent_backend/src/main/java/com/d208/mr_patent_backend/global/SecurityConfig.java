@@ -39,14 +39,14 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/api/**").permitAll()
+//                        .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/api/swagger-ui/**").permitAll()
                         .requestMatchers("/api/v3/api-docs/**").permitAll()
-//                        .requestMatchers("/api/user").permitAll()
-//                        .requestMatchers("/api/user/expert").permitAll()
-//                        .requestMatchers("/api/user/login").permitAll()
-//                        .requestMatchers("/api/email/**").permitAll()
-//                        .requestMatchers("/api/expert-approve/**").hasRole("ADMIN")
+                        .requestMatchers("/api/user").permitAll()
+                        .requestMatchers("/api/user/expert").permitAll()
+                        .requestMatchers("/api/user/login").permitAll()
+                        .requestMatchers("/api/email/**").permitAll()
+                        .requestMatchers("/api/expert-approve/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
