@@ -17,7 +17,7 @@ import java.util.Map;
 public class S3Controller {
 
     private final S3Service s3Service;
-    // 업로드용 Presigned URL 발급
+
     @Operation(summary = "업로드용 Presigned URL 발급")
     @GetMapping("/upload-url")
     public ResponseEntity<Map<String, Object>> getPresignedUploadUrl(
@@ -30,7 +30,7 @@ public class S3Controller {
 
         return ResponseEntity.ok(response);
     }
-    // 다운로드용 Presigned URL 발급
+
     @Operation(summary = "다운로드용 Presigned URL 발급")
     @GetMapping("/download-url")
     public ResponseEntity<Map<String, Object>> getPresignedDownloadUrl(

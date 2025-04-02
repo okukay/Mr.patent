@@ -28,7 +28,7 @@ public class ChatRoomController {
     private final ChatService chatService;
     private final SseService sseService;
 
-    // 채팅방 목록 조회
+
     @Operation(summary = "채팅방 목록 조회")
     @GetMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> getChatRoomsByUserId(@PathVariable Integer userId) {
@@ -39,7 +39,6 @@ public class ChatRoomController {
     }
 
     @Operation(summary = "채팅방 생성")
-    // 채팅방 생성
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createChatRoom(@RequestBody ChatRoomCreateRequest request) {
         String roomId = chatRoomService.createChatRoom(request.getUserId(), request.getReceiverId());
@@ -48,7 +47,6 @@ public class ChatRoomController {
         return ResponseEntity.ok(response);
     }
     @Operation(summary = "대화 내용 불러오기")
-    // 채팅방 대화내용 불러오기
     @GetMapping("/message/{roomId}")
     public ResponseEntity<List<ChatMessageDto>> getMessages(
             @PathVariable String roomId,
@@ -60,7 +58,6 @@ public class ChatRoomController {
     }
 
     @Operation(summary = "SSE 연결")
-    //sse 연결요청
     @GetMapping("/subscribe/{userId}")
     public SseEmitter subscribe(@PathVariable Integer userId) {
         return sseService.subscribe(userId);
