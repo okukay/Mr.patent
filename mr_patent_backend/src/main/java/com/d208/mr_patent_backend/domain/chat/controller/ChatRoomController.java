@@ -1,0 +1,64 @@
+package com.d208.mr_patent_backend.domain.chat.controller;
+
+import com.d208.mr_patent_backend.domain.chat.dto.ChatListDto;
+import com.d208.mr_patent_backend.domain.chat.dto.ChatMessageDto;
+import com.d208.mr_patent_backend.domain.chat.dto.ChatRoomCreateRequest;
+import com.d208.mr_patent_backend.domain.chat.service.ChatRoomService;
+
+
+import com.d208.mr_patent_backend.domain.chat.service.ChatService;
+import com.d208.mr_patent_backend.domain.chat.service.SseService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/chat/rooms")
+@RequiredArgsConstructor
+public class ChatRoomController {
+
+    private final ChatRoomService chatRoomService;
+    private final ChatService chatService;
+    private final SseService sseService;
+
+    // 채팅방 목록 조회
+    @GetMapping("/{userId}")
+    public ResponseEntity<Map<String, Object>> getChatRoomsByUserId(@PathVariable Integer userId) {
+        List<ChatListDto> chatRooms = chatRoomService.getChatRoomsByUserId(userId);
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", chatRooms);
+        return ResponseEntity.ok(response);
+    }
+
+    // 채팅방 생성
+    @PostMapping("/create")
+    public ResponseEntity<Map<String, Object>> createChatRoom(@RequestBody ChatRoomCreateRequest request) {
+        String roomId = chatRoomService.createChatRoom(request.getUserId(), request.getReceiverId());
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", roomId);
+        return ResponseEntity.ok(response);
+    }
+
+    // 채팅방목 대화내용 불러오기
+    @GetMapping("/message/{roomId}")
+    public ResponseEntity<List<ChatMessageDto>> getMessages(
+            @PathVariable String roomId,
+            @RequestParam(required = false) Long lastMessageId // 파라미터 없어도 괜찮음(첫 대화 불러오기 때문에)
+    ) {
+        int size = 10;
+        List<ChatMessageDto> messages = chatService.getMessages(roomId, lastMessageId, size);
+        return ResponseEntity.ok(messages);
+    }
+
+
+    //sse 연결요청
+    @GetMapping("/subscribe/{userId}")
+    public SseEmitter subscribe(@PathVariable Integer userId) {
+        return sseService.subscribe(userId);
+    }
+}
