@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,9 +23,11 @@ public class FcmTokenController {
 
     @Operation(summary = "FCM 토큰 저장")
     @PostMapping("/token")
-    public void saveFcmToken(@RequestBody FcmTokenRequestDto request) {
+    public ResponseEntity<String> saveFcmToken(@RequestBody FcmTokenRequestDto request) {
         fcmTokenService.saveOrUpdateToken(request.getUserId(), request.getFcmToken());
+        return ResponseEntity.ok("FCM 토큰 저장 완료");
     }
+
 
 
 }
