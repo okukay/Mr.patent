@@ -1,7 +1,6 @@
 package com.d208.mr_patent_backend.domain.chat.dto;
 
 import lombok.*;
-import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +16,8 @@ import java.time.LocalDateTime;
 public class ChatListDto {
     private Integer userId;
     private Integer expertId;
-
+    private String expertName;
+    private String expertImage;
 
     private String roomId;
     private Integer unreadCount;

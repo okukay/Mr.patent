@@ -35,6 +35,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/chat-test.html").permitAll()
+                        .requestMatchers("/sse-test.html").permitAll()
+                        .requestMatchers("/ws/chat").permitAll()
+
+
 //                        .requestMatchers("/api/user").permitAll()
 //                        .requestMatchers("/api/user/expert").permitAll()
 //                        .requestMatchers("/api/user/login").permitAll()

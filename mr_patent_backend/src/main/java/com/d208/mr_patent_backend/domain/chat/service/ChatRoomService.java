@@ -45,6 +45,8 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
+                .expertName(request.getExpertName())
+                .expertImage(request.getExpertImage())
                 .created(LocalDateTime.now())
                 .updated(LocalDateTime.now())
                 .build();
@@ -79,6 +81,9 @@ public class ChatRoomService {
         return chatRooms.stream()
                 .map(room -> ChatListDto.builder()
                         .roomId(room.getRoomId())
+                        .userId(room.getUserId())
+                        .expertName(room.getExpertName())
+                        .expertImage(room.getExpertImage())
                         .unreadCount(room.getUnreadCount())
                         .lastMessage(room.getLastMessage())
                         .receiverId(room.getReceiverId())
