@@ -37,7 +37,7 @@ public class ChatRoomService {
         String roomId = UUID.randomUUID().toString();
 
 
-        // 사용자 A용
+        // 유저용 채팅방
         ChatRoom userRoom = ChatRoom.builder()
                 .roomId(roomId)
                 .userId(userId)
@@ -51,13 +51,14 @@ public class ChatRoomService {
                 .updated(LocalDateTime.now())
                 .build();
 
-        // 사용자 B용
+        // 변리사용 채팅방
         ChatRoom receiverRoom = ChatRoom.builder()
                 .roomId(roomId)
                 .userId(receiverId)
                 .receiverId(userId)
                 .lastMessage(null)
                 .unreadCount(0)
+                .expertId(receiverId)
                 .status(0)
                 .expertName(request.getExpertName())
                 .expertImage(request.getExpertImage())

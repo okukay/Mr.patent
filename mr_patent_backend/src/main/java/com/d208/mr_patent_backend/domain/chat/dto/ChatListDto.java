@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-// 변리사 이름이랑, 사진 추가 필요
 
 // 채팅방 목록 화면에서 보여줄 Dto
 public class ChatListDto {

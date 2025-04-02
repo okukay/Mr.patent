@@ -13,4 +13,5 @@ public class ChatRoomCreateRequest {
     private Integer receiverId;
     private String expertName; //변리사 이름
     private String expertImage; //변리사 사진
+    private Integer expertId;
 }
