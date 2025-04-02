@@ -4,6 +4,7 @@ import com.d208.mr_patent_backend.domain.chat.dto.ChatMessageDto;
 import com.d208.mr_patent_backend.domain.chat.service.ChatService;
 import com.d208.mr_patent_backend.domain.fcm.service.FcmService;
 import com.d208.mr_patent_backend.domain.fcm.service.FcmTokenService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Controller;
 
 import java.util.Map;
 
+@Tag(name = "채팅 API", description = "채팅 보내기")
 @Controller
 @RequiredArgsConstructor
 public class ChatController {

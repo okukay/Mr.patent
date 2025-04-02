@@ -2,12 +2,16 @@ package com.d208.mr_patent_backend.domain.fcm.controller;
 
 import com.d208.mr_patent_backend.domain.fcm.dto.FcmTokenRequestDto;
 import com.d208.mr_patent_backend.domain.fcm.service.FcmTokenService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+@Tag(name = "FCM API", description = "FCM 저장")
 
 @RestController
 @RequestMapping("/api/fcm")
@@ -17,6 +21,7 @@ public class FcmTokenController {
     private final FcmTokenService fcmTokenService;
 
     //클라이언트에게 받은 fcmtoken 저장
+    @Operation(summary = "FCM 토큰 저장")
     @PostMapping("/token")
     public void saveFcmToken(@RequestBody FcmTokenRequestDto request) {
         fcmTokenService.saveOrUpdateToken(request.getUserId(), request.getFcmToken());
