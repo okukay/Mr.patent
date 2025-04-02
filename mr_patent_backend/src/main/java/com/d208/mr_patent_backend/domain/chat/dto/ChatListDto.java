@@ -5,7 +5,7 @@ import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.time.LocalDateTime;
 
-// 채팅방 목록 화면에서 보여줄 Dto
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 // 변리사 이름이랑, 사진 추가 필요
 
+// 채팅방 목록 화면에서 보여줄 Dto
 public class ChatListDto {
     private Integer userId;
     private Integer expertId;

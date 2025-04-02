@@ -1,6 +1,7 @@
 package com.d208.mr_patent_backend.domain.chat.service;
 
 import com.d208.mr_patent_backend.domain.chat.dto.ChatListDto;
+import com.d208.mr_patent_backend.domain.chat.dto.ChatRoomCreateRequest;
 import com.d208.mr_patent_backend.domain.chat.entity.ChatRoom;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatRoomRepository;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,10 @@ public class ChatRoomService {
 
     // 채팅방 생성(2개)
     @Transactional
-    public String createChatRoom(Integer userId, Integer receiverId) {
+    public String createChatRoom(ChatRoomCreateRequest request ) {
+
+        Integer userId = request.getUserId();
+        Integer receiverId = request.getReceiverId();
 
         Optional<ChatRoom> existing = chatRoomRepository.findByUserIdAndReceiverId(userId, receiverId);
 
@@ -31,6 +35,7 @@ public class ChatRoomService {
         }
 
         String roomId = UUID.randomUUID().toString();
+
 
         // 사용자 A용
         ChatRoom userRoom = ChatRoom.builder()
@@ -52,6 +57,8 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
+                .expertName(request.getExpertName())
+                .expertImage(request.getExpertImage())
                 .created(LocalDateTime.now())
                 .updated(LocalDateTime.now())
                 .build();

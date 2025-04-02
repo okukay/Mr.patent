@@ -41,7 +41,7 @@ public class ChatRoomController {
     @Operation(summary = "채팅방 생성")
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createChatRoom(@RequestBody ChatRoomCreateRequest request) {
-        String roomId = chatRoomService.createChatRoom(request.getUserId(), request.getReceiverId());
+        String roomId = chatRoomService.createChatRoom(request);
         Map<String, Object> response = new HashMap<>();
         response.put("data", roomId);
         return ResponseEntity.ok(response);

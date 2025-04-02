@@ -11,4 +11,6 @@ import lombok.*;
 public class ChatRoomCreateRequest {
     private Integer userId;
     private Integer receiverId;
+    private String expertName; //변리사 이름
+    private String expertImage; //변리사 사진
 }

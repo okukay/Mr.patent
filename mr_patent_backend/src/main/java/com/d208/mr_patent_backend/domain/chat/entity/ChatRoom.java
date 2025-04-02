@@ -33,4 +33,7 @@ public class ChatRoom {
     private LocalDateTime created;
     private LocalDateTime updated;
 
+    private String expertName;
+    private String expertImage;
+
 }
