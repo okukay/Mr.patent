@@ -18,6 +18,9 @@
 .env
 *.log
 
+### pem 키 파일 ###
+*.pem
+
 # AWS User-specific
 .idea/**/aws.xml
 

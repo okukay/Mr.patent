@@ -4,8 +4,22 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+fastapi = "*"
+uvicorn = "*"
+pydantic = "*"
+sqlalchemy = "*"
+databases = "*"
+pymysql = "*"
+aiomysql = "*"
+striprtf = "*"
+numpy = "*"
+scikit-learn = "*"
+python-multipart = "*"
+torch = "*"
+torchvision = "*"
+torchaudio = "*"
+transformers = "*"
+sentencepiece = "*"
+pydantic-settings = "*"
 
 [dev-packages]
-
-[requires]
-python_version = "3.12"
