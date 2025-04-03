@@ -87,11 +87,11 @@ public class ChatRoomService {
         //room은 chatRooms 리스트 안의 각각의 요소
         return chatRooms.stream()
                 .map(room -> {
-                    // 👇 상대방 정보 조회
+                    //  상대방 정보 조회
                     User receiver = userRepository.findById(room.getReceiverId())
                             .orElseThrow(() -> new RuntimeException("상대방 정보 없음"));
 
-                    // 👇 Presigned URL 생성
+                    //  Presigned URL 생성
                     String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
 
 

@@ -15,13 +15,12 @@ import java.time.LocalDateTime;
 public class ChatListDto {
     private Integer userId;
     private Integer expertId;
-    private String userName;
-    private String userImage;
-
     private String roomId;
     private Integer unreadCount;
     private String lastMessage;
-    private Integer receiverId;
     private LocalDateTime lastTimestamp;
-
+    private String userName;
+    private String userImage;
+    private Integer receiverId;
+    
 }
