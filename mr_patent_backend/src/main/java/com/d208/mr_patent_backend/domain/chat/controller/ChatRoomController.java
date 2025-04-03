@@ -8,6 +8,8 @@ import com.d208.mr_patent_backend.domain.chat.service.ChatRoomService;
 
 import com.d208.mr_patent_backend.domain.chat.service.ChatService;
 import com.d208.mr_patent_backend.domain.chat.service.SseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +18,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+@Tag(name = "채팅방 API", description = "채팅방 생성/목록/대화내용 불러오기 ")
 @RestController
 @RequestMapping("/api/chat/rooms")
 @RequiredArgsConstructor
@@ -26,7 +28,8 @@ public class ChatRoomController {
     private final ChatService chatService;
     private final SseService sseService;
 
-    // 채팅방 목록 조회
+
+    @Operation(summary = "채팅방 목록 조회")
     @GetMapping("/{userId}")
     public ResponseEntity<Map<String, Object>> getChatRoomsByUserId(@PathVariable Integer userId) {
         List<ChatListDto> chatRooms = chatRoomService.getChatRoomsByUserId(userId);
@@ -35,16 +38,15 @@ public class ChatRoomController {
         return ResponseEntity.ok(response);
     }
 
-    // 채팅방 생성
+    @Operation(summary = "채팅방 생성")
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> createChatRoom(@RequestBody ChatRoomCreateRequest request) {
-        String roomId = chatRoomService.createChatRoom(request.getUserId(), request.getReceiverId());
+        String roomId = chatRoomService.createChatRoom(request);
         Map<String, Object> response = new HashMap<>();
         response.put("data", roomId);
         return ResponseEntity.ok(response);
     }
-
-    // 채팅방목 대화내용 불러오기
+    @Operation(summary = "대화 내용 불러오기")
     @GetMapping("/message/{roomId}")
     public ResponseEntity<List<ChatMessageDto>> getMessages(
             @PathVariable String roomId,
@@ -55,8 +57,7 @@ public class ChatRoomController {
         return ResponseEntity.ok(messages);
     }
 
-
-    //sse 연결요청
+    @Operation(summary = "SSE 연결")
     @GetMapping("/subscribe/{userId}")
     public SseEmitter subscribe(@PathVariable Integer userId) {
         return sseService.subscribe(userId);

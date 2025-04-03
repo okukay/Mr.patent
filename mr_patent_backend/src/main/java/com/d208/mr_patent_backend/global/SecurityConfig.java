@@ -40,8 +40,11 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((authorize) -> authorize
 //                        .requestMatchers("/api/**").permitAll()
-                        .requestMatchers("/api/swagger-ui/**").permitAll()
-                        .requestMatchers("/api/v3/api-docs/**").permitAll()
+                        .requestMatchers("api/swagger-ui/**").permitAll()
+                        .requestMatchers("api/v3/api-docs/**").permitAll()
+                        .requestMatchers("/chat-test.html").permitAll()
+                        .requestMatchers("/sse-test.html").permitAll()
+                        .requestMatchers("/ws/chat").permitAll()
                         .requestMatchers("/api/user").permitAll()
                         .requestMatchers("/api/user/expert").permitAll()
                         .requestMatchers("/api/user/login").permitAll()
