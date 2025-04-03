@@ -18,6 +18,7 @@ public class ChatMessageDto {
     private String message;            // 메시지 내용
     private LocalDateTime timeStamp;   // 보낸 시간
     private boolean read;               // 읽음 여부
+    private String type;                // 메세지 인지/ 입장 퇴장인지 구분위해서
     private String messageType;         //메세지 타입
     private String fileUrl;             // 다운로드 url
     private String fileName;            // 파일이름

@@ -52,8 +52,7 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
-//                .userName(request.getExpertName())
-//                .userImage(request.getExpertImage())
+
                 .created(LocalDateTime.now())
                 .updated(LocalDateTime.now())
                 .build();
@@ -66,8 +65,7 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
-//                .userName(request.getExpertName())
-//                .userImage(request.getExpertImage())
+
                 .created(LocalDateTime.now())
                 .updated(LocalDateTime.now())
                 .build();
