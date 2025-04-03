@@ -56,7 +56,7 @@ public class ChatController {
                 data.put("userId", userId.toString());
                 data.put("userName", user.getUserName());
                 data.put("userImage", user.getUserImage());
-                data.put("type", "FCM");
+                data.put("type", "CHAT");
 
                 if (user.getUserRole() == 1) {
                     data.put("expertId", receiverId.toString());
