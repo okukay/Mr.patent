@@ -36,6 +36,9 @@ public class ChatMessage {
     private boolean read; // DB에는 TINYINT형식으로 저장됨 (0 = false ,1 = true)
     private String type;                //메세지 타입
 
+    private String fileUrl;             // 다운로드 url
+    private String fileName;            // 파일이름
+
 
 }
 

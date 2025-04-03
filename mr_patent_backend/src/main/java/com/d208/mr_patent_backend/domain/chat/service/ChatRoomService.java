@@ -4,6 +4,9 @@ import com.d208.mr_patent_backend.domain.chat.dto.ChatListDto;
 import com.d208.mr_patent_backend.domain.chat.dto.ChatRoomCreateRequest;
 import com.d208.mr_patent_backend.domain.chat.entity.ChatRoom;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatRoomRepository;
+import com.d208.mr_patent_backend.domain.s3.service.S3Service;
+import com.d208.mr_patent_backend.domain.user.entity.User;
+import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,6 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatRoomService {
 
     private final ChatRoomRepository chatRoomRepository;
+    private final UserRepository userRepository;
+    private final S3Service s3Service;
+
 
     // 채팅방 생성(2개)
     @Transactional
@@ -46,8 +52,8 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
-                .expertName(request.getExpertName())
-                .expertImage(request.getExpertImage())
+//                .userName(request.getExpertName())
+//                .userImage(request.getExpertImage())
                 .created(LocalDateTime.now())
                 .updated(LocalDateTime.now())
                 .build();
@@ -60,8 +66,8 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
-                .expertName(request.getExpertName())
-                .expertImage(request.getExpertImage())
+//                .userName(request.getExpertName())
+//                .userImage(request.getExpertImage())
                 .created(LocalDateTime.now())
                 .updated(LocalDateTime.now())
                 .build();
@@ -80,17 +86,27 @@ public class ChatRoomService {
         //(리스트 조회한걸 -> Dto 형식으로 변환)
         //room은 chatRooms 리스트 안의 각각의 요소
         return chatRooms.stream()
-                .map(room -> ChatListDto.builder()
-                        .roomId(room.getRoomId())
-                        .userId(room.getUserId())
-                        .expertId(room.getExpertId())
-                        .expertName(room.getExpertName())
-                        .expertImage(room.getExpertImage())
-                        .unreadCount(room.getUnreadCount())
-                        .lastMessage(room.getLastMessage())
-                        .receiverId(room.getReceiverId())
-                        .lastTimestamp(room.getLastTimestamp())
-                        .build())
+                .map(room -> {
+                    // 👇 상대방 정보 조회
+                    User receiver = userRepository.findById(room.getReceiverId())
+                            .orElseThrow(() -> new RuntimeException("상대방 정보 없음"));
+
+                    // 👇 Presigned URL 생성
+                    String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+
+
+                    return ChatListDto.builder()
+                            .userId(room.getUserId())         // 로그인한 사용자 ID
+                            .expertId(room.getExpertId())     // 전문가 ID (사용한다면)
+                            .roomId(room.getRoomId())
+                            .receiverId(room.getReceiverId()) // 상대방 ID
+                            .unreadCount(room.getUnreadCount())
+                            .userName(receiver.getUserName()) // 상대방 이름
+                            .userImage(downUrl)              // S3 이미지 Presigned URL
+                            .lastMessage(room.getLastMessage())
+                            .lastTimestamp(room.getLastTimestamp())
+                            .build();
+                })
                 .collect(Collectors.toList());
-        }
+    }
 }
