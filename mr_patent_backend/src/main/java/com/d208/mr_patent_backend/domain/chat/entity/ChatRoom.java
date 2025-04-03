@@ -19,6 +19,7 @@ public class ChatRoom {
     @Id
     @Column(length = 36)
     private String roomId; // UUID 값을 준다
+    private Integer expertId;
 
     @Id
     private Integer userId;
@@ -32,5 +33,8 @@ public class ChatRoom {
     private LocalDateTime lastTimestamp;
     private LocalDateTime created;
     private LocalDateTime updated;
+
+    private String expertName;
+    private String expertImage;
 
 }
