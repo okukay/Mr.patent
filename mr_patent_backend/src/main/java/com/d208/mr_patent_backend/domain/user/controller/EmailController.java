@@ -28,10 +28,10 @@ public class EmailController {
 
     @Operation(summary = "이메일 중복 확인")
     @GetMapping("/check")
-    public ResponseEntity<Map<String, EmailAvailableResponseDTO>> checkEmailDuplicate(@RequestParam String email) {
+    public ResponseEntity<Map<String, Object>> checkEmailDuplicate(@RequestParam String email) {
         try {
             boolean isDuplicate = userService.checkEmailDuplicate(email);
-            Map<String, EmailAvailableResponseDTO> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("data", EmailAvailableResponseDTO.of(!isDuplicate));  // DB에 없으면 available true
 
             if (!isDuplicate) {  // DB에 없는 경우에만 체크 표시
@@ -41,7 +41,11 @@ public class EmailController {
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             log.error("이메일 중복 체크 실패: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", e.getMessage());
+            response.put("data", data);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
@@ -77,16 +81,21 @@ public class EmailController {
 
     @Operation(summary = "이메일 인증")
     @PostMapping("/verification")
-    public ResponseEntity<?> verifyAuthCode(
+    public ResponseEntity<Map<String, Object>> verifyAuthCode(
             @RequestParam String email,
             @RequestParam String authCode) {
         boolean isValid = emailService.verifyAuthCode(email, authCode);
+        Map<String, Object> response = new HashMap<>();
+
         if (isValid) {
-            Map<String, EmailVerificationResponseDTO> response = new HashMap<>();
             response.put("data", EmailVerificationResponseDTO.of(email));
             return ResponseEntity.ok(response);
         }
-        return ResponseEntity.badRequest().body("인증번호가 올바르지 않거나 만료되었습니다.");
+
+        Map<String, String> data = new HashMap<>();
+        data.put("message", "인증번호가 올바르지 않거나 만료되었습니다.");
+        response.put("data", data);
+        return ResponseEntity.badRequest().body(response);
     }
 
     @Operation(summary = "이메일 인증 번호 전송(비밀번호 변경)")
