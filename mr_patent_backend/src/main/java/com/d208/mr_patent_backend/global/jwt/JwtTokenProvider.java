@@ -1,5 +1,7 @@
 package com.d208.mr_patent_backend.global.jwt;
 
+import com.d208.mr_patent_backend.global.jwt.exception.JwtErrorCode;
+import com.d208.mr_patent_backend.global.jwt.exception.JwtException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -39,36 +41,38 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public TokenInfo generateToken(Authentication authentication) {
+    public String generateAccessToken(Authentication authentication) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
         long now = (new Date()).getTime();
         Date accessTokenValidity = new Date(now + accessTokenValidityInMilliseconds);
-        Date refreshTokenValidity = new Date(now + refreshTokenValidityInMilliseconds);
 
-        String accessToken = Jwts.builder()
+        return Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
                 .setExpiration(accessTokenValidity)
                 .signWith(key)
                 .compact();
+    }
 
-        String refreshToken = Jwts.builder()
+    public String generateRefreshToken() {
+        long now = (new Date()).getTime();
+        Date refreshTokenValidity = new Date(now + refreshTokenValidityInMilliseconds);
+
+        return Jwts.builder()
                 .setExpiration(refreshTokenValidity)
                 .signWith(key)
                 .compact();
-
-        return TokenInfo.builder()
-                .grantType("Bearer")
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
     }
 
     public Authentication getAuthentication(String token) {
         Claims claims = parseClaims(token);
+
+        if (claims.get("auth") == null) {
+            throw new JwtException(JwtErrorCode.TOKEN_INVALID, "권한 정보가 없는 토큰입니다.");
+        }
 
         Collection<? extends GrantedAuthority> authorities =
                 Arrays.stream(claims.get("auth").toString().split(","))
@@ -83,16 +87,15 @@ public class JwtTokenProvider {
         try {
             Jwts.parser().setSigningKey(key).build().parseClaimsJws(token);
             return true;
-        } catch (SecurityException | MalformedJwtException e) {
-            log.info("잘못된 JWT 서명입니다.");
         } catch (ExpiredJwtException e) {
-            log.info("만료된 JWT 토큰입니다.");
+            throw new JwtException(JwtErrorCode.TOKEN_EXPIRED);
+        } catch (MalformedJwtException e) {
+            throw new JwtException(JwtErrorCode.TOKEN_MALFORMED);
         } catch (UnsupportedJwtException e) {
-            log.info("지원되지 않는 JWT 토큰입니다.");
+            throw new JwtException(JwtErrorCode.TOKEN_UNSUPPORTED);
         } catch (IllegalArgumentException e) {
-            log.info("JWT 토큰이 잘못되었습니다.");
+            throw new JwtException(JwtErrorCode.TOKEN_ILLEGAL_ARGUMENT);
         }
-        return false;
     }
 
     private Claims parseClaims(String token) {
