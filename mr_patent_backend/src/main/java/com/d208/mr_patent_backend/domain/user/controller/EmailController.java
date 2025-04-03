@@ -47,17 +47,31 @@ public class EmailController {
 
     @Operation(summary = "이메일 인증 번호 전송")
     @PostMapping("/request")
-    public ResponseEntity<String> sendAuthCode(@RequestParam String email) {
+    public ResponseEntity<Map<String, Object>> sendAuthCode(@RequestParam String email) {
         try {
             // 중복 확인을 했는지 체크
             if (!emailService.isEmailChecked(email)) {
-                return ResponseEntity.badRequest().body("먼저 중복 확인을 해 주세요.");
+                Map<String, Object> errorResponse = new HashMap<>();
+                Map<String, String> data = new HashMap<>();
+                data.put("message", "먼저 중복 확인을 해 주세요.");
+                errorResponse.put("data", data);
+                return ResponseEntity.badRequest().body(errorResponse);
             }
 
             emailService.sendAuthEmail(email);
-            return ResponseEntity.ok("인증 코드가 발송되었습니다.");
+
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", "인증 코드가 발송되었습니다.");
+            response.put("data", data);
+
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", e.getMessage());
+            errorResponse.put("data", data);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
