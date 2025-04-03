@@ -35,7 +35,7 @@ public class ChatController {
 
         if (message.getFileName() != null && !message.getFileName().isBlank()) {
             String presignedUrl = s3Service.generatePresignedDownloadUrl(message.getFileName());
-            message.setFileUrl(presignedUrl); // DTO에 fileUrl 필드 추가
+            message.setFileUrl(presignedUrl);
         }
 
         //DB 저장
