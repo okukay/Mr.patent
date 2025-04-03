@@ -16,6 +16,7 @@ import com.d208.mr_patent_backend.global.jwt.JwtAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import java.util.Collections;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -40,8 +42,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests((authorize) -> authorize
 //                        .requestMatchers("/api/**").permitAll()
-                        .requestMatchers("api/swagger-ui/**").permitAll()
-                        .requestMatchers("api/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/swagger-ui/**").permitAll()
+                        .requestMatchers("/api/v3/api-docs/**").permitAll()
                         .requestMatchers("/chat-test.html").permitAll()
                         .requestMatchers("/sse-test.html").permitAll()
                         .requestMatchers("/ws/chat").permitAll()
@@ -52,7 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/expert-approve/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, objectMapper),
                         UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -71,6 +73,7 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

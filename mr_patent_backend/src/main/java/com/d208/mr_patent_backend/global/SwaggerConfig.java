@@ -29,8 +29,8 @@ public class SwaggerConfig {
                 .components(new Components())
                 .info(apiInfo())
                 .addSecurityItem(securityRequirement)
-                .components(components)
-                .addServersItem(server);
+                .addServersItem(server)
+                .components(components);
     }
     private Info apiInfo() {
         return new Info()

@@ -179,7 +179,15 @@ public class UserService {
                 user.getUserEmail(), "", authorities);
 
         // 토큰 생성
-        TokenInfo tokenInfo = jwtTokenProvider.generateToken(authentication);
+        TokenInfo tokenInfo = TokenInfo.builder()
+                .userId(user.getUserId())
+                .userEmail(user.getUserEmail())
+                .userName(user.getUserName())
+                .userRole(user.getUserRole())
+                .grantType("Bearer")
+                .accessToken(jwtTokenProvider.generateAccessToken(authentication))
+                .refreshToken(jwtTokenProvider.generateRefreshToken())
+                .build();
 
         // Refresh Token 저장
         user.setUserRefreshToken(tokenInfo.getRefreshToken());
@@ -226,7 +234,16 @@ public class UserService {
         // 새로운 토큰 생성
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 user.getUserEmail(), "", authorities);
-        TokenInfo tokenInfo = jwtTokenProvider.generateToken(authentication);
+
+        TokenInfo tokenInfo = TokenInfo.builder()
+                .userId(user.getUserId())
+                .userEmail(user.getUserEmail())
+                .userName(user.getUserName())
+                .userRole(user.getUserRole())
+                .grantType("Bearer")
+                .accessToken(jwtTokenProvider.generateAccessToken(authentication))
+                .refreshToken(jwtTokenProvider.generateRefreshToken())
+                .build();
 
         // 리프레시 토큰 업데이트
         user.setUserRefreshToken(tokenInfo.getRefreshToken());
