@@ -21,5 +21,10 @@ torchaudio = "*"
 transformers = "*"
 sentencepiece = "*"
 pydantic-settings = "*"
+google-cloud-vision = "*"
+google-cloud = "*"
+findspark = "*"
+fpdf = "*"
+pdf2image = "*"
 
 [dev-packages]
