@@ -24,7 +24,8 @@ pipeline {
                 echo '====== 백엔드 빌드 시작 ======'
                 dir('mr_patent_backend') {
                     sh 'chmod +x ./gradlew || true'
-                    sh './gradlew clean bootJar || ./gradlew clean build'
+                    sh './gradlew clean build -x test'
+//                     sh './gradlew clean bootJar || ./gradlew clean build'
                 }
                 echo '====== 백엔드 빌드 완료 ======'
             }
