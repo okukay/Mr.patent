@@ -29,7 +29,7 @@ public class SwaggerConfig {
                 .components(new Components())
                 .info(apiInfo())
                 .addSecurityItem(securityRequirement)
-//                .addServersItem(server);
+                .addServersItem(server)
                 .components(components);
     }
     private Info apiInfo() {
