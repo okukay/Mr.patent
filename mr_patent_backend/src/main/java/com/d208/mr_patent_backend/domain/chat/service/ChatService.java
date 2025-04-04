@@ -110,8 +110,10 @@ public class ChatService {
 
         for (ChatMessage entity : messages) {
             //  첨부 파일이 있는 경우 Presigned URL 발급
-            if (entity.getFileName() != null && (entity.getFileUrl() == null)) {
+//            if (entity.getFileName() != null && (entity.getFileUrl() == null)) {
+            if (entity.getFileName() != null) {
                 String newUrl = s3Service.generatePresignedDownloadUrl(entity.getFileName());
+
                 entity.setFileUrl(newUrl);
                 chatMessageRepository.save(entity); // DB 업데이트
             }
