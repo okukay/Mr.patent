@@ -7,12 +7,14 @@ import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
 import com.d208.mr_patent_backend.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ExpertService {
     private final ExpertRepository expertRepository;
 
@@ -31,19 +33,18 @@ public class ExpertService {
 
         return ExpertResponseDTO.builder()
                 .expertId(expert.getExpertId())
-                .name(expert.getUser().getUserName())
-                .email(expert.getUser().getUserEmail())
-                .description(expert.getExpertDescription())
-                .address(expert.getExpertAddress())
-                .phone(expert.getExpertPhone())
-                .license(expert.getExpertLicense())
-                .getDate(expert.getExpertGetDate())
-                .categories(categories)
+                .userName(expert.getUser().getUserName())
+                .userEmail(expert.getUser().getUserEmail())
+                .expertDescription(expert.getExpertDescription())
+                .expertAddress(expert.getExpertAddress())
+                .expertPhone(expert.getExpertPhone())
+                .expertGetDate(expert.getExpertGetDate())
+                .expertCategories(categories)
                 .build();
     }
 
     public ExpertDetailResponseDTO getExpertDetail(Integer expertId) {
-        Expert expert = expertRepository.findById(expertId)
+        Expert expert = expertRepository.findByIdWithDetails(expertId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 변리사입니다."));
 
         if (expert.getExpertStatus() != 1) {
@@ -68,7 +69,7 @@ public class ExpertService {
                 .expertCreatedAt(expert.getExpertCreatedAt())
                 .userEmail(user.getUserEmail())
                 .userImage(user.getUserImage())
-                .categories(categories)
+                .expertCategories(categories)
                 .build();
     }
 }

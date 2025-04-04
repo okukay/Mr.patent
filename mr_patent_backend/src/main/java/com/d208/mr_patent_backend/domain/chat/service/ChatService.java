@@ -4,6 +4,7 @@ import com.d208.mr_patent_backend.domain.chat.dto.ChatMessageDto;
 import com.d208.mr_patent_backend.domain.chat.entity.ChatMessage;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatMessageRepository;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatRoomRepository;
+import com.d208.mr_patent_backend.domain.s3.service.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +26,8 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final SseService sseService;
+    private final S3Service s3Service;
+
 
     //메세지 저장
     @Transactional
@@ -34,11 +37,14 @@ public class ChatService {
         ChatMessage message = ChatMessage.builder()
                 .roomId(dto.getRoomId())
                 .userId(dto.getUserId())
-                .message(dto.getMessage())
                 .receiverId(dto.getReceiverId())
+                .message(dto.getMessage())
                 .timestamp(now)
                 .read(dto.isRead()) // 클라이언트가 보내주는데로 0 or 1 로 저장
                 .type("CHAT")
+                .messageType(dto.getMessageType())
+                .fileUrl(dto.getFileUrl())
+                .fileName(dto.getFileName())
                 .build();
 
         chatMessageRepository.save(message);
@@ -86,27 +92,35 @@ public class ChatService {
         }
     }
 
+
     // 대화내용 불러오기 (무한 스크롤)
     public List<ChatMessageDto> getMessages(String roomId, Long lastMessageId, int size) {
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "chatId"));
 
+        List<ChatMessage> messages;
+
         if (lastMessageId == null) {
             // 처음 입장: 최신 메시지부터 size개 조회
-            Page<ChatMessage> page = chatMessageRepository.findByRoomIdOrderByChatIdDesc(roomId, pageable);
-
-            List<ChatMessageDto> result = new ArrayList<>();
-            for (ChatMessage entity : page.getContent()) {
-                ChatMessageDto dto = ChatMessageDto.fromEntity(entity);
-                result.add(dto);
-            }
-            return result;
-
+            messages = chatMessageRepository.findByRoomIdOrderByChatIdDesc(roomId, pageable);
         } else {
-            return chatMessageRepository
-                    .findByRoomIdAndChatIdLessThanOrderByChatIdDesc(roomId, lastMessageId, pageable)
-                    .stream()
-                    .map(ChatMessageDto::fromEntity)
-                    .collect(Collectors.toList());
+            // 무한스크롤: 마지막 메시지 이전 메시지 size개 조회
+            messages = chatMessageRepository.findByRoomIdAndChatIdLessThanOrderByChatIdDesc(roomId, lastMessageId, pageable);
         }
+
+        List<ChatMessageDto> result = new ArrayList<>();
+        for (ChatMessage entity : messages) {
+            //  첨부 파일이 있는 경우 Presigned URL 발급
+//            if (entity.getFileName() != null && (entity.getFileUrl() == null)) {
+            if (entity.getFileName() != null) {
+                String newUrl = s3Service.generatePresignedDownloadUrl(entity.getFileName());
+                entity.setFileUrl(newUrl);
+
+            }
+            ChatMessageDto dto = ChatMessageDto.fromEntity(entity);
+            result.add(dto);
+        }
+
+        return result;
     }
+
 }

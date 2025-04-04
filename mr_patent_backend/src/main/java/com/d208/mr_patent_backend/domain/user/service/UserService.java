@@ -106,8 +106,8 @@ public class UserService {
         // ExpertCategory 설정
         if (requestDto.getExpertCategories() != null && !requestDto.getExpertCategories().isEmpty()) {
             for (ExpertCategoryDTO categoryDto : requestDto.getExpertCategories()) {
-                Category category = categoryRepository.findById(categoryDto.getCategoryId())
-                        .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다: " + categoryDto.getCategoryId()));
+                Category category = categoryRepository.findByCategoryName(categoryDto.getCategoryName())
+                        .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다: " + categoryDto.getCategoryName()));
 
                 ExpertCategory newExpertCategory = new ExpertCategory();
                 newExpertCategory.setCategory(category);
@@ -116,27 +116,6 @@ public class UserService {
         }
 
         expertRepository.save(expert);
-    }
-
-    @Transactional
-    public void approveExpert(Integer expertId) {
-        Expert expert = expertRepository.findById(expertId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 변리사입니다."));
-
-        // 이미 승인된 변리사인지 확인
-        if (expert.getExpertStatus() == 1) {
-            throw new RuntimeException("이미 승인된 변리사입니다.");
-        }
-
-        // 변리사 승인 상태로 변경
-        expert.setExpertStatus(1);
-
-        // 해당 유저의 역할도 변리사로 변경 (userRole = 1: 변리사)
-        User user = expert.getUser();
-        user.setUserRole(1);
-
-        expertRepository.save(expert);
-        userRepository.save(user);
     }
 
     // 이메일 중복 체크
@@ -325,8 +304,8 @@ public class UserService {
             if (requestDto.getExpertCategories() != null && !requestDto.getExpertCategories().isEmpty()) {
                 expert.getExpertCategory().clear();
                 for (ExpertCategoryDTO categoryDto : requestDto.getExpertCategories()) {
-                    Category category = categoryRepository.findById(categoryDto.getCategoryId())
-                            .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다: " + categoryDto.getCategoryId()));
+                    Category category = categoryRepository.findByCategoryName(categoryDto.getCategoryName())
+                            .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다: " + categoryDto.getCategoryName()));
 
                     ExpertCategory newExpertCategory = new ExpertCategory();
                     newExpertCategory.setCategory(category);

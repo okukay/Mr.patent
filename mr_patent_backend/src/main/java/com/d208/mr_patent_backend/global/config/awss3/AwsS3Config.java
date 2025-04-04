@@ -12,22 +12,32 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
-@ConfigurationProperties(prefix = "aws.s3")
+@ConfigurationProperties(prefix = "spring.cloud.aws")
 @Getter
 @Setter
 public class AwsS3Config {
 
-    private String bucket;
+    private Credentials credentials;
     private String region;
-    private String accessKey;
-    private String secretKey;
+    private S3 s3;
+
+    @Getter @Setter
+    public static class Credentials {
+        private String accessKey;
+        private String secretKey;
+    }
+
+    @Getter @Setter
+    public static class S3 {
+        private String bucket;
+    }
 
     public S3Client s3Client() {
         return S3Client.builder()
-                .region(Region.of(region))
+                .region(software.amazon.awssdk.regions.Region.of(region))
                 .credentialsProvider(
                         StaticCredentialsProvider.create(
-                                AwsBasicCredentials.create(accessKey, secretKey)
+                                AwsBasicCredentials.create(credentials.getAccessKey(), credentials.getSecretKey())
                         )
                 )
                 .build();
@@ -35,12 +45,16 @@ public class AwsS3Config {
 
     public S3Presigner s3Presigner() {
         return S3Presigner.builder()
-                .region(Region.of(region))
+                .region(software.amazon.awssdk.regions.Region.of(region))
                 .credentialsProvider(
                         StaticCredentialsProvider.create(
-                                AwsBasicCredentials.create(accessKey, secretKey)
+                                AwsBasicCredentials.create(credentials.getAccessKey(), credentials.getSecretKey())
                         )
                 )
                 .build();
+    }
+
+    public String getBucket() {
+        return s3.getBucket();
     }
 }
