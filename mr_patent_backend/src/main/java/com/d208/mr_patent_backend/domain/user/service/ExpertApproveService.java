@@ -13,6 +13,7 @@ import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ExpertApproveService {
     private final ExpertRepository expertRepository;
 
@@ -37,13 +38,17 @@ public class ExpertApproveService {
     }
 
     private ExpertApproveResponseDTO convertToDTO(Expert expert) {
-        return ExpertApproveResponseDTO.builder()
-                .expertId(expert.getExpertId())
-                .userEmail(expert.getUser().getUserEmail())
-                .userName(expert.getUser().getUserName())
-                .expertGetDate(expert.getExpertGetDate())
-                .expertStatus(expert.getExpertStatus())
-                .createdAt(expert.getExpertCreatedAt())
-                .build();
+        try {
+            return ExpertApproveResponseDTO.builder()
+                    .expertId(expert.getExpertId())
+                    .userEmail(expert.getUser().getUserEmail())
+                    .userName(expert.getUser().getUserName())
+                    .expertGetDate(expert.getExpertGetDate())
+                    .expertStatus(expert.getExpertStatus())
+                    .createdAt(expert.getExpertCreatedAt())
+                    .build();
+        } catch (RuntimeException e) {
+            throw new RuntimeException("변리사 정보 변환 중 오류가 발생했습니다: " + e.getMessage());
+        }
     }
 }
