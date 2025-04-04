@@ -5,11 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
-/**
- * 퀴즈 선택지를 담는 DTO
- */
 @Data
 @Builder
 @NoArgsConstructor

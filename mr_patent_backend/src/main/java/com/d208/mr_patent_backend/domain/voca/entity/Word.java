@@ -21,10 +21,10 @@ public class Word {
     @Column(name = "word_id")
     private Long id;
 
-    @Column(name = "word_name", nullable = false, length = 30)
+    @Column(name = "word_name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "word_mean", nullable = false, length = 255)
+    @Column(name = "word_mean", nullable = false, length = 500)
     private String mean;
 
     @Column(name = "level_number", nullable = false)

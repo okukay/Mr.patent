@@ -1,9 +1,13 @@
 package com.d208.mr_patent_backend.domain.voca.service;
 
 import com.d208.mr_patent_backend.domain.user.entity.User;
+import com.d208.mr_patent_backend.domain.voca.dto.level.WordDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.quiz.*;
+import com.d208.mr_patent_backend.domain.voca.entity.Bookmark;
 import com.d208.mr_patent_backend.domain.voca.entity.UserLevel;
 import com.d208.mr_patent_backend.domain.voca.entity.Word;
+import com.d208.mr_patent_backend.domain.voca.repository.BookmarkRepository;
+import com.d208.mr_patent_backend.domain.voca.repository.UserLevelRepository;
 import com.d208.mr_patent_backend.domain.voca.repository.WordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,34 +19,32 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class WordQuizService {
-
     private final WordRepository wordRepository;
+    private final BookmarkRepository bookmarkRepository;
+    private final UserLevelRepository userLevelRepository;
     private final LevelService levelService;
 
-    private static final int QUIZ_COUNT = 10;    // 퀴즈 문제 개수
-    private static final int OPTIONS_COUNT = 4;  // 선택지 개수
-    private static final byte PASS_SCORE = 8;    // 통과 점수 (10점 만점 중)
+    private static final int QUIZ_COUNT = 10;
+    private static final int OPTIONS_COUNT = 4;
+    private static final byte PASS_SCORE = 8;
+
+    // ---------- 퀴즈 생성 관련 메소드 ----------
 
     /**
-     * 특정 레벨의 퀴즈 문제 생성
+     * 퀴즈 생성
      */
     @Transactional
     public QuizDTO generateQuiz(String userEmail, Byte levelId) {
         User user = levelService.findUserByEmail(userEmail);
+        validateLevelAccess(user, levelId);
 
-        // 레벨 접근 가능 여부 확인
-        if (!levelService.isLevelAccessible(user, levelId)) {
-            throw new IllegalArgumentException("이전 레벨을 먼저 통과해야 합니다.");
-        }
+        List<Word> levelWords = fetchLevelWords(levelId);
+        Collections.shuffle(levelWords);
+        List<Word> quizWords = levelWords.subList(0, QUIZ_COUNT);
 
-        // 해당 레벨의 단어 모두 가져오기
-        List<Word> words = wordRepository.findByLevelOrderByNameAsc(levelId);
-        if (words.size() < QUIZ_COUNT) {
-            throw new IllegalArgumentException("해당 레벨의 단어가 충분하지 않습니다.");
-        }
-
-        // 문제 생성
-        List<QuestionDTO> questions = createQuizQuestions(words);
+        List<QuestionDTO> questions = quizWords.stream()
+                .map(word -> createQuestion(word, levelWords))
+                .collect(Collectors.toList());
 
         return QuizDTO.builder()
                 .level_id(levelId)
@@ -51,53 +53,48 @@ public class WordQuizService {
     }
 
     /**
-     * 퀴즈 문제 생성
+     * 레벨 접근 권한 검증
      */
-    private List<QuestionDTO> createQuizQuestions(List<Word> words) {
-        // 단어 섞기
-        List<Word> shuffledWords = new ArrayList<>(words);
-        Collections.shuffle(shuffledWords);
+    private void validateLevelAccess(User user, Byte levelId) {
+        if (!levelService.isLevelAccessible(user, levelId)) {
+            throw new IllegalArgumentException("이전 레벨을 먼저 통과해야 합니다.");
+        }
+    }
 
-        // 퀴즈 문제로 사용할 단어 선택
-        List<Word> quizWords = shuffledWords.subList(0, QUIZ_COUNT);
+    /**
+     * 특정 레벨의 단어 모두 가져오기
+     */
+    private List<Word> fetchLevelWords(Byte levelId) {
+        List<Word> levelWords = wordRepository.findByLevelOrderByNameAsc(levelId);
 
-        // 문제 생성
-        List<QuestionDTO> questions = new ArrayList<>();
-        Long questionId = 1L;
-
-        for (Word word : quizWords) {
-            questions.add(createQuestion(questionId++, word, words));
+        if (levelWords.size() < QUIZ_COUNT) {
+            throw new IllegalArgumentException("퀴즈 문제를 생성할 " + levelId + "레벨의 단어가 부족합니다.");
         }
 
-        return questions;
+        return levelWords;
+    }
+
+    /**
+     * 퀴즈 문제 생성
+     */
+    private List<QuestionDTO> createQuizQuestions(List<Word> allWords) {
+        Collections.shuffle(allWords);
+        List<Word> quizWords = allWords.subList(0, QUIZ_COUNT);
+
+        return quizWords.stream()
+                .map(word -> createQuestion(word, allWords))
+                .collect(Collectors.toList());
     }
 
     /**
      * 개별 퀴즈 문제 생성
      */
-    private QuestionDTO createQuestion(Long questionId, Word word, List<Word> allWords) {
-        // 현재 단어를 제외한 단어들에서 오답 선택지 생성
-        List<Word> otherWords = allWords.stream()
-                .filter(w -> !w.getId().equals(word.getId()))
-                .collect(Collectors.toList());
-        Collections.shuffle(otherWords);
+    private QuestionDTO createQuestion(Word word, List<Word> levelWords) {
+        List<OptionDTO> options = createQuestionOptions(word, levelWords);
+        Long correctOption = findCorrectOptionId(options, word);
 
-        // 옵션 생성
-        List<OptionDTO> options = createQuestionOptions(word, otherWords);
-
-        // 선택지 순서 섞기
-        Collections.shuffle(options);
-
-        // 정답 인덱스 찾기
-        Long correctOption = options.stream()
-                .filter(opt -> opt.getOption_text().equals(word.getName()))
-                .findFirst()
-                .map(OptionDTO::getOption_id)
-                .orElse(1L);
-
-        // 퀴즈 문제 생성 (뜻을 주고 단어 맞추기)
         return QuestionDTO.builder()
-                .question_id(questionId)
+                .word_id(word.getId())
                 .question_text(word.getMean())
                 .options(options)
                 .correct_option(correctOption)
@@ -105,28 +102,53 @@ public class WordQuizService {
     }
 
     /**
-     * 퀴즈 문제 선택지 생성
+     * 문제 선택지 생성
      */
-    private List<OptionDTO> createQuestionOptions(Word correctWord, List<Word> otherWords) {
+    private List<OptionDTO> createQuestionOptions(Word correctWord, List<Word> levelWords) {
         List<OptionDTO> options = new ArrayList<>();
-        Long correctOptionId = 1L;
 
-        // 정답 추가
+        // 정답 추가 (임시 ID 설정)
         options.add(OptionDTO.builder()
-                .option_id(correctOptionId)
+                .option_id(0L)
                 .option_text(correctWord.getName())
                 .build());
 
-        // 오답 선택지 추가
+        // 오답 선택지 추가 (같은 레벨의 다른 단어들)
+        List<Word> otherWords = levelWords.stream()
+                .filter(w -> !w.getId().equals(correctWord.getId()))
+                .collect(Collectors.toList());
+        Collections.shuffle(otherWords);
+
         for (int i = 0; i < Math.min(OPTIONS_COUNT - 1, otherWords.size()); i++) {
             options.add(OptionDTO.builder()
-                    .option_id((long)(i + 2))
+                    .option_id(0L)
                     .option_text(otherWords.get(i).getName())
                     .build());
         }
 
+        // 옵션 섞기
+        Collections.shuffle(options);
+
+        // 섞은 후 순차적으로 ID 부여
+        for (int i = 0; i < options.size(); i++) {
+            options.get(i).setOption_id((long) (i + 1));
+        }
+
         return options;
     }
+
+    /**
+     * 정답 옵션 ID 찾기
+     */
+    private Long findCorrectOptionId(List<OptionDTO> options, Word correctWord) {
+        return options.stream()
+                .filter(opt -> opt.getOption_text().equals(correctWord.getName()))
+                .findFirst()
+                .map(OptionDTO::getOption_id)
+                .orElse(options.get(0).getOption_id());
+    }
+
+    // ---------- 퀴즈 결과 처리 관련 메소드 ----------
 
     /**
      * 퀴즈 결과 제출 및 처리
@@ -134,32 +156,18 @@ public class WordQuizService {
     @Transactional
     public QuizResultDTO submitQuiz(String userEmail, Byte levelId, QuizSubmitRequest request) {
         User user = levelService.findUserByEmail(userEmail);
-
-        // 사용자 레벨 확인
         UserLevel userLevel = levelService.getOrCreateUserLevel(user, levelId);
 
-        // 퀴즈 생성 (또는 캐싱된 퀴즈 가져오기)
-        QuizDTO quiz = generateQuiz(userEmail, levelId);
+        // 틀린 문제들의 단어 ID 목록
+        List<Long> wrongWordIds = request.getAnswers().stream()
+                .map(QuizSubmitRequest.AnswerDTO::getWord_id)
+                .collect(Collectors.toList());
 
-        // 정답 체크 및 점수
-        int correctCount = evaluateQuizAnswers(request.getAnswers(), quiz.getQuestions());
-        byte score = calculateScore(correctCount, request.getAnswers().size());
+        // 점수 계산 및 업데이트
+        byte score = processQuizScore(userLevel, wrongWordIds.size(), QUIZ_COUNT, levelId, user);
 
-        // 통과 여부 결정 (8점 이상)
-        boolean passed = score >= PASS_SCORE;
-
-        // 최고 점수 갱신
-        if (score > userLevel.getBestScore()) {
-            userLevel.updateScore(score);
-        }
-
-        // 퀴즈 통과 시 레벨 통과 처리
-        if (passed) {
-            levelService.processLevelPass(user, levelId, userLevel);
-        }
-
-        // 틀린 문제 목록 생성
-        List<WrongAnswerDTO> wrongAnswers = createWrongAnswersList(request.getAnswers(), quiz.getQuestions());
+        // 틀린 문제 정보 생성 (북마크 정보 포함)
+        List<WrongAnswerDTO> wrongAnswers = createWrongAnswersList(wrongWordIds, user);
 
         return QuizResultDTO.builder()
                 .level_id(levelId)
@@ -168,29 +176,35 @@ public class WordQuizService {
                 .build();
     }
 
+
     /**
-     * 퀴즈 답안 평가
+     * 퀴즈 단어 ID 목록 가져오기
      */
-    private int evaluateQuizAnswers(List<QuizSubmitRequest.AnswerDTO> userAnswers, List<QuestionDTO> questions) {
-        int correctCount = 0;
+    private List<Long> getQuizWordIds(String userEmail, Byte levelId) {
+        QuizDTO quiz = generateQuiz(userEmail, levelId);
+        return quiz.getQuestions().stream()
+                .map(QuestionDTO::getWord_id)
+                .collect(Collectors.toList());
+    }
 
-        // 사용자 답안을 순회하며 정답 여부 체크
-        for (QuizSubmitRequest.AnswerDTO userAnswer : userAnswers) {
-            // 해당 문제 찾기
-            Optional<QuestionDTO> questionOpt = questions.stream()
-                    .filter(q -> q.getQuestion_id().equals(userAnswer.getQuestion_id()))
-                    .findFirst();
+    /**
+     * 퀴즈 점수 처리 및 레벨 업데이트
+     */
+    private byte processQuizScore(UserLevel userLevel, int wrongCount, int totalQuestions, Byte levelId, User user) {
+        int correctCount = totalQuestions - wrongCount;
+        byte score = calculateScore(correctCount, totalQuestions);
 
-            if (questionOpt.isPresent()) {
-                QuestionDTO question = questionOpt.get();
-                // 사용자가 선택한 답안이 정답인지 확인
-                if (question.getCorrect_option().equals(userAnswer.getSelected_option_id())) {
-                    correctCount++;
-                }
-            }
+        // 최고 점수만 업데이트 (기존 최고 점수보다 높을 때만)
+        userLevel.updateScoreIfHigher(score);
+        userLevelRepository.save(userLevel);
+
+        // 레벨 통과 및 다음 레벨 생성 처리
+        boolean passed = score >= PASS_SCORE;
+        if (passed) {
+            levelService.processLevelPass(user, levelId, userLevel);
         }
 
-        return correctCount;
+        return score;
     }
 
     /**
@@ -203,37 +217,47 @@ public class WordQuizService {
     /**
      * 틀린 문제 목록 생성
      */
-    private List<WrongAnswerDTO> createWrongAnswersList(List<QuizSubmitRequest.AnswerDTO> userAnswers, List<QuestionDTO> questions) {
-        List<WrongAnswerDTO> wrongAnswers = new ArrayList<>();
+    private List<WrongAnswerDTO> createWrongAnswersList(List<Long> wrongWordIds, User user) {
+        return wrongWordIds.stream()
+                .map(wordId -> {
+                    Word word = wordRepository.findById(wordId)
+                            .orElseThrow(() -> new IllegalArgumentException("단어를 찾을 수 없습니다."));
 
-        for (QuizSubmitRequest.AnswerDTO userAnswer : userAnswers) {
-            // 해당 문제 찾기
-            Optional<QuestionDTO> questionOpt = questions.stream()
-                    .filter(q -> q.getQuestion_id().equals(userAnswer.getQuestion_id()))
-                    .findFirst();
+                    // 북마크 정보 조회
+                    Bookmark bookmark = bookmarkRepository.findByUserAndWord(user, word);
+                    boolean isBookmarked = bookmark != null;
 
-            if (questionOpt.isPresent()) {
-                QuestionDTO question = questionOpt.get();
+                    return WrongAnswerDTO.builder()
+                            .word_id(wordId)
+                            .question_text(word.getMean())
+                            .correct_option_text(word.getName())
+                            .is_bookmarked(isBookmarked)
+                            .bookmark_id(isBookmarked ? bookmark.getId() : null)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
 
-                // 사용자 답안이 오답인 경우
-                if (!question.getCorrect_option().equals(userAnswer.getSelected_option_id())) {
-                    // 정답 옵션 텍스트 찾기
-                    String correctOptionText = question.getOptions().stream()
-                            .filter(opt -> opt.getOption_id().equals(question.getCorrect_option()))
-                            .findFirst()
-                            .map(OptionDTO::getOption_text)
-                            .orElse("");
+    /**
+     * 단어 정보 목록 생성
+     */
+    private List<WordDTO> createWordDTOList(List<Long> wordIds, User user) {
+        return wordIds.stream()
+                .map(wordId -> {
+                    Word word = wordRepository.findById(wordId)
+                            .orElseThrow(() -> new IllegalArgumentException("단어를 찾을 수 없습니다."));
 
-                    // 틀린 문제 추가
-                    wrongAnswers.add(WrongAnswerDTO.builder()
-                            .question_id(question.getQuestion_id())
-                            .question_text(question.getQuestion_text())
-                            .correct_option_text(correctOptionText)
-                            .build());
-                }
-            }
-        }
+                    Bookmark bookmark = bookmarkRepository.findByUserAndWord(user, word);
+                    boolean isBookmarked = bookmark != null;
 
-        return wrongAnswers;
+                    return WordDTO.builder()
+                            .word_id(word.getId())
+                            .word_name(word.getName())
+                            .word_mean(word.getMean())
+                            .is_bookmarked(isBookmarked)
+                            .bookmark_id(isBookmarked ? bookmark.getId() : null)
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

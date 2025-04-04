@@ -1,5 +1,6 @@
 package com.d208.mr_patent_backend.domain.voca.dto.quiz;
 
+import com.d208.mr_patent_backend.domain.voca.dto.level.WordDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

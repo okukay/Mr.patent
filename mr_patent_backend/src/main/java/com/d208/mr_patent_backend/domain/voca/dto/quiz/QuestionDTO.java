@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuestionDTO {
-    private Long question_id;
+    private Long word_id;
     private String question_text;
     private List<OptionDTO> options;
     private Long correct_option;

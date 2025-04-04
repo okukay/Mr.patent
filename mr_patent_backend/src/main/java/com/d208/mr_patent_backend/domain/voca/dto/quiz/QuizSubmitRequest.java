@@ -21,7 +21,6 @@ public class QuizSubmitRequest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class AnswerDTO {
-        private Long question_id;
-        private Long selected_option_id;
+        private Long word_id;
     }
 }

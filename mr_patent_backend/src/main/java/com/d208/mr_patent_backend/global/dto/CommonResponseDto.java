@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CommonResponseDto<T> {
     private T data;
-    private ErrorResponse error;
+    private ErrorResponseDto error;
 
     /**
      * 성공 응답 생성
@@ -38,7 +38,7 @@ public class CommonResponseDto<T> {
     public static <T> CommonResponseDto<T> error(String code, String message) {
         return CommonResponseDto.<T>builder()
                 .data(null)
-                .error(new ErrorResponse(code, message))
+                .error(new ErrorResponseDto(code, message))
                 .build();
     }
 }

@@ -36,7 +36,7 @@ public class UserLevel {
     /**
      * 점수 업데이트
      */
-    public void updateScore(Byte score) {
+    public void updateScore(byte score) {
         this.bestScore = score;
     }
 
@@ -45,5 +45,14 @@ public class UserLevel {
      */
     public void pass() {
         this.isPassed = 1;
+    }
+
+    /**
+     * 새 점수가 기존 최고 점수보다 높을 때만 점수 업데이트
+     */
+    public void updateScoreIfHigher(byte newScore) {
+        if (newScore > this.bestScore) {
+            this.bestScore = newScore;
+        }
     }
 }

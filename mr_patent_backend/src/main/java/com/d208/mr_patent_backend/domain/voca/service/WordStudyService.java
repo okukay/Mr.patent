@@ -1,15 +1,12 @@
 package com.d208.mr_patent_backend.domain.voca.service;
 
+import com.d208.mr_patent_backend.domain.user.entity.User;
 import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
-import com.d208.mr_patent_backend.domain.voca.dto.LevelDTO;
-import com.d208.mr_patent_backend.domain.voca.dto.level.LevelWordsDTO;
+import com.d208.mr_patent_backend.domain.voca.dto.level.LevelDTO;
+import com.d208.mr_patent_backend.domain.voca.dto.level.WordDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.quiz.QuizDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.quiz.QuizResultDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.quiz.QuizSubmitRequest;
-import com.d208.mr_patent_backend.domain.voca.repository.BookmarkRepository;
-import com.d208.mr_patent_backend.domain.voca.repository.QuizResultRepository;
-import com.d208.mr_patent_backend.domain.voca.repository.UserLevelRepository;
-import com.d208.mr_patent_backend.domain.voca.repository.WordRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +23,17 @@ public class WordStudyService {
 
     private final LevelService levelService;
     private final WordService wordService;
-    private final WordQuizService wordquizService;
+    private final WordQuizService wordQuizService;
+    private final BookmarkService bookmarkService;
+    private final UserRepository userRepository;
+
+    /**
+     * 사용자 이메일로 사용자 찾기 (공통 유틸리티 메서드)
+     */
+    public User findUserByEmail(String userEmail) {
+        return userRepository.findByUserEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+    }
 
     /**
      * 사용자의 모든 레벨 정보 조회
@@ -40,7 +47,7 @@ public class WordStudyService {
      * 특정 레벨의 단어 목록 조회
      */
     @Transactional
-    public LevelWordsDTO getLevelWords(String userEmail, Byte levelId) {
+    public List<WordDTO> getLevelWords(String userEmail, Byte levelId) {
         return wordService.getLevelWords(userEmail, levelId);
     }
 
@@ -49,7 +56,7 @@ public class WordStudyService {
      */
     @Transactional
     public QuizDTO generateQuiz(String userEmail, Byte levelId) {
-        return wordquizService.generateQuiz(userEmail, levelId);
+        return wordQuizService.generateQuiz(userEmail, levelId);
     }
 
     /**
@@ -57,6 +64,6 @@ public class WordStudyService {
      */
     @Transactional
     public QuizResultDTO submitQuiz(String userEmail, Byte levelId, QuizSubmitRequest request) {
-        return wordquizService.submitQuiz(userEmail, levelId, request);
+        return wordQuizService.submitQuiz(userEmail, levelId, request);
     }
 }

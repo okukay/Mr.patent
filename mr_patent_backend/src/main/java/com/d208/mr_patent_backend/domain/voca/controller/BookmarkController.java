@@ -1,18 +1,19 @@
 package com.d208.mr_patent_backend.domain.voca.controller;
 
+import com.d208.mr_patent_backend.domain.user.entity.User;
 import com.d208.mr_patent_backend.domain.voca.dto.BookmarkCountDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.bookmark.BookmarkListDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.BookmarkRequestDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.BookmarkResponseDTO;
 import com.d208.mr_patent_backend.domain.voca.service.BookmarkService;
 import com.d208.mr_patent_backend.global.dto.CommonResponseDto;
-import com.d208.mr_patent_backend.global.jwt.JwtTokenProvider;
+import com.d208.mr_patent_backend.global.util.SecurityUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,68 +27,50 @@ import java.util.Map;
 public class BookmarkController {
 
     private final BookmarkService bookmarkService;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final SecurityUtils securityUtils;
 
     /**
      * 북마크 추가
      */
+    @Operation(summary = "단어 북마크 추가")
     @PostMapping("")
     public ResponseEntity<CommonResponseDto<BookmarkResponseDTO>> addBookmark(
-            Authentication authentication,
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody BookmarkRequestDTO request) {
+            HttpServletRequest request,
+            @RequestBody BookmarkRequestDTO bookmarkRequest) {
 
-        String userEmail;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            userEmail = jwtTokenProvider.getUserEmail(token);
-        } else {
-            throw new RuntimeException("인증 정보를 찾을 수 없습니다.");
-        }
+        User user = securityUtils.getCurrentUser(request);
 
-        BookmarkResponseDTO result = bookmarkService.addBookmark(userEmail, request.getWord_id());
+        BookmarkResponseDTO result = bookmarkService.addBookmark(user.getUserEmail(), bookmarkRequest.getWord_id());
         return ResponseEntity.ok(CommonResponseDto.success(result));
     }
 
     /**
      * 북마크 삭제
      */
+    @Operation(summary = "단어 북마크 삭제")
     @DeleteMapping("/{bookmark_id}")
     public ResponseEntity<CommonResponseDto<Object>> deleteBookmark(
-            Authentication authentication,
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            HttpServletRequest request,
             @PathVariable("bookmark_id") Long bookmarkId) {
 
-        String userEmail;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            userEmail = jwtTokenProvider.getUserEmail(token);
-        } else {
-            throw new RuntimeException("인증 정보를 찾을 수 없습니다.");
-        }
+        User user = securityUtils.getCurrentUser(request);
 
-        bookmarkService.deleteBookmark(userEmail, bookmarkId);
+        bookmarkService.deleteBookmark(user.getUserEmail(), bookmarkId);
         return ResponseEntity.ok(CommonResponseDto.success(null));
     }
 
     /**
      * 레벨별 북마크 개수 조회
      */
+    @Operation(summary = "레벨별 북마크 개수 조회")
     @GetMapping("/count")
     public ResponseEntity<CommonResponseDto<Map<String, List<BookmarkCountDTO>>>> getBookmarkCount(
-            Authentication authentication,
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            HttpServletRequest request,
             @RequestParam(value = "level_id", required = false) Byte levelId) {
 
-        String userEmail;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            userEmail = jwtTokenProvider.getUserEmail(token);
-        } else {
-            throw new RuntimeException("인증 정보를 찾을 수 없습니다.");
-        }
+        User user = securityUtils.getCurrentUser(request);
 
-        List<BookmarkCountDTO> counts = bookmarkService.getBookmarkCounts(userEmail, levelId);
+        List<BookmarkCountDTO> counts = bookmarkService.getBookmarkCounts(user.getUserEmail(), levelId);
         Map<String, List<BookmarkCountDTO>> responseData = Map.of("levels", counts);
         return ResponseEntity.ok(CommonResponseDto.success(responseData));
     }
@@ -95,21 +78,15 @@ public class BookmarkController {
     /**
      * 북마크 목록 조회
      */
+    @Operation(summary = "북마크 목록 조회")
     @GetMapping("")
     public ResponseEntity<CommonResponseDto<BookmarkListDTO>> getBookmarks(
-            Authentication authentication,
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            HttpServletRequest request,
             @RequestParam(value = "level_id", required = false) Byte levelId) {
 
-        String userEmail;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            userEmail = jwtTokenProvider.getUserEmail(token);
-        } else {
-            throw new RuntimeException("인증 정보를 찾을 수 없습니다.");
-        }
+        User user = securityUtils.getCurrentUser(request);
 
-        BookmarkListDTO bookmarks = bookmarkService.getBookmarks(userEmail, levelId);
+        BookmarkListDTO bookmarks = bookmarkService.getBookmarks(user.getUserEmail(), levelId);
         return ResponseEntity.ok(CommonResponseDto.success(bookmarks));
     }
 }

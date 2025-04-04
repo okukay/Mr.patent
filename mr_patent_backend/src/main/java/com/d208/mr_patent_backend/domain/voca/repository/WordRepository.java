@@ -19,4 +19,9 @@ public interface WordRepository extends JpaRepository<Word, Long> {
      * 단어 이름으로 조회
      */
     Word findByName(String name);
+
+    @Query("SELECT w FROM Word w WHERE w.level = :level ORDER BY w.id ASC")
+    List<Word> findByLevelOrderByWordIdAsc(@Param("level") Byte level);
+
+    long countByLevel(byte level);
 }

@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
  * 틀린 문제 정보를 담는 DTO
  */
@@ -15,7 +13,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WrongAnswerDTO {
-    private Long question_id;
+    private Long word_id;
     private String question_text;
     private String correct_option_text;
+    private boolean is_bookmarked;
+    private Long bookmark_id;
 }
