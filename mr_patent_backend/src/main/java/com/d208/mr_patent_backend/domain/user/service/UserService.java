@@ -185,7 +185,7 @@ public class UserService {
                 .userName(user.getUserName())
                 .userRole(user.getUserRole())
                 .grantType("Bearer")
-                .accessToken(jwtTokenProvider.generateAccessToken(authentication))
+                .accessToken(jwtTokenProvider.generateAccessToken(authentication, user.getUserId()))
                 .refreshToken(jwtTokenProvider.generateRefreshToken())
                 .build();
 
@@ -241,7 +241,7 @@ public class UserService {
                 .userName(user.getUserName())
                 .userRole(user.getUserRole())
                 .grantType("Bearer")
-                .accessToken(jwtTokenProvider.generateAccessToken(authentication))
+                .accessToken(jwtTokenProvider.generateAccessToken(authentication, user.getUserId()))
                 .refreshToken(jwtTokenProvider.generateRefreshToken())
                 .build();
 
