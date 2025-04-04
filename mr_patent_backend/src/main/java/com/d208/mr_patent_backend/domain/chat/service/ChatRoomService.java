@@ -90,7 +90,14 @@ public class ChatRoomService {
                             .orElseThrow(() -> new RuntimeException("상대방 정보 없음"));
 
                     //  Presigned URL 생성
-                    String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+                    String downUrl = null;
+                    String userImage = receiver.getUserImage();
+                    if (userImage != null && !userImage.isBlank()) {
+                        downUrl = s3Service.generatePresignedDownloadUrl(userImage);
+                    }
+
+//                   String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+
 
 
                     return ChatListDto.builder()
