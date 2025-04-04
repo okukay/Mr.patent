@@ -26,7 +26,7 @@ public class S3Service {
 
         // 어떤 객체를 올릴지 정의
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(awsS3Config.getBucket()) // 업로드할 S3 버킷 이름
+                .bucket(awsS3Config.getS3().getBucket()) // 업로드할 S3 버킷 이름
                 .key(fileName)                   // s3에 저장될 경로 + 이름
                 .contentType(contentType)        // MIME 타입
                 .build();
@@ -50,7 +50,7 @@ public class S3Service {
 
         // 다운로드할 파일 정보
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(awsS3Config.getBucket())
+                .bucket(awsS3Config.getS3().getBucket())
                 .key(fileName)
                 .build();
 
