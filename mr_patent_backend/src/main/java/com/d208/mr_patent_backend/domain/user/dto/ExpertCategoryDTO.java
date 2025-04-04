@@ -11,5 +11,5 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ExpertCategoryDTO {
-    private Integer categoryId;
+    private String categoryName;
 }

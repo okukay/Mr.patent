@@ -106,8 +106,8 @@ public class UserService {
         // ExpertCategory 설정
         if (requestDto.getExpertCategories() != null && !requestDto.getExpertCategories().isEmpty()) {
             for (ExpertCategoryDTO categoryDto : requestDto.getExpertCategories()) {
-                Category category = categoryRepository.findById(categoryDto.getCategoryId())
-                        .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다: " + categoryDto.getCategoryId()));
+                Category category = categoryRepository.findByCategoryName(categoryDto.getCategoryName())
+                        .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다: " + categoryDto.getCategoryName()));
 
                 ExpertCategory newExpertCategory = new ExpertCategory();
                 newExpertCategory.setCategory(category);
@@ -325,8 +325,8 @@ public class UserService {
             if (requestDto.getExpertCategories() != null && !requestDto.getExpertCategories().isEmpty()) {
                 expert.getExpertCategory().clear();
                 for (ExpertCategoryDTO categoryDto : requestDto.getExpertCategories()) {
-                    Category category = categoryRepository.findById(categoryDto.getCategoryId())
-                            .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다: " + categoryDto.getCategoryId()));
+                    Category category = categoryRepository.findByCategoryName(categoryDto.getCategoryName())
+                            .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다: " + categoryDto.getCategoryName()));
 
                     ExpertCategory newExpertCategory = new ExpertCategory();
                     newExpertCategory.setCategory(category);
