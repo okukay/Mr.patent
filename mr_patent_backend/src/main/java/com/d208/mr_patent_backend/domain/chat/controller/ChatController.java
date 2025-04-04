@@ -4,6 +4,7 @@ import com.d208.mr_patent_backend.domain.chat.dto.ChatMessageDto;
 import com.d208.mr_patent_backend.domain.chat.service.ChatService;
 import com.d208.mr_patent_backend.domain.fcm.service.FcmService;
 import com.d208.mr_patent_backend.domain.fcm.service.FcmTokenService;
+import com.d208.mr_patent_backend.domain.s3.service.S3Service;
 import com.d208.mr_patent_backend.domain.user.entity.User;
 import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,12 +26,17 @@ public class ChatController {
     private final FcmTokenService fcmTokenService;
     private final FcmService fcmService;
     private final UserRepository userRepository;
-
+    private final S3Service s3Service;
 
 
     // 클라이언트가 "/pub/chat/message"로 메시지를 보내면 이 메서드가 처리(브로드 캐스트)
     @MessageMapping("/chat/message")
     public void sendMessage(ChatMessageDto message) {
+
+        if (message.getFileName() != null && !message.getFileName().isBlank()) {
+            String presignedUrl = s3Service.generatePresignedDownloadUrl(message.getFileName());
+            message.setFileUrl(presignedUrl);
+        }
 
         //DB 저장
         chatService.saveMessage(message);
@@ -56,7 +62,7 @@ public class ChatController {
                 data.put("userId", userId.toString());
                 data.put("userName", user.getUserName());
                 data.put("userImage", user.getUserImage());
-                data.put("type", "FCM");
+                data.put("type", "CHAT");
 
                 if (user.getUserRole() == 1) {
                     data.put("expertId", receiverId.toString());

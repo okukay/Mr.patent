@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/chat-test.html").permitAll()
                         .requestMatchers("/sse-test.html").permitAll()
                         .requestMatchers("/profile-upload-test.html").permitAll()
+                        .requestMatchers("/api/user/profile-image/**").permitAll()
                         .requestMatchers("/ws/chat").permitAll()
                         .requestMatchers("/api/user").permitAll()
                         .requestMatchers("/api/user/expert").permitAll()
