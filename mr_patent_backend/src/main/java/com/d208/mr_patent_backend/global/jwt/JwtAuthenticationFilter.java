@@ -75,7 +75,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
                 requestURI.equals("/api/expert-approve") ||
                 requestURI.startsWith("/api/user/profile-image") ||
                 requestURI.startsWith("/api/email/")||
-                requestURI.startsWith("/api/ws/chat")||
+                requestURI.startsWith("/ws/chat")||
                 requestURI.startsWith("/api/ws/chat/websocket")
         );
     }
