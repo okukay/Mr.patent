@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>프로필 이미지 업로드 테스트</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .preview {
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #ccc;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .preview img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+<h1>프로필 이미지 업로드 테스트</h1>
+
+<div class="preview" id="imagePreview">
+    <span>이미지 미리보기</span>
+</div>
+
+<input type="file" id="imageInput" accept="image/*">
+<button onclick="uploadImage()">업로드</button>
+
+<div id="result" class="result"></div>
+
+<script>
+    // 이미지 미리보기
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.innerHTML = `<img src="${e.target.result}">`;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    async function uploadImage() {
+        const file = document.getElementById('imageInput').files[0];
+        if (!file) {
+            showResult('파일을 선택해주세요.', false);
+            return;
+        }
+
+        try {
+            // 1. Presigned URL 요청
+            const response = await fetch(`/api/user/profile-image/upload-url?filename=${file.name}&contenttype=${file.type}`);
+            const data = await response.json();
+            const presignedUrl = data.data;
+
+            // 2. S3에 직접 업로드
+            await fetch(presignedUrl, {
+                method: 'PUT',
+                body: file,
+                headers: {
+                    'Content-Type': file.type
+                }
+            });
+
+            // 3. 이미지 URL 추출 (Presigned URL에서 쿼리스트링 제거)
+            const imageUrl = presignedUrl.split('?')[0];
+            showResult(`업로드 성공!<br>이미지 URL: ${imageUrl}`, true);
+
+        } catch (error) {
+            console.error('업로드 실패:', error);
+            showResult('업로드 실패: ' + error.message, false);
+        }
+    }
+
+    function showResult(message, isSuccess) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML = message;
+        resultDiv.className = 'result ' + (isSuccess ? 'success' : 'error');
+    }
+</script>
+</body>
+</html>

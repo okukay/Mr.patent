@@ -3,6 +3,7 @@ package com.d208.mr_patent_backend.domain.user.controller;
 import com.d208.mr_patent_backend.domain.user.dto.UserSignupRequestDTO;
 import com.d208.mr_patent_backend.domain.user.dto.ExpertSignupRequestDTO;
 import com.d208.mr_patent_backend.domain.user.service.UserService;
+import com.d208.mr_patent_backend.domain.s3.service.S3Service;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +30,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
 
@@ -43,50 +44,80 @@ import java.time.LocalDateTime;
 public class UserController {
 
     private final UserService userService;
+    private final S3Service s3Service;
 
     @Operation(summary = "일반 회원 가입")
     @PostMapping("")
-    public ResponseEntity<String> signUpUser(@Valid @RequestBody UserSignupRequestDTO requestDto) {
+    public ResponseEntity<Map<String, Object>> signUpUser(@Valid @RequestBody UserSignupRequestDTO requestDto) {
         try {
             userService.signUpUser(requestDto);
-            return ResponseEntity.ok("회원가입이 완료되었습니다.");
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", "회원가입이 완료되었습니다.");
+            response.put("data", data);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", e.getMessage());
+            response.put("data", data);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
     @Operation(summary = "변리사 회원 가입")
     @PostMapping("/expert")
-    public ResponseEntity<String> signUpExpert(@Valid @RequestBody ExpertSignupRequestDTO requestDto) {
+    public ResponseEntity<Map<String, Object>> signUpExpert(@Valid @RequestBody ExpertSignupRequestDTO requestDto) {
         try {
             userService.signUpExpert(requestDto);
-            return ResponseEntity.ok("변리사 회원가입이 완료되었습니다.");
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", "변리사 회원가입이 완료되었습니다.");
+            response.put("data", data);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", e.getMessage());
+            response.put("data", data);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
     @Operation(summary = "회원 로그인")
     @PostMapping("/login")
-    public ResponseEntity<TokenInfo> login(@Valid @RequestBody LoginRequestDTO requestDto) {
+    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody LoginRequestDTO requestDto) {
         try {
             TokenInfo tokenInfo = userService.login(requestDto);
-            return ResponseEntity.ok(tokenInfo);
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", tokenInfo);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", e.getMessage());
+            response.put("data", data);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
     @Operation(summary = "회원 로그아웃")
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, Object>> logout(@RequestHeader("Authorization") String token) {
         try {
-            // Bearer 토큰에서 실제 토큰 값만 추출
             String accessToken = token.substring(7);
             userService.logout(accessToken);
-            return ResponseEntity.ok("로그아웃이 완료되었습니다.");
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", "로그아웃이 완료되었습니다.");
+            response.put("data", data);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", e.getMessage());
+            response.put("data", data);
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
@@ -95,13 +126,15 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> reissue(@RequestBody TokenRequestDTO tokenRequestDTO) {
         try {
             TokenInfo tokenInfo = userService.reissue(tokenRequestDTO.getRefreshToken());
-
             Map<String, Object> response = new HashMap<>();
             response.put("data", tokenInfo);
-
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            Map<String, Object> response = new HashMap<>();
+            Map<String, String> data = new HashMap<>();
+            data.put("message", "토큰 재발급에 실패했습니다.");
+            response.put("data", data);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
 
@@ -162,6 +195,20 @@ public class UserController {
         data.put("user_updated_at", LocalDateTime.now());
         response.put("data", data);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "프로필 이미지 업로드용 Presigned URL 발급")
+    @GetMapping("/profile-image/upload-url")
+    public ResponseEntity<Map<String, Object>> getProfileImageUploadUrl(
+            @RequestParam String filename,
+            @RequestParam String contenttype
+    ) {
+        String presignedUrl = s3Service.generatePresignedUploadUrl(filename, contenttype);
+        Map<String, Object> response = new HashMap<>();
+        Map<String, String> data = new HashMap<>();
+        data.put("url", presignedUrl);
+        response.put("data", data);
         return ResponseEntity.ok(response);
     }
 }
