@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/expert").permitAll()
                         .requestMatchers("/api/user/login").permitAll()
                         .requestMatchers("/api/email/**").permitAll()
+                        .requestMatchers("/api/expert-approve/**").permitAll()
 //                        .requestMatchers("/api/expert-approve/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
