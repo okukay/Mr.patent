@@ -33,14 +33,13 @@ public class ExpertService {
 
         return ExpertResponseDTO.builder()
                 .expertId(expert.getExpertId())
-                .name(expert.getUser().getUserName())
-                .email(expert.getUser().getUserEmail())
-                .description(expert.getExpertDescription())
-                .address(expert.getExpertAddress())
-                .phone(expert.getExpertPhone())
-                .license(expert.getExpertLicense())
-                .getDate(expert.getExpertGetDate())
-                .categories(categories)
+                .userName(expert.getUser().getUserName())
+                .userEmail(expert.getUser().getUserEmail())
+                .expertDescription(expert.getExpertDescription())
+                .expertAddress(expert.getExpertAddress())
+                .expertPhone(expert.getExpertPhone())
+                .expertGetDate(expert.getExpertGetDate())
+                .expertCategories(categories)
                 .build();
     }
 
@@ -70,7 +69,7 @@ public class ExpertService {
                 .expertCreatedAt(expert.getExpertCreatedAt())
                 .userEmail(user.getUserEmail())
                 .userImage(user.getUserImage())
-                .categories(categories)
+                .expertCategories(categories)
                 .build();
     }
 }
