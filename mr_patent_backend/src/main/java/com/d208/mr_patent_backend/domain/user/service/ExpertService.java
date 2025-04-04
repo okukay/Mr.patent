@@ -7,12 +7,14 @@ import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
 import com.d208.mr_patent_backend.domain.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ExpertService {
     private final ExpertRepository expertRepository;
 
@@ -43,7 +45,7 @@ public class ExpertService {
     }
 
     public ExpertDetailResponseDTO getExpertDetail(Integer expertId) {
-        Expert expert = expertRepository.findById(expertId)
+        Expert expert = expertRepository.findByIdWithDetails(expertId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 변리사입니다."));
 
         if (expert.getExpertStatus() != 1) {

@@ -14,6 +14,17 @@ import java.util.Optional;
 public interface ExpertRepository extends JpaRepository<Expert, Integer> {
     Optional<Expert> findByUser(User user);
 
-    @Query("SELECT e FROM Expert e JOIN FETCH e.user WHERE e.expertStatus = :status")
+    @Query("SELECT DISTINCT e FROM Expert e " +
+            "JOIN FETCH e.user " +
+            "LEFT JOIN FETCH e.expertCategory ec " +
+            "LEFT JOIN FETCH ec.category " +
+            "WHERE e.expertStatus = :status")
     List<Expert> findByExpertStatus(@Param("status") Integer status);
+
+    @Query("SELECT DISTINCT e FROM Expert e " +
+            "JOIN FETCH e.user " +
+            "LEFT JOIN FETCH e.expertCategory ec " +
+            "LEFT JOIN FETCH ec.category " +
+            "WHERE e.expertId = :expertId")
+    Optional<Expert> findByIdWithDetails(@Param("expertId") Integer expertId);
 }
