@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>채팅방 목록 (SSE 테스트)</title>
+    <style>
+        .room {
+            border: 1px solid #ccc;
+            margin: 5px 0;
+            padding: 10px;
+        }
+        .unread {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h2>채팅방 목록 (SSE 실시간 반영)</h2>
+
+<!-- 사용자 ID 입력 -->
+<label>유저 ID: <input type="text" id="userId" value="1" /></label>
+<button onclick="loadChatRooms()">채팅방 목록 조회 + SSE 연결</button>
+
+<!-- SSE 연결 상태 표시 -->
+<div id="sseStatus">SSE 상태: ⏳ 대기 중...</div>
+
+<!-- 채팅방 목록 -->
+<div id="chatList"></div>
+
+<script>
+    let eventSource = null;
+
+    function loadChatRooms() {
+        const userId = document.getElementById('userId').value;
+
+        // 1. 기존 목록 초기화
+        document.getElementById('chatList').innerHTML = '';
+
+        // 2. 기존 SSE 연결 종료
+        if (eventSource) {
+            eventSource.close();
+        }
+
+        // 3. 채팅방 목록 조회
+        fetch(`/api/chat/rooms/${userId}`)
+            .then(response => response.json())
+            .then(result => {
+                const chatRooms = result.data;
+                chatRooms.forEach(room => appendChatRoom(room));
+            });
+
+        // 4. SSE 연결
+        eventSource = new EventSource(`/api/chat/rooms/subscribe/${userId}`);
+
+        eventSource.onopen = () => {
+            document.getElementById('sseStatus').innerText = 'SSE 상태: 🟢 연결됨';
+        };
+
+        eventSource.onerror = () => {
+            document.getElementById('sseStatus').innerText = 'SSE 상태: 🔴 연결 끊김';
+        };
+
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("📩 받은 SSE 데이터: ", data);
+
+            const roomId = data.roomId;
+            let roomDiv = document.getElementById(`room-${roomId}`);
+
+            if (!roomDiv) {
+                // 새로운 채팅방
+                appendChatRoom(data);
+            } else {
+                // 기존 채팅방 업데이트
+                roomDiv.querySelector('.last-message').innerText = data.lastMessage;
+                roomDiv.querySelector('.timestamp').innerText = data.timestamp;
+                const unreadElem = roomDiv.querySelector('.unread');
+                if (data.unreadCount === 0) {
+                    unreadElem.innerText = '';
+                } else {
+                    unreadElem.innerText = data.unreadCount;
+                }
+            }
+        };
+    }
+
+    function appendChatRoom(room) {
+        const div = document.createElement('div');
+        div.className = 'room';
+        div.id = `room-${room.roomId}`;
+        div.innerHTML = `
+            <b>Room ID:</b> ${room.roomId}<br>
+            <span class="last-message">${room.lastMessage}</span><br>
+            <span class="timestamp">${room.lastTimestamp || '시간 없음'}</span><br>
+            <span class="unread">${room.unreadCount > 0 ? room.unreadCount : ''}</span>
+        `;
+        document.getElementById('chatList').appendChild(div);
+    }
+</script>
+
+</body>
+</html>

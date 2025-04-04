@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>채팅 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<h2>1:1 채팅 테스트</h2>
+<div>
+    <input type="text" id="roomId" placeholder="채팅방 ID 입력" />
+    <button onclick="changeRoom()">채팅방 이동</button><br>
+    <label>User ID: <input type="text" id="userId" value="user1"></label><br>
+    <label>Receiver ID: <input type="text" id="receiverId" value="user2"></label><br>
+    <label>Message: <input type="text" id="message"></label><br>
+    <label>상대방 온라인 상태:
+        <select id="isRead">
+            <option value="true">온라인</option>
+            <option value="false">오프라인</option>
+        </select>
+    </label><br>
+    <button onclick="sendMessage()">메시지 전송</button>
+</div>
+
+<h3>메시지 로그</h3>
+<div id="chatLog" style="border:1px solid #ccc; padding:10px; width:400px; height:200px; overflow:auto;"></div>
+
+<script>
+    let stompClient = null;
+    let currentSubscription = null;
+    function connect() {
+        const socket = new WebSocket('ws://localhost:8080/ws/chat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, () => {
+            console.log("✅ STOMP 연결 성공");
+
+            const roomId = document.getElementById('roomId').value;
+            subscribeToRoom(roomId);
+        });
+    }
+    function subscribeToRoom(roomId) {
+        const userId = document.getElementById('userId').value;
+
+        // 기존 구독이 있다면 해제
+        if (currentSubscription !== null) {
+            currentSubscription.unsubscribe();
+            console.log('🔄 이전 구독 해제');
+        }
+        currentSubscription = stompClient.subscribe('/sub/chat/room/' + roomId, (message) => {
+
+            const msg = JSON.parse(message.body);
+            const log = document.getElementById('chatLog');
+            log.innerHTML += `<div><b>${msg.userId}</b>: ${msg.message}</div>`;
+        },
+            {
+                userId: userId,
+                roomId: roomId
+            }
+        );
+        console.log('🟢 새 채팅방 구독 시작: /sub/chat/room/' + roomId);
+    }
+
+    function changeRoom() {
+        const newRoomId = document.getElementById('roomId').value;
+        subscribeToRoom(newRoomId); // 구독 경로만 바꿔줌
+    }
+
+    function sendMessage() {
+        const roomId = document.getElementById('roomId').value;
+        const userId = document.getElementById('userId').value;
+        const receiverId = document.getElementById('receiverId').value;
+        const message = document.getElementById('message').value;
+        const isRead = document.getElementById('isRead').value === 'true';
+
+        stompClient.send('/pub/chat/message', {}, JSON.stringify({
+            roomId: roomId,
+            userId: userId,
+            receiverId: receiverId,
+            message: message,
+            timestamp: null,
+            read: isRead
+        }));
+    }
+    connect();
+</script>
+</body>
+</html>
