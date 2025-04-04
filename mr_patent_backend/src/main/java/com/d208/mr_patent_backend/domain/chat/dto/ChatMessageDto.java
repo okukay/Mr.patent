@@ -33,7 +33,11 @@ public class ChatMessageDto {
                 .message(entity.getMessage())
                 .timeStamp(entity.getTimestamp())
                 .read(entity.isRead())
-                .messageType(entity.getType())
+                .type(entity.getType())
+                .messageType(entity.getMessageType())
+                .fileUrl(entity.getFileUrl())
+                .fileName(entity.getFileName())
+
                 .build();
     }
 }

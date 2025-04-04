@@ -37,7 +37,7 @@ public class ChatMessage {
     private String type;                //메세지 타입
     private String messageType;
 
-
+    @Column(length = 2000)
     private String fileUrl;             // 다운로드 url
     private String fileName;            // 파일이름
 

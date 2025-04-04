@@ -100,21 +100,21 @@ public class ChatService {
 
         if (lastMessageId == null) {
             // 처음 입장: 최신 메시지부터 size개 조회
-            messages = chatMessageRepository.findByRoomIdOrderByChatIdDesc(roomId, pageable).getContent();
+            messages = chatMessageRepository.findByRoomIdOrderByChatIdDesc(roomId, pageable);
         } else {
             // 무한스크롤: 마지막 메시지 이전 메시지 size개 조회
             messages = chatMessageRepository.findByRoomIdAndChatIdLessThanOrderByChatIdDesc(roomId, lastMessageId, pageable);
         }
 
         List<ChatMessageDto> result = new ArrayList<>();
+
         for (ChatMessage entity : messages) {
-            // ✅ 파일이 있는 경우 Presigned URL 발급
+            //  첨부 파일이 있는 경우 Presigned URL 발급
             if (entity.getFileName() != null && (entity.getFileUrl() == null)) {
                 String newUrl = s3Service.generatePresignedDownloadUrl(entity.getFileName());
                 entity.setFileUrl(newUrl);
                 chatMessageRepository.save(entity); // DB 업데이트
             }
-
             ChatMessageDto dto = ChatMessageDto.fromEntity(entity);
             result.add(dto);
         }
