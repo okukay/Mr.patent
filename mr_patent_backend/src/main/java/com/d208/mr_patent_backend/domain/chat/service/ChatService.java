@@ -32,9 +32,27 @@ public class ChatService {
     //메세지 저장
     @Transactional
     public void saveMessage(ChatMessageDto dto) {
-        LocalDateTime now = dto.getTimeStamp() != null ? dto.getTimeStamp() : LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
+        String type = dto.getMessageType();
+
+        if (type != null) {
+            switch (type) {
+                case "image/jpeg":
+                case "image/png":
+                    dto.setMessage("사진을 보냈습니다.");
+                    break;
+                case "application/pdf":
+                case "application/msword":
+                    dto.setMessage("파일을 보냈습니다.");
+                    break;
+                default:
+                    dto.setMessage("메세지가 전송되었습니다.");
+                    break;
+            }
+        }
         ChatMessage message = ChatMessage.builder()
+                .chatId(dto.getChatId())
                 .roomId(dto.getRoomId())
                 .userId(dto.getUserId())
                 .receiverId(dto.getReceiverId())

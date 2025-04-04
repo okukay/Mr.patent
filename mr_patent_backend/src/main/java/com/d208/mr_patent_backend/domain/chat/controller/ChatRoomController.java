@@ -48,13 +48,15 @@ public class ChatRoomController {
     }
     @Operation(summary = "대화 내용 불러오기")
     @GetMapping("/message/{roomId}")
-    public ResponseEntity<List<ChatMessageDto>> getMessages(
+    public ResponseEntity<Map<String, Object>> getMessages(
             @PathVariable String roomId,
             @RequestParam(required = false) Long lastMessageId // 파라미터 없어도 괜찮음(첫 대화 불러오기 때문에)
     ) {
         int size = 10;
         List<ChatMessageDto> messages = chatService.getMessages(roomId, lastMessageId, size);
-        return ResponseEntity.ok(messages);
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", messages);
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "SSE 연결")
