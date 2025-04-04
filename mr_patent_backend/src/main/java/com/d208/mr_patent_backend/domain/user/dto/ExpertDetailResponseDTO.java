@@ -25,5 +25,5 @@ public class ExpertDetailResponseDTO {
     private LocalDateTime expertCreatedAt;
     private String userEmail;
     private String userImage;
-    private List<String> categories;
+    private List<String> expertCategories;
 }

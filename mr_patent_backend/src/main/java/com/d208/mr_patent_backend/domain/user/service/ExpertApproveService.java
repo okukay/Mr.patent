@@ -39,13 +39,20 @@ public class ExpertApproveService {
 
     private ExpertApproveResponseDTO convertToDTO(Expert expert) {
         try {
+
+            List<String> categories = expert.getExpertCategory().stream()
+                    .map(ec -> ec.getCategory().getCategoryName())
+                    .collect(Collectors.toList());
+
             return ExpertApproveResponseDTO.builder()
                     .expertId(expert.getExpertId())
                     .userEmail(expert.getUser().getUserEmail())
                     .userName(expert.getUser().getUserName())
                     .expertGetDate(expert.getExpertGetDate())
                     .expertStatus(expert.getExpertStatus())
-                    .createdAt(expert.getExpertCreatedAt())
+                    .expertLicense(expert.getExpertLicense())
+                    .expertCreatedAt(expert.getExpertCreatedAt())
+                    .expertCategories(categories)
                     .build();
         } catch (RuntimeException e) {
             throw new RuntimeException("변리사 정보 변환 중 오류가 발생했습니다: " + e.getMessage());
