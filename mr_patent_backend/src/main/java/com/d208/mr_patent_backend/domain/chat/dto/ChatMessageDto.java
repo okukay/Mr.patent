@@ -35,7 +35,7 @@ public class ChatMessageDto {
                 .read(entity.isRead())
                 .type(entity.getType())
                 .messageType(entity.getMessageType())
-                .fileUrl(entity.getFileUrl())
+//                .fileUrl(entity.getFileUrl())
                 .fileName(entity.getFileName())
 
                 .build();

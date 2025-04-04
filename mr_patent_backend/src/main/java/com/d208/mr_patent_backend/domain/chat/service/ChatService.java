@@ -92,6 +92,7 @@ public class ChatService {
         }
     }
 
+
     // 대화내용 불러오기 (무한 스크롤)
     public List<ChatMessageDto> getMessages(String roomId, Long lastMessageId, int size) {
         Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "chatId"));
@@ -107,15 +108,13 @@ public class ChatService {
         }
 
         List<ChatMessageDto> result = new ArrayList<>();
-
         for (ChatMessage entity : messages) {
             //  첨부 파일이 있는 경우 Presigned URL 발급
 //            if (entity.getFileName() != null && (entity.getFileUrl() == null)) {
             if (entity.getFileName() != null) {
                 String newUrl = s3Service.generatePresignedDownloadUrl(entity.getFileName());
-
                 entity.setFileUrl(newUrl);
-                chatMessageRepository.save(entity); // DB 업데이트
+
             }
             ChatMessageDto dto = ChatMessageDto.fromEntity(entity);
             result.add(dto);
