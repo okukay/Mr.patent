@@ -74,7 +74,9 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
                 requestURI.equals("/profile-upload-test.html") ||
                 requestURI.equals("/api/expert-approve") ||
                 requestURI.startsWith("/api/user/profile-image") ||
-                requestURI.startsWith("/api/email/"));
+                requestURI.startsWith("/api/email/")||
+                requestURI.startsWith("/ws/chat")
+        );
     }
 
     private void sendErrorResponse(HttpServletResponse response, JwtErrorCode errorCode, String message) throws IOException {
