@@ -16,34 +16,33 @@ API_DESCRIPTION = "특허 처리 및 관리를 위한 API 문서"
 
 # 앱 설정 - 명시적인 문서 경로 설정
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    title="특허 관리 API",
+    version="1.0.0",
+    description="API 문서"
 )
 
-# 커스텀 OpenAPI 스키마 생성 함수
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
+# # 커스텀 OpenAPI 스키마 생성 함수
+# def custom_openapi():
+#     if app.openapi_schema:
+#         return app.openapi_schema
     
-    openapi_schema = get_openapi(
-        title=API_TITLE,
-        version="1.0.0",
-        description=API_DESCRIPTION,
-        routes=app.routes,
-    )
+#     openapi_schema = get_openapi(
+#         title=API_TITLE,
+#         version="1.0.0",
+#         description=API_DESCRIPTION,
+#         routes=app.routes,
+#     )
     
-    # 절대 URL 사용
-    openapi_schema["servers"] = [
-        {"url": "https://j12d208.p.ssafy.io/api", "description": "API Server"}
-    ]
+#     # 절대 URL 사용
+#     openapi_schema["servers"] = [
+#         {"url": "https://j12d208.p.ssafy.io/api", "description": "API Server"}
+#     ]
     
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
+#     app.openapi_schema = openapi_schema
+#     return app.openapi_schema
 
-# 커스텀 OpenAPI 스키마 적용
-app.openapi = custom_openapi
+# # 커스텀 OpenAPI 스키마 적용
+# app.openapi = custom_openapi
 
 # CORS 설정 (안드로이드 앱에서 접근 허용)
 app.add_middleware(
