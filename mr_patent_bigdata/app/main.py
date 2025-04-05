@@ -34,9 +34,9 @@ def custom_openapi():
         routes=app.routes,
     )
     
-    # 서버 URL 설정
+    # 절대 URL 사용
     openapi_schema["servers"] = [
-        {"url": "/api", "description": "API Server"}
+        {"url": "https://j12d208.p.ssafy.io/api", "description": "API Server"}
     ]
     
     app.openapi_schema = openapi_schema
