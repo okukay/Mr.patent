@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.middleware.base import BaseHTTPMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.openapi.utils import get_openapi
@@ -14,11 +15,24 @@ from app.api.dependencies import verify_token
 API_TITLE = "특허 관리 API"
 API_DESCRIPTION = "특허 처리 및 관리를 위한 API 문서"
 
+# 미들웨어 클래스 정의
+class AuthenticationMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        # 문서 경로는 인증에서 제외
+        if request.url.path.endswith("/docs") or request.url.path.endswith("/openapi.json") or request.url.path.endswith("/redoc"):
+            return await call_next(request)
+            
+        # 기존 요청 처리
+        return await call_next(request)
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     docs_url=None,  # 기본 /docs 경로 비활성화
     redoc_url=None  # 기본 /redoc 경로 비활성화
 )
+
+# 미들웨어 추가
+app.add_middleware(AuthenticationMiddleware)
 
 # CORS 설정 (안드로이드 앱에서 접근 허용)
 app.add_middleware(
