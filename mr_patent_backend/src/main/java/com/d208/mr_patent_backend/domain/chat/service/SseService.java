@@ -25,18 +25,33 @@ public class SseService {
         System.out.println("emitter 생성 완료");
 
         // 연결 끊겼을 때 제거
-        emitter.onCompletion(() -> emitters.remove(userId));
-        emitter.onTimeout(() -> emitters.remove(userId));
-        emitter.onError(e -> emitters.remove(userId));
+        emitter.onCompletion(() -> {
+            emitters.remove(userId);
+            System.out.println("emitter 연결해제(화면이동)");
+        });
+        emitter.onTimeout(() -> {
+            emitters.remove(userId);
+            System.out.println("emitter 연결해제 타임아웃");
+        });
+
+        emitter.onError(e -> {
+            emitters.remove(userId);
+            System.out.println("emitter 연결해제 에러발생");
+        });
+//        emitter.onCompletion(() -> emitters.remove(userId));
+//        emitter.onTimeout(() -> emitters.remove(userId));
+//        emitter.onError(e -> emitters.remove(userId));
 
         try {
             emitter.send(SseEmitter.event()
-                    .name("connect") // 이벤트 이름 (클라이언트에서 필터링할 수 있음)
+                    .name("connect")
                     .data("connected"));
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
+            e.printStackTrace();
             emitter.completeWithError(e);
         }
-
+        System.out.println("연결시 확인 메세지 전송완료");
         return emitter;
     }
 
