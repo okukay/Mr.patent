@@ -42,12 +42,11 @@ public class ChatController {
         ChatMessageDto savedMessage = chatService.saveMessage(message);
 
         // 웹소켓 전송
-        if(message.isRead()){
-            messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), savedMessage);
-        }
+        messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), savedMessage);
+
 
         //fcm 보내기
-        else {
+        if(!message.isRead()) {
             Integer receiverId = message.getReceiverId();
             String token = fcmTokenService.getTokenByUserId(receiverId);
 
