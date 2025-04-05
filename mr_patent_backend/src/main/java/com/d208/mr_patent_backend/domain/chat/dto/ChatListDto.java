@@ -2,6 +2,7 @@ package com.d208.mr_patent_backend.domain.chat.dto;
 
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 
@@ -18,7 +19,7 @@ public class ChatListDto {
     private String roomId;
     private Integer unreadCount;
     private String lastMessage;
-    private LocalDateTime lastTimestamp;
+    private Instant lastTimestamp;
     private String userName;
     private String userImage;
     private Integer receiverId;

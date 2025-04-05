@@ -3,6 +3,7 @@ package com.d208.mr_patent_backend.domain.chat.dto;
 
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 // 채팅방 dto
@@ -17,9 +18,9 @@ public class ChatRoomDto {
     private Integer unreadCount;       // 안읽은 메세지 카운트
     private String sessionId;
     private String lastMessage;                 // 마지막 메세지
-    private LocalDateTime lastTimestamp;        // 마지막 보낸시간
-    private LocalDateTime created;     // 생성일자 시간
-    private LocalDateTime updated;     // 수정일자 여부
+    private Instant lastTimestamp;        // 마지막 보낸시간
+    private Instant created;     // 생성일자 시간
+    private Instant updated;     // 수정일자 여부
 
 }
 
