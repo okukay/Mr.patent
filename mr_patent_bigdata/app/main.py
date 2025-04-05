@@ -17,9 +17,9 @@ API_DESCRIPTION = "특허 처리 및 관리를 위한 API 문서"
 # 앱 설정 - 명시적인 문서 경로 설정
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    docs_url="/api/docs",  # 기본 /docs 경로 비활성화
-    redoc_url="/api/redoc",  # 기본 /redoc 경로 비활성화
-    openapi_url="/api/openapi.json"  # 기본 /openapi.json 경로 비활성화
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # CORS 설정 (안드로이드 앱에서 접근 허용)
