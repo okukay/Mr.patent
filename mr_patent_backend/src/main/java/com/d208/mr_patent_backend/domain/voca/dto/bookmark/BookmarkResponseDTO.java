@@ -1,4 +1,4 @@
-package com.d208.mr_patent_backend.domain.voca.dto;
+package com.d208.mr_patent_backend.domain.voca.dto.bookmark;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
