@@ -31,7 +31,7 @@ public class ChatService {
 
     //메세지 저장
     @Transactional
-    public void saveMessage(ChatMessageDto dto) {
+    public ChatMessageDto saveMessage(ChatMessageDto dto) {
         LocalDateTime now = LocalDateTime.now();
 
         String type = dto.getMessageType();
@@ -105,6 +105,7 @@ public class ChatService {
                 ));
             }
         }
+        return dto;
     }
 
 
