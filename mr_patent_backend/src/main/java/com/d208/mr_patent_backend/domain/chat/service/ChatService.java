@@ -46,9 +46,6 @@ public class ChatService {
                 case "application/msword":
                     dto.setMessage("파일을 보냈습니다.");
                     break;
-                default:
-                    dto.setMessage("메세지가 전송되었습니다.");
-                    break;
             }
         }
         ChatMessage message = ChatMessage.builder()
