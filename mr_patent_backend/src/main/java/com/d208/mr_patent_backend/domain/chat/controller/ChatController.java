@@ -38,12 +38,13 @@ public class ChatController {
             message.setFileUrl(presignedUrl);
         }
 
+
         //DB 저장
-        chatService.saveMessage(message);
+        ChatMessageDto savedMessage = chatService.saveMessage(message);
 
         // 웹소켓 전송
         if(message.isRead()){
-            messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
+            messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), savedMessage);
         }
 
         //fcm 보내기
