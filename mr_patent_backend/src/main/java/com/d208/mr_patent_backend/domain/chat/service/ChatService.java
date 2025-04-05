@@ -75,12 +75,12 @@ public class ChatService {
                 .orElseThrow(() -> new RuntimeException("받는 사람 채팅방이 없습니다."));
 
         // 4. senderRoom 업데이트
-        senderRoom.setLastMessage(dto.getMessage());
+        senderRoom.setLastMessage(message.getMessage());
         senderRoom.setLastTimestamp(now);
         senderRoom.setUpdated(now);
 
         // 5. receiverRoom 업데이트
-        receiverRoom.setLastMessage(dto.getMessage());
+        receiverRoom.setLastMessage(message.getMessage());
         receiverRoom.setLastTimestamp(now);
         if (!dto.isRead()) {
             receiverRoom.setUnreadCount(receiverRoom.getUnreadCount() + 1);
