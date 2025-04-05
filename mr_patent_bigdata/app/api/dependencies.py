@@ -1,6 +1,11 @@
 from fastapi import Request, HTTPException, Depends, Header
-from typing import Optional
+from typing import Optional, Dict, Any
 import re
+import logging
+
+# 로깅 설정 - 디버깅용
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("auth_middleware")
 
 # 문서 경로 패턴 정의 (확장)
 DOCS_PATHS = [
@@ -9,39 +14,61 @@ DOCS_PATHS = [
     "/recommend/docs", "/recommend/redoc", "/recommend/openapi.json"
 ]
 
+# 인증 예외 경로 패턴 (정규식)
+AUTH_EXEMPT_PATTERNS = [
+    r'^/docs/?$',
+    r'^/redoc/?$',
+    r'^/openapi\.json/?$',
+    r'^/api/docs/?$', 
+    r'^/api/redoc/?$',
+    r'^/api/openapi\.json/?$',
+    r'^/$',
+    r'^/api/?$',
+    r'^/static/.*$',
+    r'.*\.js$',
+    r'.*\.css$',
+    r'.*\.png$',
+    r'.*swagger-ui.*$',
+    r'.*favicon\.ico$'
+]
+
 async def verify_token(
     request: Request,
     authorization: Optional[str] = Header(None)
-):
+) -> Dict[str, Any]:
     """
     요청에서 인증 토큰을 확인하는 의존성 함수
     문서 경로는 인증 없이 접근 가능하도록 구현
     """
-    # 현재 요청 경로
     path = request.url.path
+    method = request.method
     
-    # 문서 관련 경로인지 확인 (더 포괄적인 검사)
-    if any(path == doc_path for doc_path in DOCS_PATHS):
-        return True
+    # 디버깅용 로그
+    logger.info(f"Path: {path}, Method: {method}")
     
-    # 경로 끝부분 검사
-    if path.endswith("/docs") or path.endswith("/redoc") or path.endswith("/openapi.json"):
-        return True
+    # 1. 직접 경로 매칭
+    if path in DOCS_PATHS:
+        logger.info(f"직접 경로 매칭 성공: {path}")
+        return {"authenticated": False, "path": path, "exempt_reason": "docs_path"}
     
-    # 정규식으로 문서 패턴 확인 (더 유연한 검사)
-    if re.search(r'/(docs|redoc|openapi\.json)/?$', path):
-        return True
-        
-    # 루트 경로도 인증 없이 접근 허용
-    if path == "/" or path == "/api" or path == "/api/":
-        return True
+    # 2. 경로 끝부분 매칭
+    if path.endswith(("/docs", "/redoc", "/openapi.json")):
+        logger.info(f"경로 끝부분 매칭 성공: {path}")
+        return {"authenticated": False, "path": path, "exempt_reason": "path_suffix"}
     
-    # 정적 파일 경로 허용 (예: CSS, JS)
-    if path.startswith("/static/") or ".js" in path or ".css" in path:
-        return True
+    # 3. 정규식 패턴 매칭
+    for pattern in AUTH_EXEMPT_PATTERNS:
+        if re.match(pattern, path):
+            logger.info(f"정규식 패턴 매칭 성공: {path} -> {pattern}")
+            return {"authenticated": False, "path": path, "exempt_reason": "pattern_match"}
     
-    # 그 외 경로는 토큰 검증
+    # 디버깅용: 옵션 요청은 항상 허용
+    if method == "OPTIONS":
+        return {"authenticated": False, "path": path, "exempt_reason": "options_method"}
+    
+    # 인증이 필요한 경로이나 토큰 없음
     if not authorization:
+        logger.warning(f"인증 토큰 없음: {path}")
         raise HTTPException(
             status_code=401,
             detail={
@@ -51,5 +78,6 @@ async def verify_token(
             }
         )
     
-    # 토큰 존재하면 통과 (실제 검증 로직은 추가 필요)
-    return True
+    # 토큰 검증 - 여기서는 토큰이 존재하면 통과
+    logger.info(f"토큰 검증 성공: {path}")
+    return {"authenticated": True, "path": path, "token": authorization}
