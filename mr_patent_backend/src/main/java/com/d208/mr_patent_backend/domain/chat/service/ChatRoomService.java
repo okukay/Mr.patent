@@ -54,7 +54,6 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
-
                 .created(now)
                 .updated(now)
                 .build();
@@ -67,7 +66,6 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
-
                 .created(now)
                 .updated(now)
                 .build();
@@ -99,8 +97,6 @@ public class ChatRoomService {
                     }
 
 //                   String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
-
-
 
                     return ChatListDto.builder()
                             .userId(room.getUserId())         // 로그인한 사용자 ID
