@@ -51,14 +51,14 @@ public class WordService {
                 .map(word -> {
                     // 북마크 조회
                     Bookmark bookmark = bookmarkRepository.findByUserAndWord(user, word);
-                    boolean isBookmarked = bookmark != null;
+                    boolean Bookmarked = bookmark != null;
 
                     return WordDTO.builder()
                             .word_id(word.getId())
                             .word_name(word.getName())
                             .word_mean(word.getMean())
-                            .is_bookmarked(isBookmarked)
-                            .bookmark_id(isBookmarked ? bookmark.getId() : null)
+                            .bookmarked(Bookmarked)
+                            .bookmark_id(Bookmarked ? bookmark.getId() : null)
                             .build();
                 })
                 .collect(Collectors.toList());

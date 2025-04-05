@@ -1,10 +1,10 @@
 package com.d208.mr_patent_backend.domain.voca.controller;
 
 import com.d208.mr_patent_backend.domain.user.entity.User;
-import com.d208.mr_patent_backend.domain.voca.dto.BookmarkCountDTO;
+import com.d208.mr_patent_backend.domain.voca.dto.bookmark.BookmarkCountDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.bookmark.BookmarkListDTO;
-import com.d208.mr_patent_backend.domain.voca.dto.BookmarkRequestDTO;
-import com.d208.mr_patent_backend.domain.voca.dto.BookmarkResponseDTO;
+import com.d208.mr_patent_backend.domain.voca.dto.bookmark.BookmarkRequestDTO;
+import com.d208.mr_patent_backend.domain.voca.dto.bookmark.BookmarkResponseDTO;
 import com.d208.mr_patent_backend.domain.voca.service.BookmarkService;
 import com.d208.mr_patent_backend.global.dto.CommonResponseDto;
 import com.d208.mr_patent_backend.global.util.SecurityUtils;

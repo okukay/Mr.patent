@@ -2,10 +2,9 @@ package com.d208.mr_patent_backend.domain.voca.service;
 
 import com.d208.mr_patent_backend.domain.user.entity.User;
 import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
-import com.d208.mr_patent_backend.domain.voca.dto.*;
-import com.d208.mr_patent_backend.domain.voca.dto.BookmarkCountDTO;
-import com.d208.mr_patent_backend.domain.voca.dto.BookmarkDTO;
-import com.d208.mr_patent_backend.domain.voca.dto.BookmarkResponseDTO;
+import com.d208.mr_patent_backend.domain.voca.dto.bookmark.BookmarkCountDTO;
+import com.d208.mr_patent_backend.domain.voca.dto.level.WordDTO;
+import com.d208.mr_patent_backend.domain.voca.dto.bookmark.BookmarkResponseDTO;
 import com.d208.mr_patent_backend.domain.voca.dto.bookmark.BookmarkListDTO;
 import com.d208.mr_patent_backend.domain.voca.entity.Bookmark;
 import com.d208.mr_patent_backend.domain.voca.entity.Word;
@@ -17,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +28,7 @@ public class BookmarkService {
     private final UserRepository userRepository;
     private final WordRepository wordRepository;
     private final BookmarkRepository bookmarkRepository;
+
 
     /**
      * 북마크 추가
@@ -96,16 +98,27 @@ public class BookmarkService {
                     .count((int) count)
                     .build());
         } else {
-            // 모든 레벨의 북마크 개수 조회
-            List<Object[]> countsByLevel = bookmarkRepository.countByUserGroupByWordLevel(user);
+            // 모든 레벨의 북마크 개수를 저장할 맵 생성
+            Map<Byte, Integer> countMap = new HashMap<>();
 
-            // 결과 변환
+            // 먼저 1~5 레벨에 대해 0으로 초기화
+            for (byte level = 1; level <= 5; level++) {
+                countMap.put(level, 0);
+            }
+
+            // 데이터베이스에서 조회한 북마크 개수로 맵 업데이트
+            List<Object[]> countsByLevel = bookmarkRepository.countByUserGroupByWordLevel(user);
             for (Object[] entry : countsByLevel) {
                 Byte level = (Byte) entry[0];
                 Long count = (Long) entry[1];
+                countMap.put(level, count.intValue());
+            }
+
+            // 맵을 BookmarkCountDTO 리스트로 변환 (레벨 순서대로)
+            for (byte level = 1; level <= 5; level++) {
                 result.add(BookmarkCountDTO.builder()
                         .level_id(level)
-                        .count(count.intValue())
+                        .count(countMap.get(level))
                         .build());
             }
         }
@@ -128,18 +141,19 @@ public class BookmarkService {
             bookmarks = bookmarkRepository.findByUserOrderByIdDesc(user);
         }
 
-        List<BookmarkDTO> bookmarkDTOs = bookmarks.stream()
-                .map(bookmark -> BookmarkDTO.builder()
+        List<WordDTO> wordDTOs = bookmarks.stream()
+                .map(bookmark -> WordDTO.builder()
                         .bookmark_id(bookmark.getId())
                         .word_id(bookmark.getWord().getId())
                         .word_name(bookmark.getWord().getName())
                         .word_mean(bookmark.getWord().getMean())
+                        .bookmarked(true)
                         .build())
                 .collect(Collectors.toList());
 
         return BookmarkListDTO.builder()
-                .bookmarks(bookmarkDTOs)
-                .total(bookmarkDTOs.size())
+                .words(wordDTOs)
+                .total(wordDTOs.size())
                 .build();
     }
 
