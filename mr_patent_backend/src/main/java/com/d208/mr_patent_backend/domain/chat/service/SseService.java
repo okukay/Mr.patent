@@ -43,13 +43,12 @@ public class SseService {
 //        emitter.onError(e -> emitters.remove(userId));
 
         try {
-            emitter.send(SseEmitter.event()
-                    .name("connect")
-                    .data("connected"));
-        }
-        catch (IOException e) {
+            System.out.println("[SSE] try to send connect message");
+            emitter.send(SseEmitter.event().name("connect").data("connected"));
+            System.out.println("[SSE] message sent successfully");
+        } catch (IOException e) {
+            System.out.println("[SSE] IOException 발생: " + e.getMessage());
             e.printStackTrace();
-            emitter.completeWithError(e);
         }
         System.out.println("연결시 확인 메세지 전송완료");
         return emitter;
