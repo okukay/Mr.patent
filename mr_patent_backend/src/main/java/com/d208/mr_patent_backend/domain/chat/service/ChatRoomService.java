@@ -9,6 +9,7 @@ import com.d208.mr_patent_backend.domain.user.entity.User;
 import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,7 @@ public class ChatRoomService {
     @Transactional
     public String createChatRoom(ChatRoomCreateRequest request ) {
 
+        Instant now = Instant.now();
         Integer userId = request.getUserId();
         Integer receiverId = request.getReceiverId();
 
@@ -53,8 +55,8 @@ public class ChatRoomService {
                 .unreadCount(0)
                 .status(0)
 
-                .created(LocalDateTime.now())
-                .updated(LocalDateTime.now())
+                .created(now)
+                .updated(now)
                 .build();
 
         // 변리사용 채팅방
@@ -66,8 +68,8 @@ public class ChatRoomService {
                 .unreadCount(0)
                 .status(0)
 
-                .created(LocalDateTime.now())
-                .updated(LocalDateTime.now())
+                .created(now)
+                .updated(now)
                 .build();
 
         chatRoomRepository.save(userRoom);
