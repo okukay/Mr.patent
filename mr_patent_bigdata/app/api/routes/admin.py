@@ -4,7 +4,7 @@ from typing import Dict
 from app.scripts.train_vectorizer import train_vectorizer_from_patents
 from app.services.vectorizer import load_vectorizer
 
-router = APIRouter(prefix="/api/admin", tags=["admin"])
+router = APIRouter(prefix="/fastapi/admin", tags=["admin"])
 
 @router.post("/train-vectorizer", response_model=Dict[str, str])
 async def train_vectorizer(background_tasks: BackgroundTasks):
