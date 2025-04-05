@@ -35,15 +35,15 @@ public class ChatService {
         LocalDateTime now = LocalDateTime.now();
 
         String type = dto.getMessageType();
+        //"TEXT"|"PDF"|"WORD"|"IMAGE"
 
         if (type != null) {
             switch (type) {
-                case "image/jpeg":
-                case "image/png":
+                case "IMAGE":
                     dto.setMessage("사진을 보냈습니다.");
                     break;
-                case "application/pdf":
-                case "application/msword":
+                case "WORD":
+                case "PDF":
                     dto.setMessage("파일을 보냈습니다.");
                     break;
             }
