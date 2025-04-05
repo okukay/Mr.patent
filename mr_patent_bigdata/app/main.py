@@ -16,11 +16,33 @@ API_DESCRIPTION = "특허 처리 및 관리를 위한 API 문서"
 
 # 앱 설정 - 명시적인 문서 경로 설정
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    docs_url=None,  # 기본 /docs 경로 비활성화
-    redoc_url=None,  # 기본 /redoc 경로 비활성화
-    openapi_url=None  # 기본 /openapi.json 경로 비활성화
+    title="특허 관리 API",
+    version="1.0.0",
+    description="API 문서"
 )
+
+# # 커스텀 OpenAPI 스키마 생성 함수
+# def custom_openapi():
+#     if app.openapi_schema:
+#         return app.openapi_schema
+    
+#     openapi_schema = get_openapi(
+#         title=API_TITLE,
+#         version="1.0.0",
+#         description=API_DESCRIPTION,
+#         routes=app.routes,
+#     )
+    
+#     # 절대 URL 사용
+#     openapi_schema["servers"] = [
+#         {"url": "https://j12d208.p.ssafy.io/api", "description": "API Server"}
+#     ]
+    
+#     app.openapi_schema = openapi_schema
+#     return app.openapi_schema
+
+# # 커스텀 OpenAPI 스키마 적용
+# app.openapi = custom_openapi
 
 # CORS 설정 (안드로이드 앱에서 접근 허용)
 app.add_middleware(
@@ -42,68 +64,6 @@ app.include_router(patent_public.router)
 app.include_router(comparison.router)
 app.include_router(reports.router)
 app.include_router(ocr.router)
-
-# OpenAPI 스키마 생성 - 기본 경로
-@app.get("/openapi.json", include_in_schema=False)
-async def get_open_api_endpoint():
-    return JSONResponse(
-        get_openapi(
-            title=API_TITLE,
-            version="1.0.0",
-            description=API_DESCRIPTION,
-            routes=app.routes,
-        )
-    )
-
-# OpenAPI 스키마 생성 - API 경로
-@app.get("/api/openapi.json", include_in_schema=False)
-async def get_api_open_api_endpoint():
-    return JSONResponse(
-        get_openapi(
-            title=API_TITLE,
-            version="1.0.0",
-            description=API_DESCRIPTION,
-            routes=app.routes,
-        )
-    )
-
-# Swagger UI - 기본 경로
-@app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui_html():
-    return get_swagger_ui_html(
-        openapi_url="/openapi.json",
-        title=API_TITLE,
-        swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js",
-        swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
-    )
-
-# Swagger UI - API 경로
-@app.get("/api/docs", include_in_schema=False)
-async def api_swagger_ui_html():
-    return get_swagger_ui_html(
-        openapi_url="/api/openapi.json",
-        title=API_TITLE,
-        swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js",
-        swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
-    )
-
-# ReDoc - 기본 경로
-@app.get("/redoc", include_in_schema=False)
-async def redoc_html():
-    return get_redoc_html(
-        openapi_url="/openapi.json",
-        title=API_TITLE,
-        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
-    )
-
-# ReDoc - API 경로
-@app.get("/api/redoc", include_in_schema=False)
-async def api_redoc_html():
-    return get_redoc_html(
-        openapi_url="/api/openapi.json",
-        title=API_TITLE,
-        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
-    )
 
 # 이벤트 핸들러
 @app.on_event("startup")
