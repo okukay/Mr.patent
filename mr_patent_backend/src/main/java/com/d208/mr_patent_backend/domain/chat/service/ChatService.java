@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ public class ChatService {
     //메세지 저장
     @Transactional
     public ChatMessageDto saveMessage(ChatMessageDto dto) {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         String type = dto.getMessageType();
         //"TEXT"|"PDF"|"WORD"|"IMAGE"
