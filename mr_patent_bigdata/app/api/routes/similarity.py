@@ -11,7 +11,7 @@ from app.core.database import database
 from app.services.vectorizer import get_tfidf_vector, get_bert_vector
 from app.services.kipris import get_patent_public_info, download_patent_pdf
 
-router = APIRouter(prefix="/api", tags=["similarity"])
+router = APIRouter(prefix="/fastapi", tags=["similarity"])
 
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""

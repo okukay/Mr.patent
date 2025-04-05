@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from app.core.database import database
 from app.schemas.patent import FolderCreate, FolderResponse, PatentDraftResponse
 
-router = APIRouter(prefix="/api", tags=["folders"])
+router = APIRouter(prefix="/fastapi", tags=["folders"])
 
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""

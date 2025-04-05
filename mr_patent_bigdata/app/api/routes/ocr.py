@@ -8,7 +8,7 @@ from pdf2image import convert_from_path
 from app.core.logging import logger
 from dotenv import load_dotenv
 
-router = APIRouter(prefix="/api", tags=["ocr"])
+router = APIRouter(prefix="/fastapi", tags=["ocr"])
 
 # 임시 파일 저장 경로
 TEMP_DIR = "temp_pdf"

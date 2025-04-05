@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from app.core.database import database
 
-router = APIRouter(prefix="/api/patent", tags=["comparison"])
+router = APIRouter(prefix="/fastapi/patent", tags=["comparison"])
 
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""

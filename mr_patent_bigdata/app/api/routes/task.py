@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 from app.core.database import database, task_status
 from app.schemas.task import TaskResponse
 
-router = APIRouter(prefix="/api/patents", tags=["tasks"])
+router = APIRouter(prefix="/fastapi/patents", tags=["tasks"])
 
 @router.get("/process-status/{task_id}", response_model=TaskResponse)
 async def get_process_status(task_id: str):

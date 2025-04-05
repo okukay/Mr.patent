@@ -8,7 +8,7 @@ from app.schemas.patent import PatentDraftCreate, PatentDraftResponse
 from app.services.vectorizer import get_tfidf_vector, get_bert_vector
 import numpy as np
 
-router = APIRouter(prefix="/api", tags=["drafts"])
+router = APIRouter(prefix="/fastapi", tags=["drafts"])
 
 # 로깅 설정
 logger = logging.getLogger(__name__)

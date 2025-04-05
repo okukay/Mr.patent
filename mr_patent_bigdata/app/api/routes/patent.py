@@ -14,7 +14,7 @@ from app.services.vectorizer import fit_tfidf_vectorizer
 from app.services.spark_vectorizer import process_patents_with_spark  # Spark 기반 병렬 처리 함수 임포트
 from striprtf.striprtf import rtf_to_text
 
-router = APIRouter(prefix="/api/patent", tags=["patent"])
+router = APIRouter(prefix="/fastapi/patent", tags=["patent"])
 
 # 추출된 데이터 저장을 위한 디렉토리
 DATA_DIR = os.path.join(os.getcwd(), "temp_data")
