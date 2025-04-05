@@ -19,7 +19,8 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
+    root_path="/api"
 )
 
 # CORS 설정 (안드로이드 앱에서 접근 허용)
