@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from app.core.database import database
 from app.services.kipris import get_patent_public_info, download_patent_pdf
 
-router = APIRouter(prefix="/api/patent", tags=["patent_public"])
+router = APIRouter(prefix="/fastapi/patent", tags=["patent_public"])
 
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""

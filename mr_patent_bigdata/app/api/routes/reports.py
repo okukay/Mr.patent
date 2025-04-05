@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from app.core.database import database
 from app.services.report_generator import generate_report_pdf
 
-router = APIRouter(prefix="/api", tags=["reports"])
+router = APIRouter(prefix="/fastapi", tags=["reports"])
 
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""
