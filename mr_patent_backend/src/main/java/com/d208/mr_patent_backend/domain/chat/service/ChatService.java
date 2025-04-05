@@ -96,6 +96,7 @@ public class ChatService {
         // 상대방 오프라인일 경우 -> sse연결되어있다면 -> sse전송
         if (!dto.isRead()) {
             if(sseService.isConnected(dto.getReceiverId())) {
+                System.out.println("sse 연결확인");
                 // SSE 전송 로직 추가
                 sseService.sendToUser(dto.getReceiverId(), Map.of(
                         "type", "CHAT_UPDATE",
@@ -104,7 +105,9 @@ public class ChatService {
                         "timestamp", now,
                         "unreadCount", receiverRoom.getUnreadCount()
                 ));
+                System.out.println("sse 메세지 전송 완료");
             }
+
         }
         return ChatMessageDto.builder()
                 .chatId(message.getChatId())
