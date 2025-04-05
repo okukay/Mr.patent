@@ -36,22 +36,17 @@ public class ChatService {
         Instant now = Instant.now();
 
         String type = dto.getMessageType();
-        String finalMessage = dto.getMessage(); // 텍스트 기본값
+        //"TEXT"|"PDF"|"WORD"|"IMAGE"
 
         if (type != null) {
             switch (type) {
                 case "IMAGE":
-                    finalMessage = "사진을 보냈습니다.";
+                    dto.setMessage("사진을 보냈습니다.");
                     break;
                 case "WORD":
                 case "PDF":
-                    finalMessage = "파일을 보냈습니다.";
+                    dto.setMessage("파일을 보냈습니다.");
                     break;
-
-                case "TEXT":
-                    finalMessage = dto.getMessage(); // 다시 명확히 한 번 더
-                    break;
-
             }
         }
         ChatMessage message = ChatMessage.builder()
@@ -59,7 +54,7 @@ public class ChatService {
                 .roomId(dto.getRoomId())
                 .userId(dto.getUserId())
                 .receiverId(dto.getReceiverId())
-                .message(finalMessage)
+                .message(dto.getMessage())
                 .timestamp(now)
                 .read(dto.isRead()) // 클라이언트가 보내주는데로 0 or 1 로 저장
                 .type("CHAT")
@@ -67,9 +62,6 @@ public class ChatService {
                 .fileUrl(dto.getFileUrl())
                 .fileName(dto.getFileName())
                 .build();
-
-        System.out.println("보낸이 LastMessage: " + finalMessage);
-        System.out.println("받는이 LastMessage: " + finalMessage);
 
         chatMessageRepository.save(message);
         System.out.println(" 메시지 DB 저장 완료: " + dto.getMessage());
@@ -83,12 +75,12 @@ public class ChatService {
                 .orElseThrow(() -> new RuntimeException("받는 사람 채팅방이 없습니다."));
 
         // 4. senderRoom 업데이트
-        senderRoom.setLastMessage(finalMessage);
+        senderRoom.setLastMessage(message.getMessage());
         senderRoom.setLastTimestamp(now);
         senderRoom.setUpdated(now);
 
         // 5. receiverRoom 업데이트
-        receiverRoom.setLastMessage(finalMessage);
+        receiverRoom.setLastMessage(message.getMessage());
         receiverRoom.setLastTimestamp(now);
         if (!dto.isRead()) {
             receiverRoom.setUnreadCount(receiverRoom.getUnreadCount() + 1);

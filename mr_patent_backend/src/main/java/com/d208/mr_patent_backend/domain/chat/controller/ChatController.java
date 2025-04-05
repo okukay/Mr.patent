@@ -47,6 +47,7 @@ public class ChatController {
 
         //fcm 보내기
         if(!message.isRead()) {
+            System.out.println("fcm 보낼 준비");
             Integer receiverId = message.getReceiverId();
             String token = fcmTokenService.getTokenByUserId(receiverId);
 
@@ -73,6 +74,7 @@ public class ChatController {
                         message.getMessage(),
                         data
                 );
+                System.out.println("fcm 이 보내졋다.");
             }
         }
     }
