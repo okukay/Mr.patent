@@ -38,7 +38,6 @@ public class ChatController {
             message.setFileUrl(presignedUrl);
         }
 
-
         //DB 저장
         ChatMessageDto savedMessage = chatService.saveMessage(message);
 

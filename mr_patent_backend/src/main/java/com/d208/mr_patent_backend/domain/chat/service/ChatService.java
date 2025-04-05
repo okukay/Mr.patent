@@ -50,7 +50,7 @@ public class ChatService {
             }
         }
         ChatMessage message = ChatMessage.builder()
-
+                .chatId(dto.getChatId())
                 .roomId(dto.getRoomId())
                 .userId(dto.getUserId())
                 .receiverId(dto.getReceiverId())
@@ -89,10 +89,9 @@ public class ChatService {
 
         // 6. 저장
         chatRoomRepository.save(senderRoom);
-        System.out.println("보낸사람 채팅방 업데이트");
         chatRoomRepository.save(receiverRoom);
-        System.out.println("받는사람 채팅방 업데이트");
 
+        System.out.println("채팅방 메타데이터 업데이트 완료");
 
         // 상대방 오프라인일 경우 -> sse연결되어있다면 -> sse전송
         if (!dto.isRead()) {
@@ -108,7 +107,17 @@ public class ChatService {
             }
         }
         return ChatMessageDto.builder()
-                .chatId(message.getChatId()) // DB 저장 후 생성된 PK
+                .chatId(message.getChatId())
+                .roomId(message.getRoomId())
+                .userId(message.getUserId())
+                .receiverId(message.getReceiverId())
+                .message(message.getMessage())
+                .timeStamp(message.getTimestamp())
+                .read(message.isRead())
+                .type(message.getType())
+                .messageType(message.getMessageType())
+                .fileUrl(message.getFileUrl())
+                .fileName(message.getFileName())
                 .build();
     }
 
