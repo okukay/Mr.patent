@@ -1,5 +1,6 @@
 package com.d208.mr_patent_backend.domain.voca.dto.quiz;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,6 @@ public class WrongAnswerDTO {
     private Long word_id;
     private String question_text;
     private String correct_option_text;
-    private boolean is_bookmarked;
+    private boolean bookmarked;
     private Long bookmark_id;
 }

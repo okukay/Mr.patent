@@ -194,14 +194,19 @@ public class WordQuizService {
         int correctCount = totalQuestions - wrongCount;
         byte score = calculateScore(correctCount, totalQuestions);
 
-        // 최고 점수만 업데이트 (기존 최고 점수보다 높을 때만)
-        userLevel.updateScoreIfHigher(score);
-        userLevelRepository.save(userLevel);
+        System.out.println("현재 점수: " + score + ", 기존 점수: " + userLevel.getBestScore());
 
-        // 레벨 통과 및 다음 레벨 생성 처리
-        boolean passed = score >= PASS_SCORE;
-        if (passed) {
+        // 처음 퀴즈를 풀거나(bestScore가 100인 경우) 더 높은 점수를 얻었을 때만 업데이트
+        if (userLevel.getBestScore() == 100 || (score > userLevel.getBestScore() && score <= 10)) {
+            userLevel.updateScore(score);
+            userLevelRepository.save(userLevel);
+            System.out.println("점수 업데이트: " + score);
+        }
+
+        // 통과 여부 처리 (8점 이상이고 아직 통과하지 않은 경우)
+        if (score >= PASS_SCORE && userLevel.getIsPassed() == 0) {
             levelService.processLevelPass(user, levelId, userLevel);
+            System.out.println("레벨 " + levelId + " 통과 처리 완료");
         }
 
         return score;
@@ -231,7 +236,7 @@ public class WordQuizService {
                             .word_id(wordId)
                             .question_text(word.getMean())
                             .correct_option_text(word.getName())
-                            .is_bookmarked(isBookmarked)
+                            .bookmarked(isBookmarked)
                             .bookmark_id(isBookmarked ? bookmark.getId() : null)
                             .build();
                 })
@@ -254,7 +259,7 @@ public class WordQuizService {
                             .word_id(word.getId())
                             .word_name(word.getName())
                             .word_mean(word.getMean())
-                            .is_bookmarked(isBookmarked)
+                            .bookmarked(isBookmarked)
                             .bookmark_id(isBookmarked ? bookmark.getId() : null)
                             .build();
                 })
