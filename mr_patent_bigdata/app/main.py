@@ -23,6 +23,29 @@ app = FastAPI(
     root_path="/api"
 )
 
+# 커스텀 OpenAPI 스키마 생성 함수
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=API_TITLE,
+        version="1.0.0",
+        description=API_DESCRIPTION,
+        routes=app.routes,
+    )
+    
+    # 서버 URL 설정
+    openapi_schema["servers"] = [
+        {"url": "/api", "description": "API Server"}
+    ]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+# 커스텀 OpenAPI 스키마 적용
+app.openapi = custom_openapi
+
 # CORS 설정 (안드로이드 앱에서 접근 허용)
 app.add_middleware(
     CORSMiddleware,
