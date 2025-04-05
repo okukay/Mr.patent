@@ -81,7 +81,7 @@ async def custom_swagger_ui_html():
 @app.get("/api/docs", include_in_schema=False)
 async def api_swagger_ui_html():
     return get_swagger_ui_html(
-        openapi_url="/api/openapi.json",
+        openapi_url="openapi.json",
         title=API_TITLE,
         swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js",
         swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
