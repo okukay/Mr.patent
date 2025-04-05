@@ -1,8 +1,13 @@
 from fastapi import Request, HTTPException, Depends, Header
 from typing import Optional
+import re
 
-# 문서 경로 패턴 정의
-DOCS_PATHS = ["/docs", "/redoc", "/openapi.json"]
+# 문서 경로 패턴 정의 (확장)
+DOCS_PATHS = [
+    "/docs", "/redoc", "/openapi.json",
+    "/api/docs", "/api/redoc", "/api/openapi.json",
+    "/recommend/docs", "/recommend/redoc", "/recommend/openapi.json"
+]
 
 async def verify_token(
     request: Request,
@@ -12,12 +17,27 @@ async def verify_token(
     요청에서 인증 토큰을 확인하는 의존성 함수
     문서 경로는 인증 없이 접근 가능하도록 구현
     """
-    # 문서 경로는 인증 없이 접근 허용
-    if request.url.path in DOCS_PATHS or request.url.path.endswith("/docs") or request.url.path.endswith("/redoc"):
+    # 현재 요청 경로
+    path = request.url.path
+    
+    # 문서 관련 경로인지 확인 (더 포괄적인 검사)
+    if any(path == doc_path for doc_path in DOCS_PATHS):
+        return True
+    
+    # 경로 끝부분 검사
+    if path.endswith("/docs") or path.endswith("/redoc") or path.endswith("/openapi.json"):
+        return True
+    
+    # 정규식으로 문서 패턴 확인 (더 유연한 검사)
+    if re.search(r'/(docs|redoc|openapi\.json)/?$', path):
         return True
         
     # 루트 경로도 인증 없이 접근 허용
-    if request.url.path == "/":
+    if path == "/" or path == "/api" or path == "/api/":
+        return True
+    
+    # 정적 파일 경로 허용 (예: CSS, JS)
+    if path.startswith("/static/") or ".js" in path or ".css" in path:
         return True
     
     # 그 외 경로는 토큰 검증
@@ -31,7 +51,5 @@ async def verify_token(
             }
         )
     
-    # 여기에 실제 토큰 검증 로직을 추가할 수 있습니다
-    # 예: JWT 디코딩, DB에서 토큰 확인 등
-    
+    # 토큰 존재하면 통과 (실제 검증 로직은 추가 필요)
     return True

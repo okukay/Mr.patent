@@ -8,7 +8,7 @@ from app.core.database import database
 from app.api.routes import patent, task, folders, drafts, similarity, admin, patent_public, comparison, reports, ocr
 from app.core.logging import logger
 from app.services.vectorizer import load_vectorizer
-from app.api.dependencies import verify_token  # 새로 추가한 의존성 가져오기
+from app.api.dependencies import verify_token
 
 # API 문서 커스텀 제목 및 설명
 API_TITLE = "특허 관리 API"
@@ -51,8 +51,25 @@ async def custom_swagger_ui_html():
         swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
     )
 
+@app.get("/api/docs", include_in_schema=False)
+async def api_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title=API_TITLE,
+        swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js",
+        swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
+    )
+
 @app.get("/redoc", include_in_schema=False)
 async def redoc_html():
+    return get_redoc_html(
+        openapi_url="/openapi.json",
+        title=API_TITLE,
+        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
+    )
+
+@app.get("/api/redoc", include_in_schema=False)
+async def api_redoc_html():
     return get_redoc_html(
         openapi_url="/openapi.json",
         title=API_TITLE,
