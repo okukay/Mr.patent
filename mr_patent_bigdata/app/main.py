@@ -19,8 +19,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json",
-    root_path="/api"
+    openapi_url="/openapi.json"
 )
 
 # 커스텀 OpenAPI 스키마 생성 함수
