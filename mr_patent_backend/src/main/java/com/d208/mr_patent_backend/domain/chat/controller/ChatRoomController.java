@@ -60,7 +60,7 @@ public class ChatRoomController {
     }
 
     @Operation(summary = "SSE 연결")
-    @GetMapping("/subscribe/{userId}")
+    @GetMapping("/subscribe/{userId}, produces = MediaType.TEXT_EVENT_STREAM_VALUE")
     public SseEmitter subscribe(@PathVariable Integer userId) {
         return sseService.subscribe(userId);
     }
