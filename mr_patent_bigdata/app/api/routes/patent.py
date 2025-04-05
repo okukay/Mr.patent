@@ -17,7 +17,7 @@ from striprtf.striprtf import rtf_to_text
 router = APIRouter(prefix="/api/patent", tags=["patent"])
 
 # 추출된 데이터 저장을 위한 디렉토리
-DATA_DIR = "/tmp/patent_data"
+DATA_DIR = os.path.join(os.getcwd(), "temp_data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 def save_extracted_data(patents: List[Dict[str, Any]], filename: str = "extracted_patents.pkl") -> str:

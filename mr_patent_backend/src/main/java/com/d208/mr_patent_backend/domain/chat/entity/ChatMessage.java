@@ -7,6 +7,7 @@ package com.d208.mr_patent_backend.domain.chat.entity;
 import lombok.*;
 import jakarta.persistence.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,7 +31,7 @@ public class ChatMessage {
 
     @Column(columnDefinition = "TEXT")
     private String message;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
 
     @Column(name = "is_read")
     private boolean read; // DB에는 TINYINT형식으로 저장됨 (0 = false ,1 = true)
