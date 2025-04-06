@@ -33,6 +33,7 @@ public class ChatController {
     @MessageMapping("/chat/message")
     public void sendMessage(ChatMessageDto message) {
 
+        System.out.println("메세지 전송완료");
         if (message.getFileName() != null && !message.getFileName().isBlank()) {
             String presignedUrl = s3Service.generatePresignedDownloadUrl(message.getFileName());
             message.setFileUrl(presignedUrl);
