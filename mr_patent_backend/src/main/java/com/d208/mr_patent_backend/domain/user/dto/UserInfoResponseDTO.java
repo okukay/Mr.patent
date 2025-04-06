@@ -24,6 +24,7 @@ public class UserInfoResponseDTO {
     private Integer userRole;
 
     // 변리사 추가 정보 (선택적)
+    private Integer expertId;
     private String expertDescription;
     private String expertAddress;
     private String expertPhone;

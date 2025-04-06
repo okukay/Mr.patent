@@ -258,6 +258,7 @@ public class UserService {
                     .collect(Collectors.toList());
 
             builder
+                    .expertId(expert.getExpertId())
                     .expertDescription(expert.getExpertDescription())
                     .expertAddress(expert.getExpertAddress())
                     .expertPhone(expert.getExpertPhone())
