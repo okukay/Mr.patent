@@ -33,6 +33,7 @@ public class ChatController {
     @MessageMapping("/chat/message")
     public void sendMessage(ChatMessageDto message) {
 
+        System.out.println("메세지 전송완료");
         if (message.getFileName() != null && !message.getFileName().isBlank()) {
             String presignedUrl = s3Service.generatePresignedDownloadUrl(message.getFileName());
             message.setFileUrl(presignedUrl);
@@ -43,7 +44,6 @@ public class ChatController {
 
         // 웹소켓 전송
         messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), savedMessage);
-
 
         //fcm 보내기
         if(!message.isRead()) {
