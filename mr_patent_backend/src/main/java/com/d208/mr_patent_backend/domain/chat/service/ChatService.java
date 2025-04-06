@@ -5,8 +5,11 @@ import com.d208.mr_patent_backend.domain.chat.entity.ChatMessage;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatMessageRepository;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatRoomRepository;
 import com.d208.mr_patent_backend.domain.s3.service.S3Service;
+import com.d208.mr_patent_backend.domain.user.entity.Expert;
+import com.d208.mr_patent_backend.domain.user.entity.User;
+import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
+import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,7 +21,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +31,9 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final SseService sseService;
     private final S3Service s3Service;
+    private final UserRepository userRepository;
+    private final ExpertRepository expertRepository;
+
 
 
     //메세지 저장
@@ -97,13 +103,25 @@ public class ChatService {
         if (!dto.isRead()) {
             if(sseService.isConnected(dto.getReceiverId())) {
                 System.out.println("sse 연결확인");
+
+                User user = userRepository.findById(dto.getUserId())
+                        .orElseThrow(() -> new RuntimeException("유저 정보를 찾을 수 없습니다."));
+
+                Expert expert = expertRepository.findByUser_Id(dto.getUserId()); //메세지 보낸userId로 expert 인지 확인
+                Integer expertId = expert != null ? expert.getExpertId() : null; // 맞으면 expertId 추출 아니면 null
+
                 // SSE 전송 로직 추가
                 sseService.sendToUser(dto.getReceiverId(), Map.of(
-                        "type", "CHAT_UPDATE",
+                        "userId",dto.getUserId(),
+                        "expertId", expertId,
                         "roomId", dto.getRoomId(),
+                        "unreadCount", receiverRoom.getUnreadCount(),
                         "lastMessage", dto.getMessage(),
-                        "timestamp", now,
-                        "unreadCount", receiverRoom.getUnreadCount()
+                        "userName" ,user.getUserName(),
+                        "userImage", user.getUserImage(),
+                        "receiverId", dto.getReceiverId(),
+                        "timestamp", now
+
                 ));
                 System.out.println("sse 메세지 전송 완료");
             }
