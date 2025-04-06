@@ -44,7 +44,6 @@ public class ChatController {
         // 웹소켓 전송
         messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), savedMessage);
 
-
         //fcm 보내기
         if(!message.isRead()) {
             System.out.println("fcm 보낼 준비");
