@@ -57,26 +57,26 @@ public class SseService {
         }
 
         System.out.println("연결시 첫번쨰확인 메세지 전송완료");
-        scheduler.schedule(() -> {
-            try {
-                if (emitters.containsKey(userId)) { // 여전히 연결된 상태일 때만 전송
-                    emitter.send(SseEmitter.event()
-                            .name("chat-update")
-                            .data(Map.of(
-                                    "roomId", "8224c9c2-424f-45e4-8d27-93d21b9bcabd",
-                                    "userName","수닝모",
-                                    "lastMessage", "test",
-                                    "unreadCount", 1
-                            )));
-                    System.out.println("🕒 5초 후 추가 메시지 전송 완료");
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                emitter.completeWithError(e);
-            }
-        }, 5, TimeUnit.SECONDS);
-
-        System.out.println("연결시 모든 확인 메시지 전송 완료");
+//        scheduler.schedule(() -> {
+//            try {
+//                if (emitters.containsKey(userId)) { // 여전히 연결된 상태일 때만 전송
+//                    emitter.send(SseEmitter.event()
+//                            .name("chat-update")
+//                            .data(Map.of(
+//                                    "roomId", "8224c9c2-424f-45e4-8d27-93d21b9bcabd",
+//                                    "userName","수닝모",
+//                                    "lastMessage", "test",
+//                                    "unreadCount", 1
+//                            )));
+//                    System.out.println("🕒 5초 후 추가 메시지 전송 완료");
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                emitter.completeWithError(e);
+//            }
+//        }, 5, TimeUnit.SECONDS);
+//
+//        System.out.println("연결시 모든 확인 메시지 전송 완료");
 
         return emitter;
     }
