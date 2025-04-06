@@ -96,7 +96,7 @@ public class UserService {
         // Expert 엔티티 생성 및 저장
         Expert expert = new Expert();
         expert.setUser(user);
-        expert.setExpertIdentification(requestDto.getExpertIdentification());
+        expert.setExpertIdentification(passwordEncoder.encode(requestDto.getExpertIdentification()));
         expert.setExpertDescription(requestDto.getExpertDescription());
         expert.setExpertAddress(requestDto.getExpertAddress());
         expert.setExpertPhone(requestDto.getExpertPhone());
