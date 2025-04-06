@@ -108,7 +108,7 @@ public class ChatService {
                         .orElseThrow(() -> new RuntimeException("유저 정보를 찾을 수 없습니다."));
 
                 Expert expert = expertRepository.findByUser_UserId(dto.getUserId()); //메세지 보낸userId로 expert 인지 확인
-                Integer expertId = expert != null ? expert.getExpertId() : null; // 맞으면 expertId 추출 아니면 null
+                Integer expertId = expert != null ? expert.getExpertId() : -1; // 맞으면 expertId 추출 아니면 null
 
                 // SSE 전송 로직 추가
                 sseService.sendToUser(dto.getReceiverId(), Map.of(
