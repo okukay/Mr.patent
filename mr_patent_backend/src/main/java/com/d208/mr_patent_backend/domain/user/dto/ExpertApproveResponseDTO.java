@@ -21,6 +21,6 @@ public class ExpertApproveResponseDTO {
     private LocalDate expertGetDate;
     private Integer expertStatus;
     private String expertLicense;
-    private List<String> expertCategories;
+    private List<ExpertCategoryDTO> expertCategories;
     private LocalDateTime expertCreatedAt;
 }

@@ -253,8 +253,12 @@ public class UserService {
             Expert expert = expertRepository.findByUser(user)
                     .orElseThrow(() -> new RuntimeException("변리사 정보를 찾을 수 없습니다."));
 
-            List<String> categories = expert.getExpertCategory().stream()
-                    .map(ec -> ec.getCategory().getCategoryName())
+            List<ExpertCategoryDTO> categories = expert.getExpertCategory().stream()
+                    .map(ec -> {
+                        ExpertCategoryDTO dto = new ExpertCategoryDTO();
+                        dto.setCategoryName(ec.getCategory().getCategoryName());
+                        return dto;
+                    })
                     .collect(Collectors.toList());
 
             builder

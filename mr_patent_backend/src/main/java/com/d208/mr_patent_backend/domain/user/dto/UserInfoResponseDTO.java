@@ -29,5 +29,5 @@ public class UserInfoResponseDTO {
     private String expertAddress;
     private String expertPhone;
     private LocalDate expertGetDate;
-    private List<String> expertCategories;
+    private List<ExpertCategoryDTO> expertCategories;
 }

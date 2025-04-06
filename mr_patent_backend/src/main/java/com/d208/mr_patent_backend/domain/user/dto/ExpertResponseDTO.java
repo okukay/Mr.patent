@@ -15,11 +15,11 @@ import java.util.List;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class ExpertResponseDTO {
     private Integer expertId;
-    private String userName;        // 변리사 이름
-    private String userEmail;       // 변리사 이메일
-    private String expertDescription; // 변리사 소개
-    private String expertAddress;     // 사무실 주소
-    private String expertPhone;       // 연락처
-    private LocalDate expertGetDate;  // 자격 취득일
-    private List<String> expertCategories; // 전문 분야 카테고리들
+    private String userName;
+    private String userEmail;
+    private String expertDescription;
+    private String expertAddress;
+    private String expertPhone;
+    private LocalDate expertGetDate;
+    private List<ExpertCategoryDTO> expertCategories;
 }

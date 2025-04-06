@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.d208.mr_patent_backend.domain.user.dto.ExpertApproveResponseDTO;
+import com.d208.mr_patent_backend.domain.user.dto.ExpertCategoryDTO;
 import com.d208.mr_patent_backend.domain.user.entity.Expert;
 import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
 
@@ -40,8 +41,12 @@ public class ExpertApproveService {
     private ExpertApproveResponseDTO convertToDTO(Expert expert) {
         try {
 
-            List<String> categories = expert.getExpertCategory().stream()
-                    .map(ec -> ec.getCategory().getCategoryName())
+            List<ExpertCategoryDTO> categories = expert.getExpertCategory().stream()
+                    .map(ec -> {
+                        ExpertCategoryDTO dto = new ExpertCategoryDTO();
+                        dto.setCategoryName(ec.getCategory().getCategoryName());
+                        return dto;
+                    })
                     .collect(Collectors.toList());
 
             return ExpertApproveResponseDTO.builder()

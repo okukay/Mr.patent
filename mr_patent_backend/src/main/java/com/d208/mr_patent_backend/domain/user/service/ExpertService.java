@@ -2,6 +2,7 @@ package com.d208.mr_patent_backend.domain.user.service;
 
 import com.d208.mr_patent_backend.domain.user.dto.ExpertResponseDTO;
 import com.d208.mr_patent_backend.domain.user.dto.ExpertDetailResponseDTO;
+import com.d208.mr_patent_backend.domain.user.dto.ExpertCategoryDTO;
 import com.d208.mr_patent_backend.domain.user.entity.Expert;
 import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
 import com.d208.mr_patent_backend.domain.user.entity.User;
@@ -27,8 +28,12 @@ public class ExpertService {
 
     private ExpertResponseDTO convertToDTO(Expert expert) {
         // 카테고리 이름 리스트 추출
-        List<String> categories = expert.getExpertCategory().stream()
-                .map(ec -> ec.getCategory().getCategoryName())
+        List<ExpertCategoryDTO> categories = expert.getExpertCategory().stream()
+                .map(ec -> {
+                    ExpertCategoryDTO dto = new ExpertCategoryDTO();
+                    dto.setCategoryName(ec.getCategory().getCategoryName());
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         return ExpertResponseDTO.builder()
@@ -54,8 +59,12 @@ public class ExpertService {
         User user = expert.getUser();
 
         // 카테고리 이름 리스트 추출
-        List<String> categories = expert.getExpertCategory().stream()
-                .map(ec -> ec.getCategory().getCategoryName())
+        List<ExpertCategoryDTO> categories = expert.getExpertCategory().stream()
+                .map(ec -> {
+                    ExpertCategoryDTO dto = new ExpertCategoryDTO();
+                    dto.setCategoryName(ec.getCategory().getCategoryName());
+                    return dto;
+                })
                 .collect(Collectors.toList());
 
         return ExpertDetailResponseDTO.builder()
