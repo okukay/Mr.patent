@@ -96,7 +96,7 @@ public class UserService {
         // Expert 엔티티 생성 및 저장
         Expert expert = new Expert();
         expert.setUser(user);
-        expert.setExpertIdentification(requestDto.getExpertIdentification());
+        expert.setExpertIdentification(passwordEncoder.encode(requestDto.getExpertIdentification()));
         expert.setExpertDescription(requestDto.getExpertDescription());
         expert.setExpertAddress(requestDto.getExpertAddress());
         expert.setExpertPhone(requestDto.getExpertPhone());
@@ -258,11 +258,12 @@ public class UserService {
                     .collect(Collectors.toList());
 
             builder
+                    .expertId(expert.getExpertId())
                     .expertDescription(expert.getExpertDescription())
                     .expertAddress(expert.getExpertAddress())
                     .expertPhone(expert.getExpertPhone())
                     .expertGetDate(expert.getExpertGetDate())
-                    .categories(categories);
+                    .expertCategories(categories);
         }
 
         return builder.build();

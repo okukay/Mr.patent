@@ -45,14 +45,14 @@ pipeline {
             steps {
                 echo '====== 백엔드 배포 시작 ======'
                 // 백업 디렉토리 생성
-                sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/backups'
+//                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/backups'
                 
                 // 빌드 디렉토리 생성 및 JAR 파일 복사
                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
                 sh 'cp -f mr_patent_backend/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/build/libs/ || true'
                 
                 // 백업 생성
-                sh 'cp -f ${DOCKER_COMPOSE_DIR}/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/backups/backup-$(date +%Y%m%d%H%M%S)-${BRANCH_NAME}.jar || true'
+//                 sh 'cp -f ${DOCKER_COMPOSE_DIR}/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/backups/backup-$(date +%Y%m%d%H%M%S)-${BRANCH_NAME}.jar || true'
                 
                 // 도커 컨테이너 재시작
                 sh '''

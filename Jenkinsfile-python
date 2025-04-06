@@ -32,11 +32,23 @@ pipeline {
             steps {
                 echo '====== FastAPI 배포 시작 ======'
                 sh '''
+                    # 기존 컨테이너 강제 제거
+                    docker rm -f mr_patent_fastapi || true
+                    
+                    # 디렉토리 생성 및 파일 복사
+                    mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi
+                    cp -rf mr_patent_bigdata/* ${DOCKER_COMPOSE_DIR}/fastapi/ || true
+                    
+                    # 디버깅을 위한 내용 보기
+                    ls -la ${DOCKER_COMPOSE_DIR}/fastapi/
+                    ls -la mr_patent_bigdata/app || true
+                    
+                    # 도커 컨테이너 재빌드 및 시작
                     cd ${DOCKER_COMPOSE_DIR} && 
                     docker-compose stop fastapi || true
                     docker-compose rm -f fastapi || true
-                    docker-compose build --no-cache fastapi || true
-                    docker-compose up -d fastapi || true
+                    docker-compose build --no-cache fastapi
+                    docker-compose up -d fastapi
                     docker image prune -f || true
                 '''
                 echo '====== FastAPI 배포 완료 ======'
