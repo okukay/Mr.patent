@@ -263,7 +263,7 @@ public class UserService {
                     .expertAddress(expert.getExpertAddress())
                     .expertPhone(expert.getExpertPhone())
                     .expertGetDate(expert.getExpertGetDate())
-                    .categories(categories);
+                    .expertCategories(categories);
         }
 
         return builder.build();
