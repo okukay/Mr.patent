@@ -11,6 +11,7 @@ import com.d208.mr_patent_backend.domain.chat.service.SseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -60,8 +61,9 @@ public class ChatRoomController {
     }
 
     @Operation(summary = "SSE 연결")
-    @GetMapping("/subscribe/{userId}")
+    @GetMapping(value = "/subscribe/{userId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(@PathVariable Integer userId) {
         return sseService.subscribe(userId);
     }
+
 }
