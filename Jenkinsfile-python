@@ -10,7 +10,6 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
-                // 빌드 시작 시 커밋 정보 저장
                 script {
                     env.GIT_AUTHOR = sh(script: "git show -s --pretty=%an", returnStdout: true).trim()
                     env.GIT_EMAIL = sh(script: "git show -s --pretty=%ae", returnStdout: true).trim()
@@ -22,7 +21,14 @@ pipeline {
             steps {
                 echo '====== FastAPI 빌드 시작 ======'
                 dir('mr_patent_bigdata') {
-                    sh 'ls -la || true'
+                    sh '''
+                        echo "현재 디렉토리 내용:"
+                        ls -la
+                        echo "app 디렉토리 내용:"
+                        ls -la app
+                        echo "Pipfile 내용:"
+                        cat Pipfile
+                    '''
                     echo '====== FastAPI 빌드 완료 ======'
                 }
             }
@@ -32,16 +38,27 @@ pipeline {
             steps {
                 echo '====== FastAPI 배포 시작 ======'
                 sh '''
+                    # 상세 디버깅 로그 추가
+                    echo "소스 디렉토리 mr_patent_bigdata 내용:"
+                    ls -la mr_patent_bigdata
+                    
+                    echo "대상 디렉토리 ${DOCKER_COMPOSE_DIR}/fastapi 현재 내용:"
+                    ls -la ${DOCKER_COMPOSE_DIR}/fastapi || true
+                    
                     # 기존 컨테이너 강제 제거
                     docker rm -f mr_patent_fastapi || true
                     
-                    # 디렉토리 생성 및 파일 복사
+                    # 디렉토리 생성 및 파일 복사 (더 구체적으로)
                     mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi
-                    cp -rf mr_patent_bigdata/* ${DOCKER_COMPOSE_DIR}/fastapi/ || true
                     
-                    # 디버깅을 위한 내용 보기
-                    ls -la ${DOCKER_COMPOSE_DIR}/fastapi/
-                    ls -la mr_patent_bigdata/app || true
+                    # 특정 파일/디렉토리 개별 복사
+                    cp -f mr_patent_bigdata/Pipfile ${DOCKER_COMPOSE_DIR}/fastapi/
+                    cp -f mr_patent_bigdata/Pipfile.lock ${DOCKER_COMPOSE_DIR}/fastapi/
+                    cp -rf mr_patent_bigdata/app ${DOCKER_COMPOSE_DIR}/fastapi/
+                    cp -rf mr_patent_bigdata/models ${DOCKER_COMPOSE_DIR}/fastapi/
+                    
+                    echo "복사 후 대상 디렉토리 내용:"
+                    ls -la ${DOCKER_COMPOSE_DIR}/fastapi
                     
                     # 도커 컨테이너 재빌드 및 시작
                     cd ${DOCKER_COMPOSE_DIR} && 
