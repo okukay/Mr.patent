@@ -79,6 +79,7 @@ public class ChatRoomService {
 
     // userId에 따른 채팅방 목록 조회
     public List<ChatListDto> getChatRoomsByUserId(Integer userId) {
+
         List<ChatRoom> chatRooms = chatRoomRepository.findByUserIdAndLastMessageIsNotNull(userId);
 
         //(리스트 조회한걸 -> Dto 형식으로 변환)

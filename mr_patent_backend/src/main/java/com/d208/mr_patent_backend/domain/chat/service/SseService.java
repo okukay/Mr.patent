@@ -7,10 +7,14 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class SseService {
     private final Map<Integer, SseEmitter> emitters = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1); // 1개의 스레드로 예약 작업 실행
 
     // SSE 연결 확인( true or false)
     public boolean isConnected(Integer userId) {
@@ -42,15 +46,38 @@ public class SseService {
 //        emitter.onTimeout(() -> emitters.remove(userId));
 //        emitter.onError(e -> emitters.remove(userId));
 
-//        try {
-//            System.out.println("[SSE] try to send connect message");
-//            emitter.send(SseEmitter.event().name("connect").data("connected"));
-//            System.out.println("[SSE] message sent successfully");
-//        } catch (IOException e) {
-//            System.out.println("[SSE] IOException 발생: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-        System.out.println("연결시 확인 메세지 전송완료");
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("connect")
+                    .data(Map.of("status", "connected")));
+            System.out.println("✅ 초기 연결 메시지 전송 완료");
+        } catch (IOException e) {
+            e.printStackTrace();
+            emitter.completeWithError(e);
+        }
+
+        System.out.println("연결시 첫번쨰확인 메세지 전송완료");
+//        scheduler.schedule(() -> {
+//            try {
+//                if (emitters.containsKey(userId)) { // 여전히 연결된 상태일 때만 전송
+//                    emitter.send(SseEmitter.event()
+//                            .name("chat-update")
+//                            .data(Map.of(
+//                                    "roomId", "8224c9c2-424f-45e4-8d27-93d21b9bcabd",
+//                                    "userName","수닝모",
+//                                    "lastMessage", "test",
+//                                    "unreadCount", 1
+//                            )));
+//                    System.out.println("🕒 5초 후 추가 메시지 전송 완료");
+//                }
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                emitter.completeWithError(e);
+//            }
+//        }, 5, TimeUnit.SECONDS);
+//
+//        System.out.println("연결시 모든 확인 메시지 전송 완료");
+
         return emitter;
     }
 
