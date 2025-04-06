@@ -26,7 +26,7 @@ public class Expert {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "expert_identification", length = 15, nullable = false)
+    @Column(name = "expert_identification", length = 255, nullable = false)
     private String expertIdentification;
 
     @Column(name = "expert_description", length = 500, nullable = false)
