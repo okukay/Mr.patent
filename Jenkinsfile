@@ -62,74 +62,33 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '====== 백엔드 배포 시작 ======'
-                // 빌드 디렉토리 생성 및 JAR 파일 복사
+
+                // 빌드 결과 복사
                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
                 sh 'cp -f mr_patent_backend/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/build/libs/ || true'
-                // Firebase 키 파일 복사
+
+                // Firebase 키 복사
                 withCredentials([file(credentialsId: 'firebase_key', variable: 'FIREBASE_KEY_FILE')]) {
-                    // Firebase 키 디렉토리 생성 및 파일 복사
                     sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/config/firebase'
                     sh 'cp -f ${FIREBASE_KEY_FILE} ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
                     sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
                 }
-                
-                // 도커 컨테이너 재시작 (절대 경로 사용)
-                // sh '''
-                //     cd ${DOCKER_COMPOSE_DIR}
-                //     ${DOCKER_COMPOSE} -f ${DOCKER_COMPOSE_DIR}/docker-compose.yml stop backend || true
-                //     ${DOCKER_COMPOSE} -f ${DOCKER_COMPOSE_DIR}/docker-compose.yml rm -f backend || true
-                //     ${DOCKER_COMPOSE} -f ${DOCKER_COMPOSE_DIR}/docker-compose.yml build --no-cache backend
-                //     ${DOCKER_COMPOSE} -f ${DOCKER_COMPOSE_DIR}/docker-compose.yml up -d --no-deps backend
-                //     docker image prune -f || true
-                // '''
 
+                sh 'cp -f .env ${DOCKER_COMPOSE_DIR}/.env || true'
+
+                // 도커 재배포 (기존 docker-compose.yml 사용)
                 sh '''
-                    # 작업 공간에 빌드 디렉토리 생성 및 JAR 파일 복사
-                    mkdir -p ${WORKSPACE}/build/libs
-                    cp -f mr_patent_backend/build/libs/*.jar ${WORKSPACE}/build/libs/
-                    
-                    # Dockerfile 생성
-                    cat > ${WORKSPACE}/Dockerfile << 'EOL'
-FROM openjdk:17-jdk-slim
-WORKDIR /app
-COPY build/libs/*.jar app.jar
-EXPOSE 8080
-CMD ["java", "-Dfirebase.config.path=file:/app/config/firebase/firebase-service-account.json", "-jar", "app.jar"]
-EOL
-                    
-                    # Docker Compose 파일 생성
-                    cat > ${WORKSPACE}/docker-compose.yml << 'EOL'
-version: '3.8'
-services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: mr_patent_backend
-    command: ["java", "-Dfirebase.config.path=file:/app/config/firebase/firebase-service-account.json", "-jar", "app.jar", "--spring.config.location=file:/app/config/"]
-    volumes:
-      - /home/ubuntu/mr_patent/config:/app/config
-    ports:
-      - "8080:8080"
-    networks:
-      - app-network
-    
-networks:
-  app-network:
-    external: true
-EOL
-                    
-                    # Docker Compose 실행
-                    ${DOCKER_COMPOSE} -f ${WORKSPACE}/docker-compose.yml stop backend || true
-                    ${DOCKER_COMPOSE} -f ${WORKSPACE}/docker-compose.yml rm -f backend || true
-                    ${DOCKER_COMPOSE} -f ${WORKSPACE}/docker-compose.yml build --no-cache backend
-                    ${DOCKER_COMPOSE} -f ${WORKSPACE}/docker-compose.yml up -d --no-deps backend
+                    cd ${DOCKER_COMPOSE_DIR}
+                    ${DOCKER_COMPOSE} -f docker-compose.yml stop backend || true
+                    ${DOCKER_COMPOSE} -f docker-compose.yml rm -f backend || true
+                    ${DOCKER_COMPOSE} -f docker-compose.yml build --no-cache backend
+                    ${DOCKER_COMPOSE} -f docker-compose.yml up -d --no-deps backend
                     docker image prune -f || true
                 '''
-                
                 echo '====== 백엔드 배포 완료 ======'
             }
         }
+
         
         stage('Notification') {
             steps {
