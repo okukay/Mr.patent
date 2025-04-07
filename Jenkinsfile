@@ -74,7 +74,16 @@ pipeline {
                     sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
                 }
 
-                sh 'cp -f .env ${DOCKER_COMPOSE_DIR}/.env || true'
+                sh 'pwd'
+                sh 'ls -al'
+                sh 'ls -al .env' 
+
+                sh 'cp -f /home/ubuntu/env-files/mr_patent.env /home/ubuntu/mr_patent/.env || true'
+
+                sh 'echo "현재 작업 디렉토리 확인:" && pwd'
+                sh 'echo ".env 파일 있는지 확인:" && ls -al .env || echo "없음"'
+                sh 'echo "docker-compose.yml 위치 확인:" && ls -al /home/ubuntu/mr_patent/docker-compose.yml || echo "없음"'
+
 
                 // 도커 재배포 (기존 docker-compose.yml 사용)
                 sh '''
