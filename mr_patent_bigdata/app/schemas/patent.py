@@ -78,3 +78,6 @@ class PatentPublicResponse(PatentPublicBase):
     
     class Config:
         orm_mode = True
+
+class FolderUpdate(BaseModel):
+    user_patent_folder_title: str

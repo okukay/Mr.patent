@@ -29,8 +29,7 @@ async def get_detailed_comparison(patent_draft_id: int):  # user_patent_id에서
     
     if not comparisons:
         return {
-            "data": {"comparisons": []},
-            "timestamp": get_current_timestamp()
+            "data": {"comparisons": []}
         }
     
     # 결과 포맷팅
@@ -60,6 +59,5 @@ async def get_detailed_comparison(patent_draft_id: int):  # user_patent_id에서
     return {
         "data": {
             "comparisons": result_comparisons
-        },
-        "timestamp": get_current_timestamp()
+        }
     }

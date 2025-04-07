@@ -42,8 +42,7 @@ async def get_patent_draft(patent_draft_id: int):
             status_code=404,
             detail={
                 "code": "DRAFT_NOT_FOUND",
-                "message": "해당 ID의 특허 초안을 찾을 수 없습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "해당 ID의 특허 초안을 찾을 수 없습니다."
             }
         )
     
@@ -57,8 +56,7 @@ async def get_patent_draft(patent_draft_id: int):
         draft_dict["updated_at"] = draft_dict.pop("patent_draft_updated_at").isoformat() + 'Z'
     
     return {
-        "data": draft_dict,
-        "timestamp": get_current_timestamp()
+        "data": draft_dict
     }
 
 @router.post("/folder/{user_patent_folder_id}/draft", response_model=Dict[str, Any])
@@ -83,8 +81,7 @@ async def create_or_update_draft(
                 status_code=404,
                 detail={
                     "code": "FOLDER_NOT_FOUND",
-                    "message": "지정한 폴더를 찾을 수 없습니다.",
-                    "timestamp": get_current_timestamp()
+                    "message": "지정한 폴더를 찾을 수 없습니다."
                 }
             )
         
@@ -180,8 +177,7 @@ async def create_or_update_draft(
                 "data": {
                     "patent_draft_id": existing_draft["patent_draft_id"],
                     "created_at": now.isoformat().replace('+00:00', 'Z')
-                },
-                "timestamp": get_current_timestamp()
+                }
             }
         else:
             # 새 초안 생성
@@ -244,8 +240,7 @@ async def create_or_update_draft(
                 "data": {
                     "patent_draft_id": draft_id,
                     "created_at": now.isoformat().replace('+00:00', 'Z')
-                },
-                "timestamp": get_current_timestamp()
+                }
             }
     except Exception as e:
         logger.error(f"특허 초안 저장 중 오류: {str(e)}")
@@ -253,8 +248,7 @@ async def create_or_update_draft(
             status_code=500,
             detail={
                 "code": "INTERNAL_ERROR",
-                "message": f"특허 초안 저장 중 오류가 발생했습니다: {str(e)}",
-                "timestamp": get_current_timestamp()
+                "message": f"특허 초안 저장 중 오류가 발생했습니다: {str(e)}"
             }
         )
     
@@ -278,8 +272,7 @@ async def get_recent_drafts(
         
         if not folders:
             return {
-                "data": {"patent_drafts": []},
-                "timestamp": get_current_timestamp()
+                "data": {"patent_drafts": []}
             }
         
         # 폴더 ID 목록 추출
@@ -315,8 +308,7 @@ async def get_recent_drafts(
             result_drafts.append(draft_dict)
         
         return {
-            "data": {"patent_drafts": result_drafts},
-            "timestamp": get_current_timestamp()
+            "data": {"patent_drafts": result_drafts}
         }
         
     except Exception as e:
@@ -324,8 +316,7 @@ async def get_recent_drafts(
         raise HTTPException(
             status_code=500,
             detail={
-                "message": f"서버 오류가 발생했습니다: {str(e)}",
-                "timestamp": get_current_timestamp()
+                "message": f"서버 오류가 발생했습니다: {str(e)}"
             }
         )
 
@@ -348,8 +339,7 @@ async def export_patent_draft_pdf(patent_draft_id: int):
             status_code=404,
             detail={
                 "code": "DRAFT_NOT_FOUND",
-                "message": "해당 특허 초안을 찾을 수 없습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "해당 특허 초안을 찾을 수 없습니다."
             }
         )
     

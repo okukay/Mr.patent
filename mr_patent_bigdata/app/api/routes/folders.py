@@ -3,7 +3,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 
 from app.core.database import database
-from app.schemas.patent import FolderCreate, FolderResponse, PatentDraftResponse
+from app.schemas.patent import FolderCreate, FolderResponse, PatentDraftResponse, FolderUpdate
 
 router = APIRouter(prefix="/fastapi", tags=["folders"])
 
@@ -27,8 +27,7 @@ async def get_user_folders(user_id: int):
     
     if not folders:
         return {
-            "data": {"folders": []},
-            "timestamp": get_current_timestamp()
+            "data": {"folders": []}
         }
     
     result = []
@@ -40,8 +39,7 @@ async def get_user_folders(user_id: int):
         })
     
     return {
-        "data": {"folders": result},
-        "timestamp": get_current_timestamp()
+        "data": {"folders": result}
     }
 
 @router.post("/folder", response_model=Dict[str, Any])
@@ -79,16 +77,14 @@ async def create_folder(folder: FolderCreate):
                 "user_patent_folder_id": folder_id,
                 "user_patent_folder_title": folder.user_patent_folder_title,
                 "created_at": now.isoformat().replace('+00:00', 'Z')
-            },
-            "timestamp": get_current_timestamp()
+            }
         }
     except Exception as e:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "INVALID_INPUT",
-                "message": "폴더 생성 중 오류가 발생했습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "폴더 생성 중 오류가 발생했습니다."
             }
         )
 
@@ -110,8 +106,7 @@ async def get_folder_patents(folder_id: int):
             status_code=404,
             detail={
                 "code": "FOLDER_NOT_FOUND",
-                "message": "지정한 폴더를 찾을 수 없습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "지정한 폴더를 찾을 수 없습니다."
             }
         )
     
@@ -129,8 +124,7 @@ async def get_folder_patents(folder_id: int):
     
     if not patents:
         return {
-            "data": {"patents": []},
-            "timestamp": get_current_timestamp()
+            "data": {"patents": []}
         }
     
     result = []
@@ -142,8 +136,7 @@ async def get_folder_patents(folder_id: int):
         })
     
     return {
-        "data": {"patents": result},
-        "timestamp": get_current_timestamp()
+        "data": {"patents": result}
     }
 
 @router.delete("/folder/{folder_id}", response_model=Dict[str, str])
@@ -225,8 +218,7 @@ async def get_folder_reports(user_patent_folder_id: int):
     
     if not reports:
         return {
-            "data": {"reports": []},
-            "timestamp": get_current_timestamp()
+            "data": {"reports": []}
         }
     
     # 결과 포맷팅
@@ -242,6 +234,76 @@ async def get_folder_reports(user_patent_folder_id: int):
     return {
         "data": {
             "reports": result_reports
-        },
-        "timestamp": get_current_timestamp()
+        }
     }
+
+@router.patch("/folder/{folder_id}", response_model=Dict[str, Any])
+async def update_folder_name(
+    folder_id: int,
+    folder_data: FolderUpdate
+):
+    """특허 폴더명 수정"""
+    try:
+        # 폴더 존재 확인
+        folder_query = """
+        SELECT * FROM user_patent_folder 
+        WHERE user_patent_folder_id = :folder_id
+        """
+        
+        folder = await database.fetch_one(
+            query=folder_query,
+            values={"folder_id": folder_id}
+        )
+        
+        if not folder:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "FOLDER_NOT_FOUND",
+                    "message": "지정한 폴더를 찾을 수 없습니다."
+                }
+            )
+        
+        # 폴더명 업데이트
+        update_query = """
+        UPDATE user_patent_folder
+        SET user_patent_folder_title = :title,
+            user_patent_folder_updated_at = :updated_at
+        WHERE user_patent_folder_id = :folder_id
+        """
+        
+        now = datetime.now(timezone.utc)
+        await database.execute(
+            query=update_query,
+            values={
+                "title": folder_data.user_patent_folder_title,
+                "updated_at": now,
+                "folder_id": folder_id
+            }
+        )
+        
+        # 업데이트된 폴더 정보 조회
+        updated_folder = await database.fetch_one(
+            query=folder_query,
+            values={"folder_id": folder_id}
+        )
+        
+        # 결과 포맷팅
+        result = dict(updated_folder)
+        result["created_at"] = result.pop("user_patent_folder_created_at").isoformat() + 'Z'
+        result["updated_at"] = result.pop("user_patent_folder_updated_at").isoformat() + 'Z'
+        
+        return {
+            "data": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "INTERNAL_ERROR",
+                "message": f"폴더명 수정 중 오류가 발생했습니다: {str(e)}"
+            }
+        )

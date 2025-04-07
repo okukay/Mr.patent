@@ -47,8 +47,7 @@ async def get_patent_public(patent_application_number: str):
                     "patent_id": patent_public["patent_id"],
                     "application_number": patent_application_number,
                     "parsed_data": parsed_data
-                },
-                "timestamp": get_current_timestamp()
+                }
             }
         
         # 특허 ID 조회
@@ -70,8 +69,7 @@ async def get_patent_public(patent_application_number: str):
                 "error": {
                     "code": "PATENT_NOT_FOUND",
                     "message": "해당 출원번호의 특허를 찾을 수 없습니다."
-                },
-                "timestamp": get_current_timestamp()
+                }
             }
         
         # KIPRIS API를 통해 공고전문 정보 가져오기
@@ -85,8 +83,7 @@ async def get_patent_public(patent_application_number: str):
                 "error": {
                     "code": "KIPRIS_DATA_NOT_FOUND",
                     "message": "KIPRIS에서 해당 특허 정보를 찾을 수 없습니다."
-                },
-                "timestamp": get_current_timestamp()
+                }
             }
         
         # PDF 다운로드 및 텍스트 추출 (OCR + 파싱)
@@ -100,8 +97,7 @@ async def get_patent_public(patent_application_number: str):
                 "error": {
                     "code": "PDF_DOWNLOAD_FAILED",
                     "message": "특허 공고전문 PDF 다운로드에 실패했습니다."
-                },
-                "timestamp": get_current_timestamp()
+                }
             }
         
         # OCR 처리 및 문서 파싱 
@@ -158,8 +154,7 @@ async def get_patent_public(patent_application_number: str):
                 "patent_id": patent["patent_id"],
                 "application_number": patent_application_number,
                 "parsed_data": parsed_data
-            },
-            "timestamp": get_current_timestamp()
+            }
         }
         
     except Exception as e:
@@ -178,6 +173,5 @@ async def get_patent_public(patent_application_number: str):
             "error": {
                 "code": "SERVER_ERROR",
                 "message": f"서버 오류가 발생했습니다: {str(e)}"
-            },
-            "timestamp": get_current_timestamp()
+            }
         }

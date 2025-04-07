@@ -80,8 +80,7 @@ async def run_similarity_check(patent_draft_id: int, background_tasks: Backgroun
             status_code=404,
             detail={
                 "code": "DRAFT_NOT_FOUND",
-                "message": "해당 ID의 특허 초안을 찾을 수 없습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "해당 ID의 특허 초안을 찾을 수 없습니다."
             }
         )
     
@@ -120,8 +119,7 @@ async def run_similarity_check(patent_draft_id: int, background_tasks: Backgroun
         "data": {
             "similarity_id": similarity_id,
             "status": "ANALYZING"
-        },
-        "timestamp": get_current_timestamp()
+        }
     }
 
 # 새로 추가: 적합도 결과 조회 API
@@ -146,8 +144,7 @@ async def get_fitness_result(patent_draft_id: int):
             status_code=404,
             detail={
                 "code": "FITNESS_NOT_FOUND",
-                "message": "해당 특허 초안의 적합도 검사 결과가 없습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "해당 특허 초안의 적합도 검사 결과가 없습니다."
             }
         )
     
@@ -169,8 +166,7 @@ async def get_fitness_result(patent_draft_id: int):
             "is_corrected": fitness_dict["fitness_is_corrected"],
             "details": fitness_good_content,
             "created_at": fitness_dict["fitness_created_at"]
-        },
-        "timestamp": get_current_timestamp()
+        }
     }
 
 
@@ -194,8 +190,7 @@ async def get_similarity_result(patent_draft_id: int):
             status_code=404,
             detail={
                 "code": "DRAFT_NOT_FOUND",
-                "message": "해당 ID의 특허 초안을 찾을 수 없습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "해당 ID의 특허 초안을 찾을 수 없습니다."
             }
         )
     
@@ -217,8 +212,7 @@ async def get_similarity_result(patent_draft_id: int):
             status_code=404,
             detail={
                 "code": "SIMILARITY_NOT_FOUND",
-                "message": "해당 특허 초안의 유사도 분석 결과가 없습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "해당 특허 초안의 유사도 분석 결과가 없습니다."
             }
         )
     
@@ -292,8 +286,7 @@ async def get_similarity_result(patent_draft_id: int):
             "similar_patents": similar_patents_data,
             "comparisons": comparisons_data,
             "created_at": similarity_dict["similarity_created_at"]
-        },
-        "timestamp": get_current_timestamp()
+        }
     }
 
 async def perform_fitness_check(patent_draft_id: int, draft, now: datetime) -> Dict:
