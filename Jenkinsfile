@@ -62,6 +62,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '====== 백엔드 배포 시작 ======'
+                // 🔽 여기에 추가
+                sh 'cp /home/ubuntu/mr_patent/config/.env .env || echo ".env not found, skipping..."'
 
                 // 빌드 결과 복사
                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
@@ -77,8 +79,6 @@ pipeline {
                 sh 'pwd'
                 sh 'ls -al'
                 sh 'ls -al .env' 
-
-                sh 'cp -f /home/ubuntu/env-files/mr_patent.env /home/ubuntu/mr_patent/.env || true'
 
                 sh 'echo "현재 작업 디렉토리 확인:" && pwd'
                 sh 'echo ".env 파일 있는지 확인:" && ls -al .env || echo "없음"'
