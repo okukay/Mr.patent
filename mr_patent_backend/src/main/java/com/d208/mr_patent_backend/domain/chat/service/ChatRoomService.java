@@ -85,10 +85,6 @@ public class ChatRoomService {
 
         List<ChatRoom> chatRooms = chatRoomRepository.findByUserIdAndLastMessageIsNotNull(userId);
 
-        Expert expert = expertRepository.findByUser_UserId(userId); //메세지 보낸userId로 expert 인지 확인
-        Integer expertId = expert != null ? expert.getExpertId() : -1; // 맞으면 expertId 추출 아니면 null
-
-
         //(리스트 조회한걸 -> Dto 형식으로 변환)
         //room은 chatRooms 리스트 안의 각각의 요소
         return chatRooms.stream()
@@ -103,10 +99,14 @@ public class ChatRoomService {
                     if (userImage != null && !userImage.isBlank()) {
                         downUrl = s3Service.generatePresignedDownloadUrl(userImage);
                     }
+//                    String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+                    
+                    // receiverId를 가지고 expert인지 확인하고 expertId 반환
+                    Integer receiverId = room.getReceiverId();
+                    Expert expert = expertRepository.findByUser_UserId(receiverId); //메세지 보낸userId로 expert 인지 확인
+                    Integer expertId = expert != null ? expert.getExpertId() : -1; // 맞으면 expertId 추출 아니면 null
 
-
-
-//                   String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+//
 
                     return ChatListDto.builder()
                             .userId(room.getUserId())         // 로그인한 사용자 ID
