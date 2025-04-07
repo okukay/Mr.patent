@@ -62,41 +62,39 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '====== 백엔드 배포 시작 ======'
-                // 🔽 여기에 추가
-                sh 'cp /home/ubuntu/mr_patent/.env .env || echo ".env not found, skipping..."'
+
+                // .env 복사
+                sh 'cp /home/ubuntu/mr_patent/.env /home/ubuntu/mr_patent/.env || echo ".env not found, skipping..."'
 
                 // 빌드 결과 복사
-                sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
-                sh 'cp -f mr_patent_backend/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/build/libs/ || true'
+                sh 'mkdir -p /home/ubuntu/mr_patent/build/libs/'
+                sh 'cp -f mr_patent_backend/build/libs/*.jar /home/ubuntu/mr_patent/build/libs/ || true'
 
                 // Firebase 키 복사
                 withCredentials([file(credentialsId: 'firebase_key', variable: 'FIREBASE_KEY_FILE')]) {
-                    sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/config/firebase'
-                    sh 'cp -f ${FIREBASE_KEY_FILE} ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
-                    sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
+                    sh 'mkdir -p /home/ubuntu/mr_patent/config/firebase'
+                    sh 'cp -f ${FIREBASE_KEY_FILE} /home/ubuntu/mr_patent/config/firebase/firebase-service-account.json'
+                    sh 'chmod 600 /home/ubuntu/mr_patent/config/firebase/firebase-service-account.json'
                 }
 
-                sh 'pwd'
-                sh 'ls -al'
-                sh 'ls -al .env' 
-
+                // 디버깅 정보 출력
                 sh 'echo "현재 작업 디렉토리 확인:" && pwd'
-                sh 'echo ".env 파일 있는지 확인:" && ls -al .env || echo "없음"'
+                sh 'echo ".env 파일 있는지 확인:" && ls -al /home/ubuntu/mr_patent/.env || echo "없음"'
                 sh 'echo "docker-compose.yml 위치 확인:" && ls -al /home/ubuntu/mr_patent/docker-compose.yml || echo "없음"'
 
-
-                // 도커 재배포 (기존 docker-compose.yml 사용)
+                // 도커 재배포
                 sh '''
-                    cd ${DOCKER_COMPOSE_DIR}
-                    ${DOCKER_COMPOSE} -f docker-compose.yml stop backend || true
-                    ${DOCKER_COMPOSE} -f docker-compose.yml rm -f backend || true
-                    ${DOCKER_COMPOSE} -f docker-compose.yml build --no-cache backend
-                    ${DOCKER_COMPOSE} -f docker-compose.yml up -d --no-deps backend
+                    cd /home/ubuntu/mr_patent
+                    docker-compose -f docker-compose.yml stop backend || true
+                    docker-compose -f docker-compose.yml rm -f backend || true
+                    docker-compose -f docker-compose.yml build --no-cache backend
+                    docker-compose -f docker-compose.yml up -d --no-deps backend
                     docker image prune -f || true
                 '''
                 echo '====== 백엔드 배포 완료 ======'
             }
         }
+
 
         
         stage('Notification') {
