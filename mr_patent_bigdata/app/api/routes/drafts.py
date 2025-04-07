@@ -2,6 +2,13 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 import logging
+from fastapi.responses import FileResponse
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+import tempfile
+import os
 
 from app.core.database import database
 from app.schemas.patent import PatentDraftCreate, PatentDraftResponse
@@ -250,3 +257,169 @@ async def create_or_update_draft(
                 "timestamp": get_current_timestamp()
             }
         )
+    
+@router.get("/drafts/recent", response_model=Dict[str, Any])
+async def get_recent_drafts(
+    user_id: int, 
+    limit: int = Query(5, ge=1, le=50, description="조회할 최대 항목 수")
+):
+    """사용자의 최근 특허 초안 목록 조회 (최대 5개)"""
+    try:
+        # 사용자 폴더 확인
+        folder_query = """
+        SELECT user_patent_folder_id FROM user_patent_folder 
+        WHERE user_id = :user_id
+        """
+        
+        folders = await database.fetch_all(
+            query=folder_query,
+            values={"user_id": user_id}
+        )
+        
+        if not folders:
+            return {
+                "data": {"patent_drafts": []},
+                "timestamp": get_current_timestamp()
+            }
+        
+        # 폴더 ID 목록 추출
+        folder_ids = [folder["user_patent_folder_id"] for folder in folders]
+        folder_ids_str = ",".join(map(str, folder_ids))
+        
+        # 최근 특허 초안 조회
+        draft_query = f"""
+        SELECT 
+            patent_draft_id, 
+            patent_draft_title, 
+            patent_draft_summary,
+            patent_draft_updated_at as updated_at
+        FROM patent_draft
+        WHERE user_patent_folder_id IN ({folder_ids_str})
+        ORDER BY patent_draft_updated_at DESC
+        LIMIT :limit
+        """
+        
+        drafts = await database.fetch_all(
+            query=draft_query,
+            values={"limit": limit}
+        )
+        
+        # 결과 포맷팅
+        result_drafts = []
+        for draft in drafts:
+            draft_dict = dict(draft)
+            # 날짜 포맷 변환
+            if "updated_at" in draft_dict:
+                draft_dict["updated_at"] = draft_dict["updated_at"].isoformat() + 'Z'
+            
+            result_drafts.append(draft_dict)
+        
+        return {
+            "data": {"patent_drafts": result_drafts},
+            "timestamp": get_current_timestamp()
+        }
+        
+    except Exception as e:
+        logger.error(f"최근 특허 초안 조회 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": f"서버 오류가 발생했습니다: {str(e)}",
+                "timestamp": get_current_timestamp()
+            }
+        )
+
+@router.get("/draft/{patent_draft_id}/export-pdf", response_class=FileResponse)
+async def export_patent_draft_pdf(patent_draft_id: int):
+    """특허 초안 PDF 다운로드"""
+    # 초안 정보 조회
+    draft_query = """
+    SELECT * FROM patent_draft
+    WHERE patent_draft_id = :draft_id
+    """
+    
+    draft = await database.fetch_one(
+        query=draft_query,
+        values={"draft_id": patent_draft_id}
+    )
+    
+    if not draft:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "DRAFT_NOT_FOUND",
+                "message": "해당 특허 초안을 찾을 수 없습니다.",
+                "timestamp": get_current_timestamp()
+            }
+        )
+    
+    # 임시 PDF 파일 생성
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    pdf_path = temp_file.name
+    temp_file.close()
+    
+    # PDF 생성
+    c = canvas.Canvas(pdf_path, pagesize=A4)
+    width, height = A4
+    
+    # 폰트 설정 (나눔고딕 등 한글 폰트 사용 필요)
+    try:
+        pdfmetrics.registerFont(TTFont('NanumGothic', 'NanumGothic.ttf'))
+        font_name = 'NanumGothic'
+    except:
+        font_name = 'Helvetica'  # 폴백 폰트
+    
+    # 제목
+    c.setFont(font_name, 18)
+    c.drawString(50, height - 50, draft["patent_draft_title"])
+    
+    # 각 섹션 출력
+    sections = [
+        ("기술분야", draft["patent_draft_technical_field"]),
+        ("배경기술", draft["patent_draft_background"]),
+        ("해결하려는 과제", draft["patent_draft_problem"]),
+        ("과제의 해결 수단", draft["patent_draft_solution"]),
+        ("발명의 효과", draft["patent_draft_effect"]),
+        ("발명을 실시하기 위한 구체적인 내용", draft["patent_draft_detailed"]),
+        ("요약", draft["patent_draft_summary"]),
+        ("청구항", draft["patent_draft_claim"])
+    ]
+    
+    y_position = height - 100
+    
+    for title, content in sections:
+        if not content:
+            continue
+            
+        # 섹션 제목
+        c.setFont(font_name, 14)
+        y_position -= 30
+        c.drawString(50, y_position, title)
+        
+        # 섹션 내용
+        c.setFont(font_name, 10)
+        
+        # 내용 줄바꿈 처리 (간단한 구현)
+        for line in content.split('\n'):
+            y_position -= 20
+            
+            # 페이지 넘김 처리
+            if y_position < 50:
+                c.showPage()
+                y_position = height - 50
+            
+            c.drawString(50, y_position, line[:80])  # 한 줄에 최대 80자
+    
+    c.save()
+    
+    # 파일 응답
+    response = FileResponse(
+        path=pdf_path,
+        filename=f"patent_draft_{patent_draft_id}.pdf",
+        media_type="application/pdf"
+    )
+    
+    # 임시 파일 삭제 설정
+    response.headers["X-Delete-After-Sent"] = "true"
+    
+    return response

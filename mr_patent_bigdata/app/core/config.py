@@ -4,6 +4,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     PROJECT_NAME: str = "mr_patent_fastapi"
     google_credentials_path: str
+    kipris_service_key: str
     
     model_config = SettingsConfigDict(
         env_file=".env",

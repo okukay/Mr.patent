@@ -201,8 +201,6 @@ async def parse_patent_from_pdf(file: UploadFile = File(...)):
             patent_data["patent_draft_title"] = file.filename.replace(".pdf", "")
         
         return {
-            "status": "success",
-            "message": "특허 PDF에서 텍스트를 추출하고 파싱했습니다.",
             "data": patent_data
         }
         
