@@ -5,7 +5,7 @@ pipeline {
         DOCKER_COMPOSE_DIR = "/var/jenkins_shared/mr_patent"
         BACKEND_IMAGE = 'mr_patent-backend'
         BRANCH_NAME = "${env.BRANCH_NAME}"
-        DOCKER_COMPOSE = '/usr/local/bin/docker-compose'
+        DOCKER_COMPOSE = '$HOME/bin/docker-compose'
     }
     
     stages {
@@ -16,12 +16,14 @@ pipeline {
                 sh '''
                     if ! command -v docker-compose &> /dev/null; then
                         echo "Docker Compose not found, installing..."
-                        curl -L "https://github.com/docker/compose/releases/download/v2.24.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                        chmod +x /usr/local/bin/docker-compose
-                        # 심볼릭 링크 생성
-                        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+                        mkdir -p $HOME/bin
+                        curl -L "https://github.com/docker/compose/releases/download/v2.24.3/docker-compose-$(uname -s)-$(uname -m)" -o $HOME/bin/docker-compose
+                        chmod +x $HOME/bin/docker-compose
+                        export PATH=$HOME/bin:$PATH
+                    else
+                        echo "Docker Compose already installed"
                     fi
-                    docker-compose --version
+                    docker-compose --version || $HOME/bin/docker-compose --version
                 '''
                 echo '====== 환경 설정 완료 ======'
             }
@@ -64,38 +66,36 @@ pipeline {
                 echo '====== 백엔드 배포 시작 ======'
 
                 // .env 복사
-                sh 'cp /home/ubuntu/mr_patent/.env /home/ubuntu/mr_patent/.env || echo ".env not found, skipping..."'
+                sh 'cp ${DOCKER_COMPOSE_DIR}/.env ${DOCKER_COMPOSE_DIR}/.env || echo ".env not found, skipping..."'
 
                 // 빌드 결과 복사
-                sh 'mkdir -p /home/ubuntu/mr_patent/build/libs/'
-                sh 'cp -f mr_patent_backend/build/libs/*.jar /home/ubuntu/mr_patent/build/libs/ || true'
+                sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
+                sh 'cp -f mr_patent_backend/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/build/libs/ || true'
 
                 // Firebase 키 복사
                 withCredentials([file(credentialsId: 'firebase_key', variable: 'FIREBASE_KEY_FILE')]) {
-                    sh 'mkdir -p /home/ubuntu/mr_patent/config/firebase'
-                    sh 'cp -f ${FIREBASE_KEY_FILE} /home/ubuntu/mr_patent/config/firebase/firebase-service-account.json'
-                    sh 'chmod 600 /home/ubuntu/mr_patent/config/firebase/firebase-service-account.json'
+                    sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/config/firebase'
+                    sh 'cp -f ${FIREBASE_KEY_FILE} ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
+                    sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
                 }
 
                 // 디버깅 정보 출력
                 sh 'echo "현재 작업 디렉토리 확인:" && pwd'
-                sh 'echo ".env 파일 있는지 확인:" && ls -al /home/ubuntu/mr_patent/.env || echo "없음"'
-                sh 'echo "docker-compose.yml 위치 확인:" && ls -al /home/ubuntu/mr_patent/docker-compose.yml || echo "없음"'
+                sh 'echo ".env 파일 있는지 확인:" && ls -al ${DOCKER_COMPOSE_DIR}/.env || echo "없음"'
+                sh 'echo "docker-compose.yml 위치 확인:" && ls -al ${DOCKER_COMPOSE_DIR}/docker-compose.yml || echo "없음"'
 
                 // 도커 재배포
                 sh '''
-                    cd /home/ubuntu/mr_patent
-                    docker-compose -f docker-compose.yml stop backend || true
-                    docker-compose -f docker-compose.yml rm -f backend || true
-                    docker-compose -f docker-compose.yml build --no-cache backend
-                    docker-compose -f docker-compose.yml up -d --no-deps backend
+                    cd ${DOCKER_COMPOSE_DIR}
+                    $HOME/bin/docker-compose -f docker-compose.yml stop backend || true
+                    $HOME/bin/docker-compose -f docker-compose.yml rm -f backend || true
+                    $HOME/bin/docker-compose -f docker-compose.yml build --no-cache backend
+                    $HOME/bin/docker-compose -f docker-compose.yml up -d --no-deps backend
                     docker image prune -f || true
                 '''
                 echo '====== 백엔드 배포 완료 ======'
             }
         }
-
-
         
         stage('Notification') {
             steps {
