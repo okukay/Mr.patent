@@ -114,7 +114,7 @@ async def get_folder_patents(folder_id: int):
                 }
             }
         
-        # 폴더의 특허 초안 목록 조회 (기본 정보) - folder_id를 user_patent_folder_id로 수정
+        # 폴더의 특허 초안 목록 조회 (기본 정보)
         drafts_query = """
         SELECT 
             pd.patent_draft_id, 
@@ -137,9 +137,9 @@ async def get_folder_patents(folder_id: int):
             draft_dict = dict(draft)
             patent_draft_id = draft_dict["patent_draft_id"]
             
-            # 기본값 설정
-            similarity_result = False
-            similarity_score = 0
+            # 기본값 설정 - 불리언 사용
+            is_corrected = False
+            total_score = 0.0  # 소수점 형태로 저장
             
             try:
                 # 1. fitness 테이블에서 적합도 통과 여부 조회
@@ -157,8 +157,8 @@ async def get_folder_patents(folder_id: int):
                 )
                 
                 if fitness_data and fitness_data["fitness_is_corrected"] is not None:
-                    # 0=실패, 1=통과
-                    similarity_result = bool(int(fitness_data["fitness_is_corrected"]))
+                    # 0=실패, 1=통과를 불리언 값으로 변환
+                    is_corrected = bool(int(fitness_data["fitness_is_corrected"]))
             except Exception as e:
                 logger.error(f"Fitness 정보 조회 중 오류: {str(e)}")
                 # 오류 발생 시 기본값 사용
@@ -179,8 +179,8 @@ async def get_folder_patents(folder_id: int):
                 )
                 
                 if score_data and score_data["detailed_comparison_total_score"] is not None:
-                    # FLOAT 값을 정수 퍼센트로 변환
-                    similarity_score = int(float(score_data["detailed_comparison_total_score"]) * 100)
+                    # 소수점 형태 그대로 사용
+                    total_score = float(score_data["detailed_comparison_total_score"])
             except Exception as e:
                 logger.error(f"상세 점수 조회 중 오류: {str(e)}")
                 # 오류 발생 시 기본값 사용
@@ -192,15 +192,14 @@ async def get_folder_patents(folder_id: int):
             else:
                 created_at = str(created_at) if created_at is not None else ""
             
-            # 특허 초안 정보에 유사도 결과 추가
+            # 특허 초안 정보에 ERD 컬럼명과 동일한 필드명 사용
             patents_data.append({
                 "patent_draft_id": patent_draft_id,
                 "patent_draft_title": draft_dict["patent_draft_title"] or "",
-                "patent_similiarity_result": similarity_result,
-                "patent_similiarity_result_score": similarity_score,
+                "fitness_is_corrected": is_corrected,  # 불리언 값 사용
+                "detailed_comparison_total_score": total_score,  # 소수점 형태 사용
                 "created_at": created_at
             })
-
         
         return {
             "data": {
