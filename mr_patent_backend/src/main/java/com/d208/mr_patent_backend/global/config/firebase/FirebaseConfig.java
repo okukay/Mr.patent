@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -22,13 +23,13 @@ public class FirebaseConfig {
     private static boolean isFirebaseInitialized = false;
 
     //즉 서버가 실행되면 이 메서드가 한 번 실행되며 Firebase를 초기화 할거임
-
     @PostConstruct
     public void getFcmCredential(){
 
         try {
             log.info("🔥 FCM 초기화 시작 - 설정된 키 경로: {}", fcmKeyPath);
-            InputStream refreshToken = new ClassPathResource(fcmKeyPath).getInputStream();
+//            InputStream refreshToken = new ClassPathResource(fcmKeyPath).getInputStream();
+            InputStream refreshToken = new FileInputStream(fcmKeyPath);
             FirebaseOptions options = FirebaseOptions.builder() //Firebase Admin SDK에서 사용할 인증 정보 설정
                     .setCredentials(GoogleCredentials.fromStream(refreshToken)).build();
 
