@@ -5,28 +5,9 @@ pipeline {
         DOCKER_COMPOSE_DIR = '/home/ubuntu/mr_patent'
         BACKEND_IMAGE = 'mr_patent-backend'
         BRANCH_NAME = "${env.BRANCH_NAME}"
-        DOCKER_COMPOSE = '/usr/local/bin/docker-compose'
     }
     
     stages {
-        stage('Setup') {
-            steps {
-                echo '====== 환경 설정 시작 ======'
-                // 도커 컴포즈 설치 확인 또는 설치
-                sh '''
-                    if ! command -v docker-compose &> /dev/null; then
-                        echo "Docker Compose not found, installing..."
-                        curl -L "https://github.com/docker/compose/releases/download/v2.24.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                        chmod +x /usr/local/bin/docker-compose
-                        # 심볼릭 링크 생성
-                        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
-                    fi
-                    docker-compose --version
-                '''
-                echo '====== 환경 설정 완료 ======'
-            }
-        }
-        
         stage('Checkout') {
             steps {
                 checkout scm
@@ -59,13 +40,12 @@ pipeline {
             }
         }
         
-            stage('Deploy') {
+        stage('Deploy') {
             steps {
                 echo '====== 백엔드 배포 시작 ======'
                 // 빌드 디렉토리 생성 및 JAR 파일 복사
                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
                 sh 'cp -f mr_patent_backend/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/build/libs/ || true'
-                
                 // Firebase 키 파일 복사
                 withCredentials([file(credentialsId: 'firebase_key', variable: 'FIREBASE_KEY_FILE')]) {
                     // Firebase 키 디렉토리 생성 및 파일 복사
@@ -74,55 +54,25 @@ pipeline {
                     sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
                 }
                 
-                // 젠킨스 작업 공간에 도커 컴포즈 파일 생성
+                // 도커 직접 명령어로 재시작
                 sh '''
                     cd ${DOCKER_COMPOSE_DIR}
                     
-                    # 파일 권한 확인
-                    ls -la ${DOCKER_COMPOSE_DIR}/docker-compose.yml || echo "File not found"
+                    # 도커 컨테이너 중지 및 제거
+                    docker stop mr_patent_backend || true
+                    docker rm mr_patent_backend || true
                     
-                    # 작업 디렉토리에 docker-compose.yml 파일 생성
-                    cat > jenkins-docker-compose.yml << 'EOL'
-        version: '3.8'
-
-        services:
-        backend:
-            build:
-            context: .
-            dockerfile: deploy/backend/Dockerfile
-            container_name: mr_patent_backend
-            command: ["java", "-jar", "app.jar", "--spring.config.location=file:/app/config/"]
-            volumes:
-            - ./config:/app/config
-            ports:
-            - "8080:8080"
-            depends_on:
-            - mysql
-            - redis
-            - elasticsearch
-            - fastapi
-            env_file:
-            - .env
-            networks:
-            - app-network
-            logging:
-            driver: "json-file"
-            options:
-                max-size: "10m"
-                max-file: "3"
-
-        # 기존 네트워크와 볼륨 사용
-        networks:
-        app-network:
-            external: true
-
-        EOL
+                    # 도커 이미지 빌드
+                    docker build -t mr_patent_backend -f deploy/backend/Dockerfile .
                     
-                    # 도커 컨테이너 재시작
-                    ${DOCKER_COMPOSE} -f jenkins-docker-compose.yml stop backend || true
-                    ${DOCKER_COMPOSE} -f jenkins-docker-compose.yml rm -f backend || true
-                    ${DOCKER_COMPOSE} -f jenkins-docker-compose.yml build --no-cache backend
-                    ${DOCKER_COMPOSE} -f jenkins-docker-compose.yml up -d --no-deps backend
+                    # 도커 컨테이너 실행
+                    docker run -d --name mr_patent_backend \\
+                      --network app-network \\
+                      -p 8080:8080 \\
+                      -v ${DOCKER_COMPOSE_DIR}/config:/app/config \\
+                      --env-file .env \\
+                      mr_patent_backend \\
+                      java -jar app.jar --spring.config.location=file:/app/config/
                     
                     # 이미지 정리
                     docker image prune -f || true
@@ -131,7 +81,14 @@ pipeline {
                 echo '====== 백엔드 배포 완료 ======'
             }
         }
-
+        
+        stage('Notification') {
+            steps {
+                echo 'jenkins notification!'
+            }
+        }
+    }
+    
     post {
         success {
             echo '====== 파이프라인 성공 ======'
