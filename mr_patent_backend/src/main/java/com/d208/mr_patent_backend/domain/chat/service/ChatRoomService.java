@@ -5,7 +5,9 @@ import com.d208.mr_patent_backend.domain.chat.dto.ChatRoomCreateRequest;
 import com.d208.mr_patent_backend.domain.chat.entity.ChatRoom;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatRoomRepository;
 import com.d208.mr_patent_backend.domain.s3.service.S3Service;
+import com.d208.mr_patent_backend.domain.user.entity.Expert;
 import com.d208.mr_patent_backend.domain.user.entity.User;
+import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
 import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final ExpertRepository expertRepository;
 
 
     // 채팅방 생성(2개)
@@ -82,6 +85,10 @@ public class ChatRoomService {
 
         List<ChatRoom> chatRooms = chatRoomRepository.findByUserIdAndLastMessageIsNotNull(userId);
 
+        Expert expert = expertRepository.findByUser_UserId(userId); //메세지 보낸userId로 expert 인지 확인
+        Integer expertId = expert != null ? expert.getExpertId() : -1; // 맞으면 expertId 추출 아니면 null
+
+
         //(리스트 조회한걸 -> Dto 형식으로 변환)
         //room은 chatRooms 리스트 안의 각각의 요소
         return chatRooms.stream()
@@ -97,11 +104,13 @@ public class ChatRoomService {
                         downUrl = s3Service.generatePresignedDownloadUrl(userImage);
                     }
 
+
+
 //                   String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
 
                     return ChatListDto.builder()
                             .userId(room.getUserId())         // 로그인한 사용자 ID
-                            .expertId(room.getExpertId())     // 전문가 ID (사용한다면)
+                            .expertId(expertId)    // 전문가 ID (사용한다면)
                             .roomId(room.getRoomId())
                             .receiverId(room.getReceiverId()) // 상대방 ID
                             .unreadCount(room.getUnreadCount())
