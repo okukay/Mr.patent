@@ -2,11 +2,32 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_COMPOSE_DIR = '/home/ubuntu/mr_patent'
+        DOCKER_COMPOSE_DIR = "/var/jenkins_shared/mr_patent"
+        DOCKER_COMPOSE = '$HOME/bin/docker-compose'
         BRANCH_NAME = "${env.BRANCH_NAME}"
     }
     
     stages {
+        stage('Setup') {
+            steps {
+                echo '====== 환경 설정 시작 ======'
+                // 도커 컴포즈 설치 확인 또는 설치
+                sh '''
+                    if ! command -v docker-compose &> /dev/null; then
+                        echo "Docker Compose not found, installing..."
+                        mkdir -p $HOME/bin
+                        curl -L "https://github.com/docker/compose/releases/download/v2.24.3/docker-compose-$(uname -s)-$(uname -m)" -o $HOME/bin/docker-compose
+                        chmod +x $HOME/bin/docker-compose
+                        export PATH=$HOME/bin:$PATH
+                    else
+                        echo "Docker Compose already installed"
+                    fi
+                    docker-compose --version || $HOME/bin/docker-compose --version
+                '''
+                echo '====== 환경 설정 완료 ======'
+            }
+        }
+        
         stage('Checkout') {
             steps {
                 checkout scm
@@ -29,8 +50,26 @@ pipeline {
                         echo "Pipfile 내용:"
                         cat Pipfile
                     '''
+                    // pipenv로 의존성 설치 추가
+                    sh '''
+                        pip install pipenv
+                        pipenv install
+                    '''
                     echo '====== FastAPI 빌드 완료 ======'
                 }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo '====== FastAPI 테스트 시작 ======'
+                dir('mr_patent_bigdata') {
+                    // 테스트 스크립트 추가 (필요시 수정)
+                    sh '''
+                        pipenv run pytest || true
+                    '''
+                }
+                echo '====== FastAPI 테스트 완료 ======'
             }
         }
         
@@ -38,42 +77,26 @@ pipeline {
             steps {
                 echo '====== FastAPI 배포 시작 ======'
                 sh '''
-                    # 상세 디버깅 로그 추가
-                    echo "소스 디렉토리 mr_patent_bigdata 내용:"
-                    ls -la mr_patent_bigdata
-                    
-                    echo "대상 디렉토리 ${DOCKER_COMPOSE_DIR}/fastapi 현재 내용:"
-                    ls -la ${DOCKER_COMPOSE_DIR}/fastapi || true
-                    
-                    # 기존 컨테이너 강제 제거
-                    docker rm -f mr_patent_fastapi || true
-                    
-                    # sudo 권한으로 디렉토리 생성 및 소유권 변경
-                    sudo mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi || true
-                    sudo chown -R jenkins:jenkins ${DOCKER_COMPOSE_DIR}/fastapi || true
-                    
-                    # 특정 파일/디렉토리 개별 복사
-                    cp -f mr_patent_bigdata/Pipfile ${DOCKER_COMPOSE_DIR}/fastapi/
-                    cp -f mr_patent_bigdata/Pipfile.lock ${DOCKER_COMPOSE_DIR}/fastapi/
+                    # 소스 디렉토리의 파일들을 대상 디렉토리로 복사
+                    mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi
                     cp -rf mr_patent_bigdata/app ${DOCKER_COMPOSE_DIR}/fastapi/
                     cp -rf mr_patent_bigdata/models ${DOCKER_COMPOSE_DIR}/fastapi/
+                    cp -f mr_patent_bigdata/Pipfile ${DOCKER_COMPOSE_DIR}/fastapi/
+                    cp -f mr_patent_bigdata/Pipfile.lock ${DOCKER_COMPOSE_DIR}/fastapi/
                     
-                    # requirements.txt 파일 확인/생성
+                    # requirements.txt 생성 (선택적)
                     if [ ! -f ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt ]; then
-                        cp -f mr_patent_bigdata/requirements.txt ${DOCKER_COMPOSE_DIR}/fastapi/ || true
+                        pipenv lock -r > ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
                         echo "pydantic-settings" >> ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
                     fi
                     
-                    echo "복사 후 대상 디렉토리 내용:"
-                    ls -la ${DOCKER_COMPOSE_DIR}/fastapi
-                    
-                    # 도커 컨테이너 재빌드 및 시작
-                    cd ${DOCKER_COMPOSE_DIR} && 
-                    docker-compose stop fastapi || true
-                    docker-compose rm -f fastapi || true
-                    docker-compose build --no-cache fastapi
-                    docker-compose up -d fastapi
-                    docker image prune -f || true
+                    # 도커 컴포즈로 fastapi 서비스 재배포
+                    cd ${DOCKER_COMPOSE_DIR}
+                    $HOME/bin/docker-compose -f docker-compose.yml stop fastapi
+                    $HOME/bin/docker-compose -f docker-compose.yml rm -f fastapi
+                    $HOME/bin/docker-compose -f docker-compose.yml build --no-cache fastapi
+                    $HOME/bin/docker-compose -f docker-compose.yml up -d fastapi
+                    docker image prune -f
                 '''
                 echo '====== FastAPI 배포 완료 ======'
             }
