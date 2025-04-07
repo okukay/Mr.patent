@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_COMPOSE_DIR = '/home/ubuntu/mr_patent'
+        DOCKER_COMPOSE_DIR = "/var/jenkins_shared/mr_patent"
         BACKEND_IMAGE = 'mr_patent-backend'
         BRANCH_NAME = "${env.BRANCH_NAME}"
         DOCKER_COMPOSE = '/usr/local/bin/docker-compose'
