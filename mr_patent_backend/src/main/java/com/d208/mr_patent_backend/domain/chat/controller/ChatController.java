@@ -69,6 +69,8 @@ public class ChatController {
                     data.put("expertId", receiverId.toString());
                 }
 
+                System.out.println("초기화 여부" + FirebaseConfig.isFirebaseInitialized());
+
                 if (FirebaseConfig.isFirebaseInitialized()) {
                     fcmService.sendMessageToToken(
                             token,

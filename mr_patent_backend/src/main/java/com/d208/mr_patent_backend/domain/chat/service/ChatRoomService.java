@@ -5,7 +5,9 @@ import com.d208.mr_patent_backend.domain.chat.dto.ChatRoomCreateRequest;
 import com.d208.mr_patent_backend.domain.chat.entity.ChatRoom;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatRoomRepository;
 import com.d208.mr_patent_backend.domain.s3.service.S3Service;
+import com.d208.mr_patent_backend.domain.user.entity.Expert;
 import com.d208.mr_patent_backend.domain.user.entity.User;
+import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
 import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +28,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final ExpertRepository expertRepository;
 
 
     // 채팅방 생성(2개)
@@ -96,12 +99,18 @@ public class ChatRoomService {
                     if (userImage != null && !userImage.isBlank()) {
                         downUrl = s3Service.generatePresignedDownloadUrl(userImage);
                     }
+//                    String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+                    
+                    // receiverId를 가지고 expert인지 확인하고 expertId 반환
+                    Integer receiverId = room.getReceiverId();
+                    Expert expert = expertRepository.findByUser_UserId(receiverId); //메세지 보낸userId로 expert 인지 확인
+                    Integer expertId = expert != null ? expert.getExpertId() : -1; // 맞으면 expertId 추출 아니면 null
 
-//                   String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+//
 
                     return ChatListDto.builder()
                             .userId(room.getUserId())         // 로그인한 사용자 ID
-                            .expertId(room.getExpertId())     // 전문가 ID (사용한다면)
+                            .expertId(expertId)    // 전문가 ID (사용한다면)
                             .roomId(room.getRoomId())
                             .receiverId(room.getReceiverId()) // 상대방 ID
                             .unreadCount(room.getUnreadCount())
