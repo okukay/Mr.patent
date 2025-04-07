@@ -138,7 +138,7 @@ async def get_folder_patents(folder_id: int):
             patent_draft_id = draft_dict["patent_draft_id"]
             
             # 기본값 설정
-            similarity_result = "false"
+            similarity_result = False
             similarity_score = 0
             
             try:
