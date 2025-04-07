@@ -3,12 +3,10 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 import logging
 from fastapi.responses import FileResponse
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+from fpdf import FPDF  # reportlab 대신 fpdf2 사용
 import tempfile
 import os
+import re
 
 from app.core.database import database
 from app.schemas.patent import PatentDraftCreate, PatentDraftResponse
@@ -42,7 +40,8 @@ async def get_patent_draft(patent_draft_id: int):
             status_code=404,
             detail={
                 "code": "DRAFT_NOT_FOUND",
-                "message": "해당 ID의 특허 초안을 찾을 수 없습니다."
+                "message": "해당 ID의 특허 초안을 찾을 수 없습니다.",
+                "timestamp": get_current_timestamp()
             }
         )
     
@@ -56,7 +55,8 @@ async def get_patent_draft(patent_draft_id: int):
         draft_dict["updated_at"] = draft_dict.pop("patent_draft_updated_at").isoformat() + 'Z'
     
     return {
-        "data": draft_dict
+        "data": draft_dict,
+        "timestamp": get_current_timestamp()
     }
 
 @router.post("/folder/{user_patent_folder_id}/draft", response_model=Dict[str, Any])
@@ -81,7 +81,8 @@ async def create_or_update_draft(
                 status_code=404,
                 detail={
                     "code": "FOLDER_NOT_FOUND",
-                    "message": "지정한 폴더를 찾을 수 없습니다."
+                    "message": "지정한 폴더를 찾을 수 없습니다.",
+                    "timestamp": get_current_timestamp()
                 }
             )
         
@@ -177,7 +178,8 @@ async def create_or_update_draft(
                 "data": {
                     "patent_draft_id": existing_draft["patent_draft_id"],
                     "created_at": now.isoformat().replace('+00:00', 'Z')
-                }
+                },
+                "timestamp": get_current_timestamp()
             }
         else:
             # 새 초안 생성
@@ -240,7 +242,8 @@ async def create_or_update_draft(
                 "data": {
                     "patent_draft_id": draft_id,
                     "created_at": now.isoformat().replace('+00:00', 'Z')
-                }
+                },
+                "timestamp": get_current_timestamp()
             }
     except Exception as e:
         logger.error(f"특허 초안 저장 중 오류: {str(e)}")
@@ -248,10 +251,11 @@ async def create_or_update_draft(
             status_code=500,
             detail={
                 "code": "INTERNAL_ERROR",
-                "message": f"특허 초안 저장 중 오류가 발생했습니다: {str(e)}"
+                "message": f"특허 초안 저장 중 오류가 발생했습니다: {str(e)}",
+                "timestamp": get_current_timestamp()
             }
         )
-    
+
 @router.get("/drafts/recent", response_model=Dict[str, Any])
 async def get_recent_drafts(
     user_id: int, 
@@ -272,7 +276,8 @@ async def get_recent_drafts(
         
         if not folders:
             return {
-                "data": {"patent_drafts": []}
+                "data": {"patent_drafts": []},
+                "timestamp": get_current_timestamp()
             }
         
         # 폴더 ID 목록 추출
@@ -308,7 +313,8 @@ async def get_recent_drafts(
             result_drafts.append(draft_dict)
         
         return {
-            "data": {"patent_drafts": result_drafts}
+            "data": {"patent_drafts": result_drafts},
+            "timestamp": get_current_timestamp()
         }
         
     except Exception as e:
@@ -316,13 +322,14 @@ async def get_recent_drafts(
         raise HTTPException(
             status_code=500,
             detail={
-                "message": f"서버 오류가 발생했습니다: {str(e)}"
+                "message": f"서버 오류가 발생했습니다: {str(e)}",
+                "timestamp": get_current_timestamp()
             }
         )
 
 @router.get("/draft/{patent_draft_id}/export-pdf", response_class=FileResponse)
 async def export_patent_draft_pdf(patent_draft_id: int):
-    """특허 초안 PDF 다운로드"""
+    """특허 초안 PDF 다운로드 (FPDF 사용)"""
     # 초안 정보 조회
     draft_query = """
     SELECT * FROM patent_draft
@@ -339,7 +346,8 @@ async def export_patent_draft_pdf(patent_draft_id: int):
             status_code=404,
             detail={
                 "code": "DRAFT_NOT_FOUND",
-                "message": "해당 특허 초안을 찾을 수 없습니다."
+                "message": "해당 특허 초안을 찾을 수 없습니다.",
+                "timestamp": get_current_timestamp()
             }
         )
     
@@ -348,68 +356,252 @@ async def export_patent_draft_pdf(patent_draft_id: int):
     pdf_path = temp_file.name
     temp_file.close()
     
-    # PDF 생성
-    c = canvas.Canvas(pdf_path, pagesize=A4)
-    width, height = A4
-    
-    # 폰트 설정 (나눔고딕 등 한글 폰트 사용 필요)
     try:
-        pdfmetrics.registerFont(TTFont('NanumGothic', 'NanumGothic.ttf'))
-        font_name = 'NanumGothic'
-    except:
-        font_name = 'Helvetica'  # 폴백 폰트
-    
-    # 제목
-    c.setFont(font_name, 18)
-    c.drawString(50, height - 50, draft["patent_draft_title"])
-    
-    # 각 섹션 출력
-    sections = [
-        ("기술분야", draft["patent_draft_technical_field"]),
-        ("배경기술", draft["patent_draft_background"]),
-        ("해결하려는 과제", draft["patent_draft_problem"]),
-        ("과제의 해결 수단", draft["patent_draft_solution"]),
-        ("발명의 효과", draft["patent_draft_effect"]),
-        ("발명을 실시하기 위한 구체적인 내용", draft["patent_draft_detailed"]),
-        ("요약", draft["patent_draft_summary"]),
-        ("청구항", draft["patent_draft_claim"])
-    ]
-    
-    y_position = height - 100
-    
-    for title, content in sections:
-        if not content:
-            continue
-            
-        # 섹션 제목
-        c.setFont(font_name, 14)
-        y_position -= 30
-        c.drawString(50, y_position, title)
+        # FPDF 객체 생성
+        pdf = FPDF()
+        pdf.add_page()
         
-        # 섹션 내용
-        c.setFont(font_name, 10)
+        # 다양한 경로에서 한글 폰트 찾기 (Windows/Linux 호환)
+        font_found = False
+        possible_font_paths = [
+            # 1. 프로젝트 내부 경로 (상대 경로)
+            os.path.join(os.path.dirname(__file__), '..', 'static', 'fonts', 'NanumGothic.ttf'),
+            # 2. 프로젝트 루트 기준 경로
+            os.path.join(os.getcwd(), 'app', 'static', 'fonts', 'NanumGothic.ttf'),
+            # 3. Windows 시스템 폰트
+            os.path.join('C:', os.sep, 'Windows', 'Fonts', 'malgun.ttf'),
+            # 4. Linux 시스템 폰트 (EC2 배포 시)
+            '/usr/share/fonts/truetype/nanum/NanumGothic.ttf',
+            '/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf',
+            '/usr/share/fonts/truetype/nanum/NanumGothic_Coding.ttf'
+        ]
         
-        # 내용 줄바꿈 처리 (간단한 구현)
-        for line in content.split('\n'):
-            y_position -= 20
+        # 폰트 파일 존재 확인 및 등록
+        for font_path in possible_font_paths:
+            if os.path.exists(font_path):
+                try:
+                    # 한글 폰트 등록 (유니코드 지원 활성화)
+                    pdf.add_font('CustomFont', '', font_path, uni=True)
+                    pdf.set_font('CustomFont', '', 16)
+                    font_found = True
+                    logger.info(f"한글 폰트 로드 성공: {font_path}")
+                    break
+                except Exception as font_error:
+                    logger.warning(f"폰트 로드 시도 중 오류 ({font_path}): {str(font_error)}")
+        
+        # 모든 폰트 로드 시도 실패 시
+        if not font_found:
+            # PDF 생성은 계속하되 한글은 표시되지 않을 것임을 경고
+            pdf.set_font('Arial', '', 16)
+            logger.warning("한글 폰트를 찾을 수 없습니다. 한글이 제대로 표시되지 않을 수 있습니다.")
+        
+        # 특수 문자 제거 함수
+        def clean_text(text):
+            if not text:
+                return ""
+            # 특수 구분자 제거
+            return text.replace("■■■", "").replace("■", "")
+        
+        # 제목
+        pdf.cell(0, 10, draft["patent_draft_title"], 0, 1, 'C')
+        pdf.ln(5)
+        
+        # 각 섹션 출력
+        sections = [
+            ("기술분야", draft["patent_draft_technical_field"]),
+            ("배경기술", draft["patent_draft_background"]),
+            ("해결하려는 과제", draft["patent_draft_problem"]),
+            ("과제의 해결 수단", draft["patent_draft_solution"]),
+            ("발명의 효과", draft["patent_draft_effect"]),
+            ("발명을 실시하기 위한 구체적인 내용", draft["patent_draft_detailed"]),
+            ("요약", draft["patent_draft_summary"]),
+            ("청구항", draft["patent_draft_claim"])
+        ]
+        
+        for title, content in sections:
+            if not content:
+                continue
             
-            # 페이지 넘김 처리
-            if y_position < 50:
-                c.showPage()
-                y_position = height - 50
+            # 섹션 제목
+            if font_found:
+                pdf.set_font('CustomFont', '', 12)
+            else:
+                pdf.set_font('Arial', 'B', 12)
+            pdf.cell(0, 10, title, 0, 1)
             
-            c.drawString(50, y_position, line[:80])  # 한 줄에 최대 80자
+            # 섹션 내용
+            if content:
+                if font_found:
+                    pdf.set_font('CustomFont', '', 10)
+                else:
+                    pdf.set_font('Arial', '', 10)
+                # 내용 정리
+                clean_content = clean_text(content)
+                # 단락별로 출력
+                for paragraph in clean_content.split('\n'):
+                    if paragraph.strip():
+                        pdf.multi_cell(0, 6, paragraph)
+                pdf.ln(3)
+            
+            pdf.ln(5)
+        
+        # PDF 저장
+        pdf.output(pdf_path)
+        
+        # 파일 응답
+        response = FileResponse(
+            path=pdf_path,
+            filename=f"patent_draft_{patent_draft_id}.pdf",
+            media_type="application/pdf"
+        )
+        
+        # 임시 파일 삭제 설정
+        response.headers["X-Delete-After-Sent"] = "true"
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"PDF 생성 중 오류: {str(e)}")
+        
+        if os.path.exists(pdf_path):
+            try:
+                os.unlink(pdf_path)
+            except:
+                pass
+                
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "PDF_GENERATION_ERROR",
+                "message": f"PDF 생성 중 오류가 발생했습니다: {str(e)}",
+                "timestamp": get_current_timestamp()
+            }
+        )
+
+@router.patch("/folder/{folder_id}", response_model=Dict[str, Any])
+async def update_folder_name(
+    folder_id: int,
+    folder_data: dict
+):
+    """특허 폴더명 수정"""
+    try:
+        if "user_patent_folder_title" not in folder_data:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "code": "INVALID_REQUEST",
+                    "message": "폴더명(user_patent_folder_title)은 필수 항목입니다.",
+                    "timestamp": get_current_timestamp()
+                }
+            )
+            
+        # 폴더 존재 확인
+        folder_query = """
+        SELECT * FROM user_patent_folder 
+        WHERE user_patent_folder_id = :folder_id
+        """
+        
+        folder = await database.fetch_one(
+            query=folder_query,
+            values={"folder_id": folder_id}
+        )
+        
+        if not folder:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "FOLDER_NOT_FOUND",
+                    "message": "지정한 폴더를 찾을 수 없습니다.",
+                    "timestamp": get_current_timestamp()
+                }
+            )
+        
+        # 폴더명 업데이트
+        update_query = """
+        UPDATE user_patent_folder
+        SET user_patent_folder_title = :title,
+            user_patent_folder_updated_at = :updated_at
+        WHERE user_patent_folder_id = :folder_id
+        """
+        
+        now = datetime.now(timezone.utc)
+        await database.execute(
+            query=update_query,
+            values={
+                "title": folder_data["user_patent_folder_title"],
+                "updated_at": now,
+                "folder_id": folder_id
+            }
+        )
+        
+        # 업데이트된 폴더 정보 조회
+        updated_folder = await database.fetch_one(
+            query=folder_query,
+            values={"folder_id": folder_id}
+        )
+        
+        # 결과 포맷팅
+        result = dict(updated_folder)
+        result["created_at"] = result.pop("user_patent_folder_created_at").isoformat() + 'Z'
+        result["updated_at"] = result.pop("user_patent_folder_updated_at").isoformat() + 'Z'
+        
+        return {
+            "data": result,
+            "timestamp": get_current_timestamp()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"폴더명 수정 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "INTERNAL_ERROR",
+                "message": f"폴더명 수정 중 오류가 발생했습니다: {str(e)}",
+                "timestamp": get_current_timestamp()
+            }
+        )
+
+@router.get("/folder/{user_patent_folder_id}/reports", response_model=Dict[str, Any])
+async def get_folder_reports(user_patent_folder_id: int):
+    """폴더별 유사도 분석 리포트 목록 조회"""
+    # 폴더의 유사도 분석 결과 목록 조회
+    query = """
+    SELECT s.similarity_id, pd.patent_draft_id, s.similarity_created_at,
+           COUNT(sp.similarity_patent_id) as similar_patents_count
+    FROM similarity s
+    JOIN patent_draft pd ON s.patent_draft_id = pd.patent_draft_id
+    LEFT JOIN similarity_patent sp ON s.similarity_id = sp.similarity_id
+    WHERE pd.user_patent_folder_id = :folder_id
+    GROUP BY s.similarity_id
+    ORDER BY s.similarity_created_at DESC
+    """
     
-    c.save()
-    
-    # 파일 응답
-    response = FileResponse(
-        path=pdf_path,
-        filename=f"patent_draft_{patent_draft_id}.pdf",
-        media_type="application/pdf"
+    reports = await database.fetch_all(
+        query=query,
+        values={"folder_id": user_patent_folder_id}
     )
     
-    # 임시 파일 삭제 설정
-    response.headers["X-Delete-After-Sent"] = "true"
+    if not reports:
+        return {
+            "data": {"reports": []},
+            "timestamp": get_current_timestamp()
+        }
     
-    return response
+    # 결과 포맷팅
+    result_reports = []
+    for report in reports:
+        result_reports.append({
+            "similarity_id": report["similarity_id"],
+            "patent_draft_id": report["patent_draft_id"],
+            "created_at": report["similarity_created_at"].isoformat() + 'Z',
+            "similar_patents_count": report["similar_patents_count"]
+        })
+    
+    return {
+        "data": {
+            "reports": result_reports
+        },
+        "timestamp": get_current_timestamp()
+    }

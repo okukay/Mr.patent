@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import json
 import re
-import traceback  # 오류 추적을 위해 추가
+import traceback
 
 from app.core.database import database
 from app.services.vectorizer import get_tfidf_vector, get_bert_vector
@@ -169,7 +169,6 @@ async def get_fitness_result(patent_draft_id: int):
         }
     }
 
-
 # 새로 추가: 유사도 결과 조회 API
 @router.get("/patent/similarity/{patent_draft_id}", response_model=Dict[str, Any])
 async def get_similarity_result(patent_draft_id: int):
@@ -321,7 +320,7 @@ async def perform_fitness_check(patent_draft_id: int, draft, now: datetime) -> D
         # 1. 내용 존재 확인
         if not section_text or len(section_text.strip()) < 10:
             fitness_results["is_corrected"] = False
-            fitness_results["details"][section_key] = "내용이 너무 짧거나 없습니다"
+            fitness_results["details"][section_key] = False
             continue
 
         # 2. 개선된 문맥 적합도 검사 사용
@@ -330,13 +329,13 @@ async def perform_fitness_check(patent_draft_id: int, draft, now: datetime) -> D
             # 적합도 기준 점수를 0.4로 낮춤 (더 관대하게)
             if similarity_score < 0.4:
                 fitness_results["is_corrected"] = False
-                fitness_results["details"][section_key] = f"적합도 낮음 ({similarity_score:.2f})"
+                fitness_results["details"][section_key] = False
             else:
-                fitness_results["details"][section_key] = f"적합 ({similarity_score:.2f})"
+                fitness_results["details"][section_key] = True
         except Exception as e:
             print(f"{section_name} 문맥 적합도 검사 중 오류: {str(e)}")
             fitness_results["is_corrected"] = False
-            fitness_results["details"][section_key] = f"오류 발생: {str(e)}"
+            fitness_results["details"][section_key] = False
     
     # 데이터베이스에 적합도 결과 저장
     try:
@@ -569,65 +568,55 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
             patent_app_number = patent["patent_application_number"]
             
             # 1. KIPRIS API를 통해 특허 공고전문 정보 가져오기
+            print(f"KIPRIS API 호출 시작: {patent_app_number}")
             patent_info = await get_patent_public_info(patent_app_number)
             
             if not patent_info:
                 print(f"특허 {patent_app_number}의 KIPRIS 정보를 찾을 수 없습니다.")
                 continue
             
-            # 2. PDF 다운로드
-            pdf_path, pdf_name = await download_patent_pdf(patent_info["publication_number"])
+            print(f"KIPRIS API 호출 성공: {patent_app_number}, 공고번호: {patent_info.get('publication_number', '알 수 없음')}")
             
-            # 3. 특허 공고전문 데이터베이스에 저장
+            # 2. 특허 공고전문 데이터베이스에 저장 (변경된 테이블 구조 반영)
             patent_public_query = """
             INSERT INTO patent_public (
                 patent_id,
                 patent_public_number,
-                patent_public_pdf_path,
-                patent_public_pdf_name,
                 patent_public_content,
                 patent_public_api_response,
-                patent_public_is_processed,
-                patent_public_retrieved_at,
                 patent_public_created_at,
                 patent_public_updated_at
             ) VALUES (
                 :patent_id,
                 :public_number,
-                :pdf_path,
-                :pdf_name,
                 :content,
                 :api_response,
-                :is_processed,
-                :retrieved_at,
                 :created_at,
                 :updated_at
             ) ON DUPLICATE KEY UPDATE
-                patent_public_pdf_path = :pdf_path,
-                patent_public_pdf_name = :pdf_name,
+                patent_public_content = :content,
+                patent_public_api_response = :api_response,
                 patent_public_updated_at = :updated_at
             """
             
             # 간단한 내용 예시 (실제로는 PDF 텍스트 추출 필요)
             content = f"특허 공고전문 내용 (출원번호: {patent_app_number})"
             
+            print(f"특허 공고전문 DB 저장 시작: {patent_app_number}")
             patent_public_id = await database.execute(
                 query=patent_public_query,
                 values={
                     "patent_id": patent["patent_id"],
                     "public_number": patent_info["publication_number"],
-                    "pdf_path": pdf_path,
-                    "pdf_name": pdf_name,
                     "content": content,
-                    "api_response": str(patent_info),
-                    "is_processed": 1,
-                    "retrieved_at": now,
+                    "api_response": json.dumps(patent_info, ensure_ascii=False),
                     "created_at": now,
                     "updated_at": now
                 }
             )
+            print(f"특허 공고전문 DB 저장 완료: ID {patent_public_id}")
             
-            # 4. 상세 비교 결과 저장
+            # 3. 상세 비교 결과 저장
             # 유사 구간 하이라이트 (샘플 데이터)
             highlights = [
                 {
@@ -637,12 +626,12 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                 },
                 {
                     "original": draft_dict["patent_draft_summary"][:100],
-                    "similar": patent["patent_summary"][:100] if patent["patent_summary"] else "",
+                    "similar": patent["patent_summary"][:100] if patent.get("patent_summary") else "",
                     "similarity": patent["summary_similarity"]
                 },
                 {
                     "original": draft_dict["patent_draft_claim"][:100],
-                    "similar": patent["patent_claim"][:100] if patent["patent_claim"] else "",
+                    "similar": patent["patent_claim"][:100] if patent.get("patent_claim") else "",
                     "similarity": patent["claim_similarity"]
                 }
             ]
@@ -676,6 +665,7 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
             )
             """
             
+            print(f"상세 비교 결과 저장 시작: {patent_app_number}")
             await database.execute(
                 query=detailed_comparison_query,
                 values={
@@ -684,7 +674,7 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                     "similarity_patent_id": patent["similarity_patent_id"],
                     "public_id": patent_public_id,
                     "total_score": patent["overall_similarity"],
-                    "context": json.dumps(context),
+                    "context": json.dumps(context, ensure_ascii=False),
                     "created_at": now,
                     "updated_at": now
                 }
@@ -694,6 +684,9 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
             
         except Exception as e:
             print(f"특허 {patent.get('patent_application_number', '알 수 없음')} 상세 비교 중 오류: {str(e)}")
+            # 스택 트레이스 출력 추가
+            import traceback
+            print(traceback.format_exc())
     
     print(f"상세 비교 완료: 특허 초안 ID {patent_draft_id}")
     return

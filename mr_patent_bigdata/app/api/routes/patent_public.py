@@ -4,9 +4,10 @@ from datetime import datetime, timezone
 import json
 import os
 import logging
+import re
 
 from app.core.database import database
-from app.services.kipris import get_patent_public_info, download_patent_pdf, extract_text_from_pdf
+from app.services.kipris import get_patent_public_info, download_patent_pdf, extract_text_from_pdf, test_kipris_apis
 
 router = APIRouter(prefix="/fastapi/patent", tags=["patent_public"])
 logger = logging.getLogger(__name__)
@@ -15,10 +16,45 @@ def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""
     return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
 
+def normalize_application_number(app_number: str) -> str:
+    """출원번호를 표준 형식(하이픈 포함)으로 변환"""
+    # 공백 및 특수문자 제거
+    clean_number = re.sub(r'[^0-9]', '', app_number).strip()
+    
+    # 길이 확인 및 형식화 (10-XXXX-XXXXXXX)
+    if len(clean_number) >= 10:
+        return f"{clean_number[:2]}-{clean_number[2:6]}-{clean_number[6:]}"
+    return clean_number
+
+@router.get("/kipris/test/{patent_application_number}", response_model=Dict[str, Any])
+async def test_kipris_api(patent_application_number: str):
+    """KIPRIS API 직접 테스트 (디버깅용)"""
+    # 출원번호 정규화 (하이픈 포함 형식으로 변환)
+    normalized_number = normalize_application_number(patent_application_number)
+    
+    # 하이픈 제거된 형식 (API 호출용)
+    clean_number = re.sub(r'[^0-9]', '', normalized_number)
+    
+    # API 테스트 수행
+    results = await test_kipris_apis(clean_number)
+    
+    return {
+        "data": {
+            "original_number": patent_application_number,
+            "normalized_number": normalized_number,
+            "clean_number": clean_number,
+            "test_results": results
+        }
+    }
+
 @router.get("/kipris/{patent_application_number}", response_model=Dict[str, Any])
 async def get_patent_public(patent_application_number: str):
     """특허 공고전문 정보 조회"""
     try:
+        # 출원번호 정규화 (하이픈 포함 형식으로 변환)
+        normalized_number = normalize_application_number(patent_application_number)
+        logger.info(f"특허 공고전문 정보 조회 시작: 원본={patent_application_number}, 정규화={normalized_number}")
+        
         # 이미 저장된 공고전문이 있는지 확인
         check_query = """
         SELECT pp.*, p.patent_application_number 
@@ -29,28 +65,30 @@ async def get_patent_public(patent_application_number: str):
         
         patent_public = await database.fetch_one(
             query=check_query,
-            values={"app_number": patent_application_number}
+            values={"app_number": normalized_number}
         )
         
         # 공고전문이 이미 있는 경우
         if patent_public:
+            logger.info(f"기존 특허 공고전문 정보 사용: {normalized_number}")
             # API 응답에서 파싱된 데이터 추출
             try:
                 api_response = json.loads(patent_public["patent_public_api_response"])
                 parsed_data = api_response.get("parsed_data", {})
-            except:
+            except json.JSONDecodeError as e:
+                logger.warning(f"API 응답 파싱 오류: {str(e)}")
                 parsed_data = {}
                 
             return {
                 "data": {
                     "patent_public_id": patent_public["patent_public_id"],
                     "patent_id": patent_public["patent_id"],
-                    "application_number": patent_application_number,
+                    "application_number": normalized_number,
                     "parsed_data": parsed_data
                 }
             }
         
-        # 특허 ID 조회
+        # 특허 ID 조회 - 정규화된 출원번호 사용
         patent_query = """
         SELECT patent_id FROM patent 
         WHERE patent_application_number = :app_number
@@ -58,10 +96,14 @@ async def get_patent_public(patent_application_number: str):
         
         patent = await database.fetch_one(
             query=patent_query,
-            values={"app_number": patent_application_number}
+            values={"app_number": normalized_number}
         )
         
+        # 특허 ID 검색 로그
+        logger.info(f"특허 ID 조회 결과: 출원번호={normalized_number}, 결과={'찾음' if patent else '찾지 못함'}")
+        
         if not patent:
+            logger.warning(f"특허 정보를 찾을 수 없음: {normalized_number}")
             return {
                 "status": False,
                 "code": 404,
@@ -72,24 +114,33 @@ async def get_patent_public(patent_application_number: str):
                 }
             }
         
-        # KIPRIS API를 통해 공고전문 정보 가져오기
-        patent_info = await get_patent_public_info(patent_application_number)
+        # KIPRIS API를 통해 공고전문 정보 가져오기 - 하이픈 제거된 형식 사용
+        clean_number = str(re.sub(r'[^0-9]', '', normalized_number))  # 문자열 타입 보장
+        logger.info(f"KIPRIS API 호출 시작: 출원번호={clean_number} (타입: {type(clean_number)})")
+        
+        # 디버깅을 위한 직접 API 테스트
+        test_results = await test_kipris_apis(clean_number)
+        logger.info(f"API 테스트 결과: {json.dumps(test_results, ensure_ascii=False)[:500]}")
+        
+        patent_info = await get_patent_public_info(clean_number)
         
         if not patent_info:
+            logger.warning(f"KIPRIS에서 특허 정보를 찾을 수 없음: {clean_number}")
             return {
-                "status": False,
-                "code": 404,
-                "data": None,
                 "error": {
                     "code": "KIPRIS_DATA_NOT_FOUND",
                     "message": "KIPRIS에서 해당 특허 정보를 찾을 수 없습니다."
                 }
             }
         
+        logger.info(f"KIPRIS API 호출 성공: {clean_number}, 공고번호: {patent_info.get('publication_number', '알 수 없음')}")
+        
         # PDF 다운로드 및 텍스트 추출 (OCR + 파싱)
-        pdf_path, pdf_name = await download_patent_pdf(patent_application_number)
+        logger.info(f"PDF 다운로드 시작: {clean_number}")
+        pdf_path, pdf_name = await download_patent_pdf(clean_number)
         
         if not pdf_path:
+            logger.error(f"PDF 다운로드 실패: {clean_number}")
             return {
                 "status": False,
                 "code": 500,
@@ -100,8 +151,12 @@ async def get_patent_public(patent_application_number: str):
                 }
             }
         
+        logger.info(f"PDF 다운로드 성공: {pdf_path}")
+        
         # OCR 처리 및 문서 파싱 
+        logger.info(f"PDF 텍스트 추출 및 파싱 시작: {pdf_path}")
         pdf_content, parsed_data = await extract_text_from_pdf(pdf_path)
+        logger.info(f"PDF 텍스트 추출 및 파싱 완료: {len(pdf_content)} 글자, {len(parsed_data)} 섹션")
         
         # DB에 저장
         now = datetime.now(timezone.utc)
@@ -129,6 +184,7 @@ async def get_patent_public(patent_application_number: str):
             "parsed_data": parsed_data
         }
         
+        logger.info(f"특허 공고전문 DB 저장 시작: {clean_number}")
         patent_public_id = await database.execute(
             query=insert_query,
             values={
@@ -140,6 +196,7 @@ async def get_patent_public(patent_application_number: str):
                 "updated_at": now
             }
         )
+        logger.info(f"특허 공고전문 DB 저장 완료: {patent_public_id}")
         
         # 텍스트 추출 완료 후 임시 PDF 파일 삭제
         try:
@@ -152,7 +209,7 @@ async def get_patent_public(patent_application_number: str):
             "data": {
                 "patent_public_id": patent_public_id,
                 "patent_id": patent["patent_id"],
-                "application_number": patent_application_number,
+                "application_number": normalized_number,
                 "parsed_data": parsed_data
             }
         }
@@ -166,6 +223,10 @@ async def get_patent_public(patent_application_number: str):
             pass
             
         logger.error(f"특허 공고전문 처리 중 오류: {str(e)}")
+        # 스택 트레이스 로깅
+        import traceback
+        logger.error(traceback.format_exc())
+        
         return {
             "status": False,
             "code": 500,

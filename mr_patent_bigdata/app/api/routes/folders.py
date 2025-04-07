@@ -196,47 +196,6 @@ async def delete_folder(folder_id: int):
             "error": "폴더 삭제에 실패했습니다."
         }
 
-@router.get("/folder/{user_patent_folder_id}/reports", response_model=Dict[str, Any])
-async def get_folder_reports(user_patent_folder_id: int):
-    """폴더별 유사도 분석 리포트 목록 조회"""
-    # 폴더의 유사도 분석 결과 목록 조회
-    query = """
-    SELECT s.similarity_id, pd.patent_draft_id, s.similarity_created_at,
-           COUNT(sp.similarity_patent_id) as similar_patents_count
-    FROM similarity s
-    JOIN patent_draft pd ON s.patent_draft_id = pd.patent_draft_id
-    LEFT JOIN similarity_patent sp ON s.similarity_id = sp.similarity_id
-    WHERE pd.user_patent_folder_id = :folder_id
-    GROUP BY s.similarity_id
-    ORDER BY s.similarity_created_at DESC
-    """
-    
-    reports = await database.fetch_all(
-        query=query,
-        values={"folder_id": user_patent_folder_id}
-    )
-    
-    if not reports:
-        return {
-            "data": {"reports": []}
-        }
-    
-    # 결과 포맷팅
-    result_reports = []
-    for report in reports:
-        result_reports.append({
-            "similarity_id": report["similarity_id"],
-            "patent_draft_id": report["patent_draft_id"],
-            "created_at": report["similarity_created_at"].isoformat() + 'Z',
-            "similar_patents_count": report["similar_patents_count"]
-        })
-    
-    return {
-        "data": {
-            "reports": result_reports
-        }
-    }
-
 @router.patch("/folder/{folder_id}", response_model=Dict[str, Any])
 async def update_folder_name(
     folder_id: int,
