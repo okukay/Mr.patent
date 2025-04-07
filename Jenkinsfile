@@ -5,9 +5,28 @@ pipeline {
         DOCKER_COMPOSE_DIR = '/home/ubuntu/mr_patent'
         BACKEND_IMAGE = 'mr_patent-backend'
         BRANCH_NAME = "${env.BRANCH_NAME}"
+        DOCKER_COMPOSE = '/usr/local/bin/docker-compose'
     }
     
     stages {
+        stage('Setup') {
+            steps {
+                echo '====== 환경 설정 시작 ======'
+                // 도커 컴포즈 설치 확인 또는 설치
+                sh '''
+                    if ! command -v docker-compose &> /dev/null; then
+                        echo "Docker Compose not found, installing..."
+                        curl -L "https://github.com/docker/compose/releases/download/v2.24.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                        chmod +x /usr/local/bin/docker-compose
+                        # 심볼릭 링크 생성
+                        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+                    fi
+                    docker-compose --version
+                '''
+                echo '====== 환경 설정 완료 ======'
+            }
+        }
+        
         stage('Checkout') {
             steps {
                 checkout scm
@@ -54,27 +73,13 @@ pipeline {
                     sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
                 }
                 
-                // 도커 직접 명령어로 재시작
+                // 도커 컨테이너 재시작 (절대 경로 사용)
                 sh '''
                     cd ${DOCKER_COMPOSE_DIR}
-                    
-                    # 도커 컨테이너 중지 및 제거
-                    docker stop mr_patent_backend || true
-                    docker rm mr_patent_backend || true
-                    
-                    # 도커 이미지 빌드
-                    docker build -t mr_patent_backend -f deploy/backend/Dockerfile .
-                    
-                    # 도커 컨테이너 실행
-                    docker run -d --name mr_patent_backend \\
-                      --network app-network \\
-                      -p 8080:8080 \\
-                      -v ${DOCKER_COMPOSE_DIR}/config:/app/config \\
-                      --env-file .env \\
-                      mr_patent_backend \\
-                      java -jar app.jar --spring.config.location=file:/app/config/
-                    
-                    # 이미지 정리
+                    ${DOCKER_COMPOSE} stop backend || true
+                    ${DOCKER_COMPOSE} rm -f backend || true
+                    ${DOCKER_COMPOSE} build --no-cache backend
+                    ${DOCKER_COMPOSE} up -d --no-deps backend
                     docker image prune -f || true
                 '''
                 
