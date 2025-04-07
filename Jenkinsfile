@@ -74,14 +74,14 @@ pipeline {
                 }
                 
                 // 도커 컨테이너 재시작 (절대 경로 사용)
-                sh '''
-                    cd ${DOCKER_COMPOSE_DIR}
-                    ${DOCKER_COMPOSE} stop backend || true
-                    ${DOCKER_COMPOSE} rm -f backend || true
-                    ${DOCKER_COMPOSE} build --no-cache backend
-                    ${DOCKER_COMPOSE} up -d --no-deps backend
-                    docker image prune -f || true
-                '''
+                    sh '''
+                        cd ${DOCKER_COMPOSE_DIR}
+                        ${DOCKER_COMPOSE} -f ${DOCKER_COMPOSE_DIR}/docker-compose.yml stop backend || true
+                        ${DOCKER_COMPOSE} -f ${DOCKER_COMPOSE_DIR}/docker-compose.yml rm -f backend || true
+                        ${DOCKER_COMPOSE} -f ${DOCKER_COMPOSE_DIR}/docker-compose.yml build --no-cache backend
+                        ${DOCKER_COMPOSE} -f ${DOCKER_COMPOSE_DIR}/docker-compose.yml up -d --no-deps backend
+                        docker image prune -f || true
+                    '''
                 
                 echo '====== 백엔드 배포 완료 ======'
             }
