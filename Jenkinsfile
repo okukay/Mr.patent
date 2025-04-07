@@ -63,7 +63,7 @@ pipeline {
             steps {
                 echo '====== 백엔드 배포 시작 ======'
                 // 🔽 여기에 추가
-                sh 'cp /home/ubuntu/mr_patent/config/.env .env || echo ".env not found, skipping..."'
+                sh 'cp /home/ubuntu/mr_patent/.env .env || echo ".env not found, skipping..."'
 
                 // 빌드 결과 복사
                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
