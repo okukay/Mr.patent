@@ -65,7 +65,6 @@ pipeline {
                 // 빌드 디렉토리 생성 및 JAR 파일 복사
                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
                 sh 'cp -f mr_patent_backend/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/build/libs/ || true'
-                
                 // Firebase 키 파일 복사
                 withCredentials([file(credentialsId: 'firebase_key', variable: 'FIREBASE_KEY_FILE')]) {
                     // Firebase 키 디렉토리 생성 및 파일 복사
@@ -74,55 +73,34 @@ pipeline {
                     sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
                 }
                 
-                // 젠킨스 작업 공간에 도커 컴포즈 파일 생성
+                // 작업 디렉토리에 간단한 도커 컴포즈 파일 생성
                 sh '''
-                    cd ${DOCKER_COMPOSE_DIR}
-                    
-                    # 파일 권한 확인
-                    ls -la ${DOCKER_COMPOSE_DIR}/docker-compose.yml || echo "File not found"
-                    
-                    # 작업 디렉토리에 docker-compose.yml 파일 생성
-                    cat > jenkins-docker-compose.yml << 'EOL'
+                    cat > docker-compose-temp.yml << 'EOL'
         version: '3.8'
 
         services:
         backend:
             build:
-            context: .
+            context: ${DOCKER_COMPOSE_DIR}
             dockerfile: deploy/backend/Dockerfile
             container_name: mr_patent_backend
             command: ["java", "-jar", "app.jar", "--spring.config.location=file:/app/config/"]
             volumes:
-            - ./config:/app/config
+            - ${DOCKER_COMPOSE_DIR}/config:/app/config
             ports:
             - "8080:8080"
-            depends_on:
-            - mysql
-            - redis
-            - elasticsearch
-            - fastapi
-            env_file:
-            - .env
             networks:
             - app-network
-            logging:
-            driver: "json-file"
-            options:
-                max-size: "10m"
-                max-file: "3"
 
-        # 기존 네트워크와 볼륨 사용
         networks:
         app-network:
             external: true
-
         EOL
-                    
-                    # 도커 컨테이너 재시작
-                    ${DOCKER_COMPOSE} -f jenkins-docker-compose.yml stop backend || true
-                    ${DOCKER_COMPOSE} -f jenkins-docker-compose.yml rm -f backend || true
-                    ${DOCKER_COMPOSE} -f jenkins-docker-compose.yml build --no-cache backend
-                    ${DOCKER_COMPOSE} -f jenkins-docker-compose.yml up -d --no-deps backend
+
+                    ${DOCKER_COMPOSE} -f docker-compose-temp.yml stop backend || true
+                    ${DOCKER_COMPOSE} -f docker-compose-temp.yml rm -f backend || true
+                    ${DOCKER_COMPOSE} -f docker-compose-temp.yml build --no-cache backend
+                    ${DOCKER_COMPOSE} -f docker-compose-temp.yml up -d --no-deps backend
                     
                     # 이미지 정리
                     docker image prune -f || true
@@ -131,7 +109,14 @@ pipeline {
                 echo '====== 백엔드 배포 완료 ======'
             }
         }
-
+        
+        stage('Notification') {
+            steps {
+                echo 'jenkins notification!'
+            }
+        }
+    }
+    
     post {
         success {
             echo '====== 파이프라인 성공 ======'
