@@ -24,6 +24,7 @@ public class ChatRoom {
 
     @Id
     private Integer userId;
+
     private Integer receiverId;
     private Integer status;
     private Integer unreadCount;

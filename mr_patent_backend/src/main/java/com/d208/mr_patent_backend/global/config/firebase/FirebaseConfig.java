@@ -20,10 +20,12 @@ public class FirebaseConfig {
     String fcmKeyPath;
 
     private static boolean isFirebaseInitialized = false;
-    //의존성 주입이 끝난 후에 자동으로 실행되는 메서드
+
     //즉 서버가 실행되면 이 메서드가 한 번 실행되며 Firebase를 초기화 할거임
+
     @PostConstruct
     public void getFcmCredential(){
+
         try {
             log.info("🔥 FCM 초기화 시작 - 설정된 키 경로: {}", fcmKeyPath);
             InputStream refreshToken = new ClassPathResource(fcmKeyPath).getInputStream();
