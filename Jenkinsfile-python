@@ -34,7 +34,7 @@ pipeline {
             }
         }
         
-        stage('Deploy FastAPI') {
+            stage('Deploy FastAPI') {
             steps {
                 echo '====== FastAPI 배포 시작 ======'
                 sh '''
@@ -48,14 +48,21 @@ pipeline {
                     # 기존 컨테이너 강제 제거
                     docker rm -f mr_patent_fastapi || true
                     
-                    # 디렉토리 생성 및 파일 복사 (더 구체적으로)
-                    mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi
+                    # sudo 권한으로 디렉토리 생성 및 소유권 변경
+                    sudo mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi || true
+                    sudo chown -R jenkins:jenkins ${DOCKER_COMPOSE_DIR}/fastapi || true
                     
                     # 특정 파일/디렉토리 개별 복사
                     cp -f mr_patent_bigdata/Pipfile ${DOCKER_COMPOSE_DIR}/fastapi/
                     cp -f mr_patent_bigdata/Pipfile.lock ${DOCKER_COMPOSE_DIR}/fastapi/
                     cp -rf mr_patent_bigdata/app ${DOCKER_COMPOSE_DIR}/fastapi/
                     cp -rf mr_patent_bigdata/models ${DOCKER_COMPOSE_DIR}/fastapi/
+                    
+                    # requirements.txt 파일 확인/생성
+                    if [ ! -f ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt ]; then
+                        cp -f mr_patent_bigdata/requirements.txt ${DOCKER_COMPOSE_DIR}/fastapi/ || true
+                        echo "pydantic-settings" >> ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
+                    fi
                     
                     echo "복사 후 대상 디렉토리 내용:"
                     ls -la ${DOCKER_COMPOSE_DIR}/fastapi
