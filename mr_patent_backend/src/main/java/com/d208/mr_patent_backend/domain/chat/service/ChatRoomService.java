@@ -100,7 +100,7 @@ public class ChatRoomService {
                         downUrl = s3Service.generatePresignedDownloadUrl(userImage);
                     }
 //                    String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
-                    
+
                     // receiverId를 가지고 expert인지 확인하고 expertId 반환
                     Integer receiverId = room.getReceiverId();
                     Expert expert = expertRepository.findByUser_UserId(receiverId); //메세지 보낸userId로 expert 인지 확인
