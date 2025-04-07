@@ -5,28 +5,9 @@ pipeline {
         DOCKER_COMPOSE_DIR = '/home/ubuntu/mr_patent'
         BACKEND_IMAGE = 'mr_patent-backend'
         BRANCH_NAME = "${env.BRANCH_NAME}"
-        DOCKER_COMPOSE = '/usr/local/bin/docker-compose'
     }
     
     stages {
-        stage('Setup') {
-            steps {
-                echo '====== 환경 설정 시작 ======'
-                // 도커 컴포즈 설치 확인 또는 설치
-                sh '''
-                    if ! command -v docker-compose &> /dev/null; then
-                        echo "Docker Compose not found, installing..."
-                        curl -L "https://github.com/docker/compose/releases/download/v2.24.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                        chmod +x /usr/local/bin/docker-compose
-                        # 심볼릭 링크 생성
-                        ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
-                    fi
-                    docker-compose --version
-                '''
-                echo '====== 환경 설정 완료 ======'
-            }
-        }
-        
         stage('Checkout') {
             steps {
                 checkout scm
@@ -59,7 +40,7 @@ pipeline {
             }
         }
         
-            stage('Deploy') {
+        stage('Deploy') {
             steps {
                 echo '====== 백엔드 배포 시작 ======'
                 // 빌드 디렉토리 생성 및 JAR 파일 복사
@@ -73,34 +54,25 @@ pipeline {
                     sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
                 }
                 
-                // 작업 디렉토리에 간단한 도커 컴포즈 파일 생성
+                // 도커 직접 명령어로 재시작
                 sh '''
-                    cat > docker-compose-temp.yml << 'EOL'
-        version: '3.8'
-
-        services:
-        backend:
-            build:
-            context: ${DOCKER_COMPOSE_DIR}
-            dockerfile: deploy/backend/Dockerfile
-            container_name: mr_patent_backend
-            command: ["java", "-jar", "app.jar", "--spring.config.location=file:/app/config/"]
-            volumes:
-            - ${DOCKER_COMPOSE_DIR}/config:/app/config
-            ports:
-            - "8080:8080"
-            networks:
-            - app-network
-
-        networks:
-        app-network:
-            external: true
-        EOL
-
-                    ${DOCKER_COMPOSE} -f docker-compose-temp.yml stop backend || true
-                    ${DOCKER_COMPOSE} -f docker-compose-temp.yml rm -f backend || true
-                    ${DOCKER_COMPOSE} -f docker-compose-temp.yml build --no-cache backend
-                    ${DOCKER_COMPOSE} -f docker-compose-temp.yml up -d --no-deps backend
+                    cd ${DOCKER_COMPOSE_DIR}
+                    
+                    # 도커 컨테이너 중지 및 제거
+                    docker stop mr_patent_backend || true
+                    docker rm mr_patent_backend || true
+                    
+                    # 도커 이미지 빌드
+                    docker build -t mr_patent_backend -f deploy/backend/Dockerfile .
+                    
+                    # 도커 컨테이너 실행
+                    docker run -d --name mr_patent_backend \\
+                      --network app-network \\
+                      -p 8080:8080 \\
+                      -v ${DOCKER_COMPOSE_DIR}/config:/app/config \\
+                      --env-file .env \\
+                      mr_patent_backend \\
+                      java -jar app.jar --spring.config.location=file:/app/config/
                     
                     # 이미지 정리
                     docker image prune -f || true
