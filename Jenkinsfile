@@ -44,15 +44,17 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '====== 백엔드 배포 시작 ======'
-                // 백업 디렉토리 생성
-//                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/backups'
-                
                 // 빌드 디렉토리 생성 및 JAR 파일 복사
                 sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/build/libs/'
                 sh 'cp -f mr_patent_backend/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/build/libs/ || true'
-                
-                // 백업 생성
-//                 sh 'cp -f ${DOCKER_COMPOSE_DIR}/build/libs/*.jar ${DOCKER_COMPOSE_DIR}/backups/backup-$(date +%Y%m%d%H%M%S)-${BRANCH_NAME}.jar || true'
+
+                // Firebase 키 파일 복사
+                withCredentials([file(credentialsId: 'firebase_key', variable: 'FIREBASE_KEY_FILE')]) {
+                    // Firebase 키 디렉토리 생성 및 파일 복사
+                    sh 'mkdir -p ${DOCKER_COMPOSE_DIR}/config/firebase'
+                    sh 'cp -f ${FIREBASE_KEY_FILE} ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
+                    sh 'chmod 600 ${DOCKER_COMPOSE_DIR}/config/firebase/firebase-service-account.json'
+                }
                 
                 // 도커 컨테이너 재시작
                 sh '''
