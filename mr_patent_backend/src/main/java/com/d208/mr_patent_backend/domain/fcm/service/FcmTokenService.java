@@ -13,27 +13,24 @@ public class FcmTokenService {
 
     private final FcmTokenRepository fcmTokenRepository;
 
-
-
-
     // 토큰 저장 또는 업데이트
     public void saveOrUpdateToken(Integer userId, String token) {
-        FcmToken fToken = fcmTokenRepository.findByUserId(userId).orElse(null);
+        FcmToken fcmToken = fcmTokenRepository.findByUserId(userId).orElse(null);
 
-        if (fToken != null) {
+        if (fcmToken != null) {
             // 기존 토큰이 있는 경우 → 업데이트
-            fToken.setToken(token);
-            fToken.setUpdatedAt(LocalDateTime.now());
+            fcmToken.setToken(token);
+            fcmToken.setUpdatedAt(LocalDateTime.now());
         } else {
             // 기존 토큰이 없는 경우 → 새로 생성
-            fToken = FcmToken.builder()
+            fcmToken = FcmToken.builder()
                     .userId(userId)
                     .token(token)
                     .updatedAt(LocalDateTime.now())
                     .build();
         }
 
-        fcmTokenRepository.save(fToken);
+        fcmTokenRepository.save(fcmToken);
     }
 
     // userId 에 따른 토큰 가져오기
