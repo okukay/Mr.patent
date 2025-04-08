@@ -26,7 +26,7 @@ public class User {
     @Column(name = "user_name", length = 25, nullable = false)
     private String userName;
 
-    @Column(name = "user_image", length = 255, nullable = false)
+    @Column(name = "user_image", length = 500, nullable = false)
     private String userImage = "기본 이미지 경로";  // 기본값 설정
 
     @Column(name = "user_role", nullable = false)
