@@ -41,10 +41,13 @@ public class WebSocketEventListener {
 
             chatRoomRepository.findByRoomIdAndUserId(roomId, userid).ifPresent(room -> {
 
-                room.setSessionId(sessionId);  // 1. sessionId 저장
-                room.setStatus(room.getStatus() + 1); // 2. status 증가
+                if (room.getSessionId() == null || room.getSessionId().isBlank()) {
+                    room.setStatus(room.getStatus() + 1);
+                }
+                room.setSessionId(sessionId);  //  sessionId 저장
                 chatRoomRepository.save(room);
 
+                //읽음 처리 서비스 로직
                 chatReadService.handleUserEntered(roomId, userid);
 
                 int totalStatus = chatRoomRepository.findByRoomId(roomId).stream()
@@ -71,6 +74,9 @@ public class WebSocketEventListener {
             System.out.println(" [퇴장] roomId = " + room.getRoomId() + ", userId = " + room.getUserId());
 
             String roomId = room.getRoomId();
+
+            room.setSessionId(null);
+
             // 1. status -1 처리
             int updatedStatus = Math.max(0, room.getStatus() - 1);
             room.setStatus(updatedStatus);

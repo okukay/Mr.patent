@@ -28,8 +28,8 @@ public class FirebaseConfig {
 
         try {
             log.info("🔥 FCM 초기화 시작 - 설정된 키 경로: {}", fcmKeyPath);
-//            InputStream refreshToken = new ClassPathResource(fcmKeyPath).getInputStream();
-            InputStream refreshToken = new FileInputStream(fcmKeyPath);
+            InputStream refreshToken = new ClassPathResource(fcmKeyPath).getInputStream(); //로컬용
+//            InputStream refreshToken = new FileInputStream(fcmKeyPath); //서버용
             FirebaseOptions options = FirebaseOptions.builder() //Firebase Admin SDK에서 사용할 인증 정보 설정
                     .setCredentials(GoogleCredentials.fromStream(refreshToken)).build();
 

@@ -24,12 +24,12 @@ public class ChatReadService {
     @Transactional
     public void handleUserEntered(String roomId, Integer userId) {
 
-        // 1. 내 row 조회
+        //  내 row 조회
         ChatRoom myRoom = chatRoomRepository.findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new RuntimeException("채팅방을 찾을 수 없습니다."));
 
-        // 2. 내 row가 아닌 상대방의 row만 처리
-        // → 내가 보낸 메시지는 내가 읽어도 read 처리 X
+        // 내 row가 아닌 상대방의 row만 처리
+        // 내가 보낸 메시지는 내가 읽어도 read 처리 X
         for (ChatRoom room : chatRoomRepository.findByRoomId(roomId)) {
             if (!room.getUserId().equals(userId)) {
                 // 3. 상대방이 보낸 메시지 중 읽지 않은 것만 가져오기
@@ -37,17 +37,17 @@ public class ChatReadService {
                         roomId, room.getUserId()
                 );
 
-                // 4. 메시지 읽음 처리
+                //  메시지 읽음 처리 true 로 변경
                 for (ChatMessage msg : unreadMessages) {
                     msg.setRead(true);
                 }
                 chatMessageRepository.saveAll(unreadMessages);
 
-                // 5. 내 unreadCount = 0 처리 (내가 읽었으니까)
+                //  내 unreadCount = 0 처리 (내가 읽었으니까)
                 myRoom.setUnreadCount(0);
                 chatRoomRepository.save(myRoom);
 
-                break; // 1:1 채팅이므로 한 명만 처리하면 됨
+                break;
             }
         }
     }

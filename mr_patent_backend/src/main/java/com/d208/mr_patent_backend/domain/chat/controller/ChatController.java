@@ -78,7 +78,6 @@ public class ChatController {
                             message.getMessage(),
                             data
                     );
-                    System.out.println("fcm 이 보내졋다.");
                 } else {
                     System.err.println("FCM이 초기화되지 않았습니다. 메시지를 전송할 수 없습니다.");
                 }
