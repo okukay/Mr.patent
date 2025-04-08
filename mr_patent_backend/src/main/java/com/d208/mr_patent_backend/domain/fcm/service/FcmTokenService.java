@@ -13,6 +13,9 @@ public class FcmTokenService {
 
     private final FcmTokenRepository fcmTokenRepository;
 
+
+
+
     // 토큰 저장 또는 업데이트
     public void saveOrUpdateToken(Integer userId, String token) {
         FcmToken fToken = fcmTokenRepository.findByUserId(userId).orElse(null);
@@ -38,5 +41,13 @@ public class FcmTokenService {
         return fcmTokenRepository.findByUserId(userId)
                 .map(FcmToken::getToken)
                 .orElse(null);
+    }
+
+
+    // FCM 토큰 삭제
+    public void deleteFcmToken(Integer userId) {
+        FcmToken token = fcmTokenRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
+        fcmTokenRepository.delete(token);
     }
 }

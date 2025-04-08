@@ -19,9 +19,8 @@ public class FcmToken {
 
     private Integer userId;
 
-    @Column(nullable = false, length = 512)
+    @Column(length = 512)
     private String token;
 
     private LocalDateTime updatedAt;
-
 }
