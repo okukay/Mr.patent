@@ -78,10 +78,17 @@ def parse_patent_document(ocr_text: str) -> Dict[str, str]:
         patent_draft["patent_draft_effect"] = effect_match.group(1).strip()
 
     # 발명을 실시하기 위한 구체적인 내용 추출 (개선된 패턴)
-    detailed_pattern = r"(?:【발명을 실시하기 위한 구체적인 내용】|발명을\s*실시하기\s*위한\s*구체적인\s*내용)\s*(.*?)(?:【청구범위】|청구\s*범위|【요약】)"
+    detailed_pattern = r"(?:【발명을\s*실시하기\s*위한\s*구체적인\s*내용】|발명을\s*실시하기\s*위한\s*구체적인\s*내용)\s*(.*?)(?:【요약】|요\s*약|【청구범위】|청구\s*범위|청구항)"
     detailed_match = re.search(detailed_pattern, ocr_text, re.DOTALL | re.IGNORECASE)
     if detailed_match:
         patent_draft["patent_draft_detailed"] = detailed_match.group(1).strip()
+
+    # 위 패턴이 실패할 경우 대안 패턴 시도
+    if not patent_draft["patent_draft_detailed"]:
+        alt_detailed_pattern = r"발명을\s*실시하기\s*위한\s*구체적인\s*내용\s*(.*?)(?=요약|청구항)"
+        alt_detailed_match = re.search(alt_detailed_pattern, ocr_text, re.DOTALL | re.IGNORECASE)
+        if alt_detailed_match:
+            patent_draft["patent_draft_detailed"] = alt_detailed_match.group(1).strip()
     
     # 요약 추출 (개선된 패턴)
     summary_pattern = r"(?:【요약】|요\s*약)\s*(.*?)(?:$)"
@@ -189,7 +196,7 @@ async def parse_patent_from_pdf(file: UploadFile = File(...)):
     try:
         # Google Cloud Vision API로 텍스트 추출
         logger.info(f"PDF 파일 OCR 처리 시작: {temp_file_path}")
-        ocr_text = extract_text(temp_file_path)
+        ocr_text = await extract_text(temp_file_path)
         logger.info(f"PDF 파일 OCR 처리 완료: {len(ocr_text)} 글자 추출")
         
         # 특허 섹션 파싱
@@ -216,5 +223,15 @@ async def parse_patent_from_pdf(file: UploadFile = File(...)):
             os.remove(temp_file_path)
             
         logger.error(f"특허 PDF 파싱 중 오류: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"특허 PDF 파싱 중 오류: {str(e)}")
-
+        raise HTTPException(
+            status_code=500, 
+            detail={
+                "status": False,
+                "code": 500,
+                "data": None,
+                "error": {
+                    "code": "PDF_PARSE_ERROR",
+                    "message": f"특허 PDF 파싱 중 오류: {str(e)}"
+                }
+            }
+        )
