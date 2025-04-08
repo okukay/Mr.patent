@@ -7,7 +7,7 @@ import logging
 import re
 
 from app.core.database import database
-from app.services.kipris import get_patent_public_info, download_patent_pdf, test_kipris_apis, parse_kipris_document
+from app.services.kipris import get_patent_public_info, download_patent_pdf, test_kipris_apis, parse_kipris_document, get_patent_info_and_pdf
 from app.api.routes.ocr import extract_text  # OCR 텍스트 추출 함수 임포트
 
 router = APIRouter(prefix="/fastapi/patent", tags=["patent_public"])
@@ -36,25 +36,34 @@ async def test_kipris_api(patent_application_number: str):
     # 하이픈 제거된 형식 (API 호출용)
     clean_number = re.sub(r'[^0-9]', '', normalized_number)
     
-    # API 테스트 수행
-    results = await test_kipris_apis(clean_number)
-    
-    return {
-        "data": {
-            "original_number": patent_application_number,
-            "normalized_number": normalized_number,
-            "clean_number": clean_number,
-            "test_results": results
+    # API 테스트 수행 - 개발/테스트 환경에서만 사용
+    if os.getenv("ENVIRONMENT", "development") != "production":
+        results = await test_kipris_apis(clean_number)
+        return {
+            "data": {
+                "original_number": patent_application_number,
+                "normalized_number": normalized_number,
+                "clean_number": clean_number,
+                "test_results": results
+            }
         }
-    }
+    else:
+        return {
+            "data": {
+                "message": "테스트 기능은 개발 환경에서만 사용 가능합니다."
+            }
+        }
 
 @router.get("/kipris/{patent_application_number}", response_model=Dict[str, Any])
 async def get_patent_public(patent_application_number: str):
     """특허 공고전문 정보 조회"""
     try:
-        # 출원번호 정규화 (하이픈 포함 형식으로 변환)
+        # 출원번호 정규화
         normalized_number = normalize_application_number(patent_application_number)
-        logger.info(f"특허 공고전문 정보 조회 시작: 원본={patent_application_number}, 정규화={normalized_number}")
+        
+        # 통합 함수 사용 (API 한 번만 호출)
+        clean_number = re.sub(r'[^0-9]', '', normalized_number)
+        patent_info, pdf_path, pdf_name = await get_patent_info_and_pdf(clean_number)
         
         # 이미 저장된 공고전문이 있는지 확인
         check_query = """
@@ -122,11 +131,12 @@ async def get_patent_public(patent_application_number: str):
         clean_number = str(re.sub(r'[^0-9]', '', normalized_number))  # 문자열 타입 보장
         logger.info(f"KIPRIS API 호출 시작: 출원번호={clean_number} (타입: {type(clean_number)})")
         
-        # 디버깅을 위한 직접 API 테스트
-        test_results = await test_kipris_apis(clean_number)
-        logger.info(f"API 테스트 결과: {json.dumps(test_results, ensure_ascii=False)[:500]}")
+        # # 디버깅을 위한 직접 API 테스트
+        # test_results = await test_kipris_apis(clean_number)
+        # logger.info(f"API 테스트 결과: {json.dumps(test_results, ensure_ascii=False)[:500]}")
         
-        patent_info = await get_patent_public_info(clean_number)
+        # 통합 함수 호출 (개선점 3 적용)
+        patent_info, pdf_path, pdf_name = await get_patent_info_and_pdf(clean_number)
         
         if not patent_info:
             logger.warning(f"KIPRIS에서 특허 정보를 찾을 수 없음: {clean_number}")

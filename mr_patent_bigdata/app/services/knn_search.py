@@ -165,15 +165,23 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
             
             # 상위 k개 유지 (최소 힙)
             if len(top_k) < k:
-                heapq.heappush(top_k, (similarity, patent))
+                # 유사도를 float으로 변환하여 저장
+                heapq.heappush(top_k, (float(similarity), patent))
             elif similarity > top_k[0][0]:
-                heapq.heappushpop(top_k, (similarity, patent))
+                heapq.heappushpop(top_k, (float(similarity), patent))
         except Exception as e:
             logger.error(f"유사도 계산 중 오류: {str(e)}")
     
-    # 5. 결과 정렬 (내림차순)
+    # 5. 결과 정렬 (내림차순) - 수정된 부분
+    # 방법 1: 명시적 키 함수를 사용한 정렬
     results = [(sim, pat) for sim, pat in top_k]
-    results.sort(reverse=True)
+    results.sort(key=lambda x: x[0], reverse=True)
+    
+    # 또는 방법 2: 힙에서 직접 추출하여 역순 정렬
+    # results = []
+    # while top_k:
+    #     results.append(heapq.heappop(top_k))
+    # results.reverse()
     
     # 6. 유사도 결과 저장
     now = datetime.now(timezone.utc)
