@@ -97,7 +97,7 @@ public class ChatService {
         chatRoomRepository.save(senderRoom);
         chatRoomRepository.save(receiverRoom);
 
-        System.out.println("채팅방 메타데이터 업데이트 완료");
+        System.out.println("채팅방 업데이트 완료");
 
         // 상대방 오프라인일 경우 -> sse연결되어있다면 -> sse전송
         if (!dto.isRead()) {

@@ -53,7 +53,7 @@ public class ChatRoomController {
             @PathVariable String roomId,
             @RequestParam(required = false) Long lastMessageId // 파라미터 없어도 괜찮음(첫 대화 불러오기 때문에)
     ) {
-        int size = 10;
+        int size = 20;
         List<ChatMessageDto> messages = chatService.getMessages(roomId, lastMessageId, size);
         Map<String, Object> response = new HashMap<>();
         response.put("data", messages);
