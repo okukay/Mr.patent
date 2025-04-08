@@ -5,26 +5,20 @@ pipeline {
         DOCKER_COMPOSE_DIR = "/var/jenkins_shared/mr_patent"
         DOCKER_COMPOSE = '$HOME/bin/docker-compose'
         BRANCH_NAME = "${env.BRANCH_NAME}"
+        PYTHON_VERSION = "3.9"
     }
     
     stages {
-        stage('Setup') {
+        stage('Setup Python Environment') {
             steps {
-                echo '====== 환경 설정 시작 ======'
-                // 도커 컴포즈 설치 확인 또는 설치
                 sh '''
-                    if ! command -v docker-compose &> /dev/null; then
-                        echo "Docker Compose not found, installing..."
-                        mkdir -p $HOME/bin
-                        curl -L "https://github.com/docker/compose/releases/download/v2.24.3/docker-compose-$(uname -s)-$(uname -m)" -o $HOME/bin/docker-compose
-                        chmod +x $HOME/bin/docker-compose
-                        export PATH=$HOME/bin:$PATH
-                    else
-                        echo "Docker Compose already installed"
-                    fi
-                    docker-compose --version || $HOME/bin/docker-compose --version
+                    # Python 및 pip 설치 확인
+                    python3 --version
+                    python3 -m pip --version
+
+                    # 가상환경 및 의존성 관리 도구 설치
+                    python3 -m pip install --user virtualenv pipenv
                 '''
-                echo '====== 환경 설정 완료 ======'
             }
         }
         
@@ -43,17 +37,20 @@ pipeline {
                 echo '====== FastAPI 빌드 시작 ======'
                 dir('mr_patent_bigdata') {
                     sh '''
+                        # 가상환경 생성 및 활성화
+                        python3 -m venv venv
+                        source venv/bin/activate
+
+                        # pipenv로 의존성 설치
+                        pip install pipenv
+                        pipenv install --dev
+
                         echo "현재 디렉토리 내용:"
                         ls -la
                         echo "app 디렉토리 내용:"
                         ls -la app
                         echo "Pipfile 내용:"
                         cat Pipfile
-                    '''
-                    // pipenv로 의존성 설치 추가
-                    sh '''
-                        pip install pipenv
-                        pipenv install
                     '''
                     echo '====== FastAPI 빌드 완료 ======'
                 }
@@ -64,8 +61,8 @@ pipeline {
             steps {
                 echo '====== FastAPI 테스트 시작 ======'
                 dir('mr_patent_bigdata') {
-                    // 테스트 스크립트 추가 (필요시 수정)
                     sh '''
+                        source venv/bin/activate
                         pipenv run pytest || true
                     '''
                 }
@@ -73,7 +70,7 @@ pipeline {
             }
         }
         
-            stage('Deploy FastAPI') {
+        stage('Deploy FastAPI') {
             steps {
                 echo '====== FastAPI 배포 시작 ======'
                 sh '''
@@ -84,11 +81,9 @@ pipeline {
                     cp -f mr_patent_bigdata/Pipfile ${DOCKER_COMPOSE_DIR}/fastapi/
                     cp -f mr_patent_bigdata/Pipfile.lock ${DOCKER_COMPOSE_DIR}/fastapi/
                     
-                    # requirements.txt 생성 (선택적)
-                    if [ ! -f ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt ]; then
-                        pipenv lock -r > ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
-                        echo "pydantic-settings" >> ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
-                    fi
+                    # requirements.txt 생성
+                    cd mr_patent_bigdata
+                    pipenv lock -r > ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
                     
                     # 도커 컴포즈로 fastapi 서비스 재배포
                     cd ${DOCKER_COMPOSE_DIR}
