@@ -110,7 +110,6 @@ pipeline {
                     $HOME/bin/docker-compose -f docker-compose.yml rm -f fastapi || true
                     $HOME/bin/docker-compose -f docker-compose.yml build --no-cache fastapi
                     $HOME/bin/docker-compose -f docker-compose.yml up -d fastapi
-                    docker image prune -f
                 '''
                 echo '====== FastAPI 배포 완료 ======'
             }
