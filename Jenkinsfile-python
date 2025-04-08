@@ -148,7 +148,6 @@ pipeline {
         }
         always {
             echo '====== 파이프라인 종료 ======'
-            cleanWs()
         }
     }
 }
