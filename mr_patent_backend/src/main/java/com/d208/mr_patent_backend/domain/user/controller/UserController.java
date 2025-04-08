@@ -211,4 +211,17 @@ public class UserController {
         response.put("data", data);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(summary = "프로필 이미지 다운로드/조회용 Presigned URL 발급")
+    @GetMapping("/profile-image/download-url")
+    public ResponseEntity<Map<String, Object>> getProfileImageDownloadUrl(
+            @RequestParam String filename
+    ) {
+        String presignedUrl = s3Service.generatePresignedDownloadUrl(filename);
+        Map<String, Object> response = new HashMap<>();
+        Map<String, String> data = new HashMap<>();
+        data.put("url", presignedUrl);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
+    }
 }
