@@ -83,8 +83,8 @@ pipeline {
                 echo '====== FastAPI 배포 시작 ======'
                 // 환경 설정 파일 복사
                 withCredentials([
-                    file(credentialsId: 'env_file', variable: 'ENV_FILE'),
-                    file(credentialsId: 'application_yml_file', variable: 'APP_YML_FILE')
+                    file(credentialsId: 'fastapi-env', variable: 'ENV_FILE'),
+                    file(credentialsId: 'application-prod.yml', variable: 'APP_YML_FILE')
                 ]) {
                     sh '''
                         mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi/config
