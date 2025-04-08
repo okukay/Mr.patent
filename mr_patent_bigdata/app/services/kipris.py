@@ -52,7 +52,7 @@ async def test_kipris_apis(application_number: str) -> Dict[str, Any]:
         # 서비스 키 URL 인코딩 적용
         params = {
             "applicationNumber": application_number,
-            "ServiceKey": urllib.parse.quote(KIPRIS_SERVICE_KEY)
+            "ServiceKey": KIPRIS_SERVICE_KEY  # 인코딩 없이 원본 키 사용
         }
         
         # 브라우저처럼 보이는 User-Agent 추가
@@ -136,7 +136,7 @@ async def get_patent_public_info(application_number: str) -> Optional[Dict[str, 
         # 서비스 키 URL 인코딩 적용
         params = {
             "applicationNumber": application_number,
-            "ServiceKey": urllib.parse.quote(KIPRIS_SERVICE_KEY)
+            "ServiceKey": KIPRIS_SERVICE_KEY  # 인코딩 없이 원본 키 사용
         }
         
         # 브라우저처럼 보이는 User-Agent 추가 (중요!)
@@ -316,3 +316,49 @@ async def extract_text_from_pdf(pdf_path: str) -> Tuple[str, Dict]:
         import traceback
         logger.error(traceback.format_exc())
         return "텍스트 추출 실패", {}
+
+def parse_kipris_document(ocr_text: str) -> Dict[str, str]:
+    """KIPRIS 공고전문 전용 파싱 함수 - 접두사 없는 깔끔한 필드명 사용"""
+    # OCR 결과에서 페이지 구분자 제거
+    ocr_text = re.sub(r'---\s*페이지\s*\d+\s*---', '', ocr_text)
+
+    def extract_section(text, start_marker, end_marker):
+        try:
+            start_idx = text.find(start_marker)
+            if start_idx == -1:
+                # 다른 형태의 마커 시도 (청구항의 경우)
+                if start_marker == "청구항":
+                    alt_markers = ["청구항 1.", "【청구항 1】"]
+                    for alt_marker in alt_markers:
+                        start_idx = text.find(alt_marker)
+                        if start_idx != -1:
+                            start_idx = start_idx
+                            break
+                if start_idx == -1:
+                    return ""
+            
+            # 시작 마커 이후로 이동
+            start_idx = start_idx + len(start_marker)
+            
+            # 끝 마커가 있는 경우
+            if end_marker and end_marker in text[start_idx:]:
+                end_idx = text.find(end_marker, start_idx)
+                return text[start_idx:end_idx].strip()
+            else:
+                # 끝 마커가 없는 경우 (예: 마지막 섹션)
+                return text[start_idx:].strip()
+        except Exception as e:
+            logger.warning(f"섹션 추출 오류 ({start_marker} ~ {end_marker}): {str(e)}")
+            return ""
+
+    return {
+        "title": extract_section(ocr_text, "발명의 명칭", "요약"),
+        "technical_field": extract_section(ocr_text, "기술분야", "배경기술"),
+        "background": extract_section(ocr_text, "배경기술", "발명의 내용"),
+        "problem": extract_section(ocr_text, "해결하려는 과제", "과제의 해결 수단"),
+        "solution": extract_section(ocr_text, "과제의 해결 수단", "발명의 효과"),
+        "effect": extract_section(ocr_text, "발명의 효과", "도면의 간단한 설명"),
+        "detailed": extract_section(ocr_text, "발명을 실시하기 위한 구체적인 내용", "청구범위"),
+        "summary": extract_section(ocr_text, "요약", "명세서"),
+        "claim": extract_section(ocr_text, "청구항", "발명의 설명")
+    }

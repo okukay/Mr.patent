@@ -261,7 +261,7 @@ async def get_recent_drafts(
     user_id: int, 
     limit: int = Query(5, ge=1, le=50, description="조회할 최대 항목 수")
 ):
-    """사용자의 최근 특허 초안 목록 조회 (최대 5개)"""
+    """사용자의 최근 특허 초안 목록 조회 (최대 5개) - 벡터 필드 제외한 모든 정보 반환"""
     try:
         # 사용자 폴더 확인
         folder_query = """
@@ -284,13 +284,22 @@ async def get_recent_drafts(
         folder_ids = [folder["user_patent_folder_id"] for folder in folders]
         folder_ids_str = ",".join(map(str, folder_ids))
         
-        # 최근 특허 초안 조회
+        # 최근 특허 초안 조회 - 벡터 필드를 제외한 모든 정보 가져오기
         draft_query = f"""
         SELECT 
-            patent_draft_id, 
-            patent_draft_title, 
+            patent_draft_id,
+            user_patent_folder_id,
+            patent_draft_title,
+            patent_draft_technical_field,
+            patent_draft_background,
+            patent_draft_problem,
+            patent_draft_solution,
+            patent_draft_effect,
+            patent_draft_detailed,
             patent_draft_summary,
-            patent_draft_updated_at as updated_at
+            patent_draft_claim,
+            patent_draft_created_at,
+            patent_draft_updated_at
         FROM patent_draft
         WHERE user_patent_folder_id IN ({folder_ids_str})
         ORDER BY patent_draft_updated_at DESC
@@ -306,11 +315,24 @@ async def get_recent_drafts(
         result_drafts = []
         for draft in drafts:
             draft_dict = dict(draft)
-            # 날짜 포맷 변환
-            if "updated_at" in draft_dict:
-                draft_dict["updated_at"] = draft_dict["updated_at"].isoformat() + 'Z'
             
-            result_drafts.append(draft_dict)
+            # 날짜 포맷 변환
+            if "patent_draft_created_at" in draft_dict:
+                draft_dict["created_at"] = draft_dict.pop("patent_draft_created_at").isoformat() + 'Z'
+            if "patent_draft_updated_at" in draft_dict:
+                draft_dict["updated_at"] = draft_dict.pop("patent_draft_updated_at").isoformat() + 'Z'
+            
+            # 필드명 정리 (선택 사항)
+            formatted_draft = {}
+            for key, value in draft_dict.items():
+                if key.startswith("patent_draft_"):
+                    # patent_draft_ 접두사 제거
+                    formatted_key = key[len("patent_draft_"):]
+                    formatted_draft[formatted_key] = value
+                else:
+                    formatted_draft[key] = value
+            
+            result_drafts.append(formatted_draft)
         
         return {
             "data": {"patent_drafts": result_drafts},

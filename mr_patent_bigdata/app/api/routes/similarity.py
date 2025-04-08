@@ -6,12 +6,15 @@ from sklearn.metrics.pairwise import cosine_similarity
 import json
 import re
 import traceback
+import logging
 
 from app.core.database import database
 from app.services.vectorizer import get_tfidf_vector, get_bert_vector
 from app.services.kipris import get_patent_public_info, download_patent_pdf
 
 router = APIRouter(prefix="/fastapi", tags=["similarity"])
+
+logger = logging.getLogger(__name__)
 
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""
@@ -63,64 +66,120 @@ def safe_cosine_similarity(a, b):
         return 0.0
 
 @router.post("/draft/{patent_draft_id}/similarity-check", response_model=Dict[str, Any])
-async def run_similarity_check(patent_draft_id: int, background_tasks: BackgroundTasks):
+async def run_similarity_check(patent_draft_id: int, background_tasks: BackgroundTasks, force_legacy: bool = False):
     """특허 초안의 적합도 검사, 유사도 분석, 상세 비교를 모두 수행 (비동기)"""
-    # 1. 특허 초안 존재 확인
-    draft_query = """
-    SELECT * FROM patent_draft 
-    WHERE patent_draft_id = :draft_id
-    """
-    draft = await database.fetch_one(
-        query=draft_query,
-        values={"draft_id": patent_draft_id}
-    )
-    
-    if not draft:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "code": "DRAFT_NOT_FOUND",
-                "message": "해당 ID의 특허 초안을 찾을 수 없습니다."
+    try:
+        # 특허 초안 존재 확인
+        draft_query = """
+        SELECT * FROM patent_draft 
+        WHERE patent_draft_id = :draft_id
+        """
+        draft = await database.fetch_one(
+            query=draft_query,
+            values={"draft_id": patent_draft_id}
+        )
+        
+        if not draft:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "DRAFT_NOT_FOUND",
+                    "message": "해당 ID의 특허 초안을 찾을 수 없습니다."
+                }
+            )
+        
+        # 클러스터 기반 검색을 강제로 건너뛰지 않는 경우
+        if not force_legacy:
+            try:
+                # 클러스터 정보 존재 확인
+                cluster_query = "SELECT COUNT(*) as count FROM cluster"
+                cluster_count = await database.fetch_val(query=cluster_query)
+                
+                # 클러스터 정보가 있으면 클러스터 기반 검색 시도
+                if cluster_count > 0:
+                    logger.info(f"클러스터 기반 유사도 검색 시도: 특허 초안 ID {patent_draft_id}")
+                    
+                    from app.services.cluster_similarity import perform_cluster_based_similarity_search
+                    result = await perform_cluster_based_similarity_search(patent_draft_id)
+                    
+                    if result:
+                        logger.info(f"클러스터 기반 유사도 검색 성공: ID {result['similarity_id']}")
+                        
+                        # 적합도 검사 및 상세 비교는 별도로 수행
+                        now = datetime.now(timezone.utc)
+                        fitness_results = await perform_fitness_check(patent_draft_id, draft, now)
+                        
+                        # 상세 비교는 상위 특허 3개에 대해 수행
+                        top_results = result["results"][:3]
+                        await perform_detailed_comparison(patent_draft_id, draft, top_results, now)
+                        
+                        return {
+                            "data": {
+                                "similarity_id": result["similarity_id"],
+                                "status": "COMPLETED",
+                                "search_method": "cluster"
+                            }
+                        }
+            
+            except Exception as e:
+                logger.error(f"클러스터 기반 유사도 검색 중 오류: {str(e)}")
+                logger.error(traceback.format_exc())
+                # 클러스터 기반 검색 실패 시 기존 방식으로 폴백
+        
+        # 기존 방식으로 유사도 검색 수행 (백그라운드 작업)
+        # 2. similarity 엔티티 생성 (분석 상태 표시)
+        now = datetime.now(timezone.utc)
+        similarity_query = """
+        INSERT INTO similarity (
+            patent_draft_id, 
+            similarity_created_at, 
+            similarity_updated_at
+        ) VALUES (
+            :draft_id,
+            :created_at,
+            :updated_at
+        )
+        """
+        
+        similarity_id = await database.execute(
+            query=similarity_query,
+            values={
+                "draft_id": patent_draft_id,
+                "created_at": now,
+                "updated_at": now
             }
         )
-    
-    # 2. similarity 엔티티 생성 (분석 상태 표시)
-    now = datetime.now(timezone.utc)
-    similarity_query = """
-    INSERT INTO similarity (
-        patent_draft_id, 
-        similarity_created_at, 
-        similarity_updated_at
-    ) VALUES (
-        :draft_id,
-        :created_at,
-        :updated_at
-    )
-    """
-    
-    similarity_id = await database.execute(
-        query=similarity_query,
-        values={
-            "draft_id": patent_draft_id,
-            "created_at": now,
-            "updated_at": now
+        
+        # 3. 백그라운드에서 분석 작업 실행
+        background_tasks.add_task(
+            perform_similarity_analysis,  # 실행할 함수
+            patent_draft_id,              # 첫 번째 인자
+            similarity_id                 # 두 번째 인자
+        )
+        
+        # 4. 즉시 응답 반환 (작업 시작됨)
+        return {
+            "data": {
+                "similarity_id": similarity_id,
+                "status": "ANALYZING",
+                "search_method": "legacy"
+            }
         }
-    )
     
-    # 3. 백그라운드에서 분석 작업 실행
-    background_tasks.add_task(
-        perform_similarity_analysis,  # 실행할 함수
-        patent_draft_id,              # 첫 번째 인자
-        similarity_id                 # 두 번째 인자
-    )
+    except HTTPException:
+        raise
     
-    # 4. 즉시 응답 반환 (작업 시작됨)
-    return {
-        "data": {
-            "similarity_id": similarity_id,
-            "status": "ANALYZING"
-        }
-    }
+    except Exception as e:
+        logger.error(f"유사도 검사 중 오류 발생: {str(e)}")
+        logger.error(traceback.format_exc())
+        
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "SIMILARITY_ERROR",
+                "message": f"유사도 검사 중 오류 발생: {str(e)}"
+            }
+        )
 
 # 새로 추가: 적합도 결과 조회 API
 @router.get("/patent/fitness/{patent_draft_id}", response_model=Dict[str, Any])
@@ -385,7 +444,7 @@ async def perform_tfidf_similarity(patent_draft_id: int, draft) -> List[Dict]:
     draft_claim_tfidf = safe_frombuffer(draft_dict["patent_draft_claim_tfidf_vector"], target_dim=1000)
     
     # TF-IDF 기반 초기 유사도 계산 (모든 특허에 대해)
-    limit = 1000
+    limit = 500
     offset = 0
     all_tfidf_candidates = []
     
@@ -557,93 +616,120 @@ async def save_similarity_results(patent_draft_id: int, similarity_id: int, resu
     return
 
 async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: List[Dict], now: datetime):
-    """상위 특허에 대한 상세 비교 및 KIPRIS API 연동"""
+    """
+    상위 특허에 대한 상세 비교 및 KIPRIS API 연동 - KLUE-BERT 모델 활용한 문맥 비교
+    TF-IDF 상위 10개 중 1위 특허만 처리하도록 수정
+    """
     print(f"상세 비교 시작: 특허 초안 ID {patent_draft_id}, 상위 특허 수: {len(top_results)}")
     
     # 레코드 객체를 딕셔너리로 변환
     draft_dict = dict(draft) if draft else {}
     
-    for i, patent in enumerate(top_results):
+     # 상위 1개 특허만 처리 (상위 3개에서 변경)
+    if len(top_results) > 0:
+        patent = top_results[0]  # 상위 1개만 처리
         try:
             print(f"상세 비교 진행 중: {i+1}/{len(top_results)}")
             patent_app_number = patent["patent_application_number"]
             
-            # 1. KIPRIS API를 통해 특허 공고전문 정보 가져오기
-            print(f"KIPRIS API 호출 시작: {patent_app_number}")
-            patent_info = await get_patent_public_info(patent_app_number)
-            
-            if not patent_info:
-                print(f"특허 {patent_app_number}의 KIPRIS 정보를 찾을 수 없습니다.")
-                continue
-            
-            print(f"KIPRIS API 호출 성공: {patent_app_number}, 공고번호: {patent_info.get('publication_number', '알 수 없음')}")
-            
-            # 2. 특허 공고전문 데이터베이스에 저장 (변경된 테이블 구조 반영)
-            patent_public_query = """
-            INSERT INTO patent_public (
-                patent_id,
-                patent_public_number,
-                patent_public_content,
-                patent_public_api_response,
-                patent_public_created_at,
-                patent_public_updated_at
-            ) VALUES (
-                :patent_id,
-                :public_number,
-                :content,
-                :api_response,
-                :created_at,
-                :updated_at
-            ) ON DUPLICATE KEY UPDATE
-                patent_public_content = :content,
-                patent_public_api_response = :api_response,
-                patent_public_updated_at = :updated_at
+            # 1. 특허 공고전문 존재여부 확인, 없으면 KIPRIS API를 통해 가져오기
+            patent_public_check = """
+            SELECT pp.patent_public_id, pp.patent_public_content 
+            FROM patent_public pp 
+            WHERE pp.patent_id = :patent_id
             """
             
-            # 간단한 내용 예시 (실제로는 PDF 텍스트 추출 필요)
-            content = f"특허 공고전문 내용 (출원번호: {patent_app_number})"
-            
-            print(f"특허 공고전문 DB 저장 시작: {patent_app_number}")
-            patent_public_id = await database.execute(
-                query=patent_public_query,
-                values={
-                    "patent_id": patent["patent_id"],
-                    "public_number": patent_info["publication_number"],
-                    "content": content,
-                    "api_response": json.dumps(patent_info, ensure_ascii=False),
-                    "created_at": now,
-                    "updated_at": now
-                }
+            public_info = await database.fetch_one(
+                query=patent_public_check,
+                values={"patent_id": patent["patent_id"]}
             )
-            print(f"특허 공고전문 DB 저장 완료: ID {patent_public_id}")
             
-            # 3. 상세 비교 결과 저장
-            # 유사 구간 하이라이트 (샘플 데이터)
-            highlights = [
-                {
-                    "original": draft_dict["patent_draft_title"][:100],
-                    "similar": patent["patent_title"][:100],
-                    "similarity": patent["title_similarity"]
-                },
-                {
-                    "original": draft_dict["patent_draft_summary"][:100],
-                    "similar": patent["patent_summary"][:100] if patent.get("patent_summary") else "",
-                    "similarity": patent["summary_similarity"]
-                },
-                {
-                    "original": draft_dict["patent_draft_claim"][:100],
-                    "similar": patent["patent_claim"][:100] if patent.get("patent_claim") else "",
-                    "similarity": patent["claim_similarity"]
-                }
-            ]
+            # 공고전문 정보가 없으면 KIPRIS API 호출
+            if not public_info:
+                print(f"KIPRIS API 호출 시작: {patent_app_number}")
+                # 새로 정의한 함수 사용
+                patent_public_id = await save_patent_public(patent["patent_id"], patent_app_number)
+                if not patent_public_id:
+                    return  # 실패 시 종료
+                    
+                # 저장된 공고전문 정보 다시 조회
+                public_info = await database.fetch_one(
+                    query=patent_public_check,
+                    values={"patent_id": patent["patent_id"]}
+                )
+            else:
+                patent_public_id = public_info["patent_public_id"]
             
-            # 상세 비교 컨텍스트 생성
-            context = {
-                "highlights": highlights,
-                "overall_similarity": patent["overall_similarity"]
+            # 원본 공고전문 텍스트 (OCR 추출)
+            patent_text = public_info["patent_public_content"]
+            
+            # 2. KLUE-BERT 모델을 활용한 특허 초안과 공고전문의 N:1 문맥 비교
+            # 특허 초안의 각 섹션
+            draft_sections = {
+                "TITLE": draft_dict["patent_draft_title"],
+                "SUMMARY": draft_dict["patent_draft_summary"],
+                "CLAIM": draft_dict["patent_draft_claim"],
+                "TECHNICAL_FIELD": draft_dict.get("patent_draft_technical_field", ""),
+                "BACKGROUND": draft_dict.get("patent_draft_background", ""),
+                "PROBLEM": draft_dict.get("patent_draft_problem", ""),
+                "SOLUTION": draft_dict.get("patent_draft_solution", ""),
+                "EFFECT": draft_dict.get("patent_draft_effect", "")
             }
             
-            # 상세 비교 결과 저장
+            # 유사 구간 찾기 (N:1 비교)
+            highlights = []
+            overall_similarity = 0.0
+            section_count = 0
+            
+            # 각 섹션별로 원본 텍스트와 비교
+            for section_key, section_text in draft_sections.items():
+                if not section_text or len(section_text.strip()) < 10:
+                    continue
+                    
+                # KLUE-BERT 모델을 활용한 문맥 비교
+                section_vector = get_bert_vector(section_text)
+                
+                # 공고전문을 300자 단위로 분할하여 각 섹션과 비교
+                best_match = {
+                    "text": "",
+                    "similarity": 0.0
+                }
+                
+                # 300자 단위로 슬라이딩 윈도우 적용
+                for i in range(0, len(patent_text), 150):
+                    chunk = patent_text[i:i+300]
+                    if len(chunk) < 50:  # 너무 짧은 청크는 건너뛰기
+                        continue
+                        
+                    chunk_vector = get_bert_vector(chunk)
+                    similarity = safe_cosine_similarity(section_vector, chunk_vector)
+                    
+                    if similarity > best_match["similarity"]:
+                        best_match["text"] = chunk
+                        best_match["similarity"] = similarity
+                
+                # 유사도가 0.6 이상인 경우만 하이라이트로 추가
+                if best_match["similarity"] >= 0.6:
+                    highlights.append({
+                        "user_section": section_key,
+                        "patent_section": "CONTENT",
+                        "user_text": section_text[:200],
+                        "patent_text": best_match["text"][:200],
+                        "similarity_score": best_match["similarity"]
+                    })
+                    
+                    overall_similarity += best_match["similarity"]
+                    section_count += 1
+            
+            # 전체 유사도 계산
+            if section_count > 0:
+                overall_similarity = overall_similarity / section_count
+            
+            # 3. 상세 비교 결과 저장
+            context = {
+                "highlights": highlights
+            }
+            
             detailed_comparison_query = """
             INSERT INTO detailed_comparison (
                 patent_draft_id,
@@ -652,6 +738,7 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                 patent_public_id,
                 detailed_comparison_total_score,
                 detailed_comparison_context,
+                detailed_comparison_result,
                 detailed_comparison_created_at,
                 detailed_comparison_updated_at
             ) VALUES (
@@ -661,6 +748,7 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                 :public_id,
                 :total_score,
                 :context,
+                :result,
                 :created_at,
                 :updated_at
             )
@@ -674,8 +762,9 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                     "patent_id": patent["patent_id"],
                     "similarity_patent_id": patent["similarity_patent_id"],
                     "public_id": patent_public_id,
-                    "total_score": patent["overall_similarity"],
+                    "total_score": overall_similarity,
                     "context": json.dumps(context, ensure_ascii=False),
+                    "result": json.dumps({"similar": overall_similarity >= 0.7}, ensure_ascii=False),
                     "created_at": now,
                     "updated_at": now
                 }
@@ -685,7 +774,6 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
             
         except Exception as e:
             print(f"특허 {patent.get('patent_application_number', '알 수 없음')} 상세 비교 중 오류: {str(e)}")
-            # 스택 트레이스 출력 추가
             import traceback
             print(traceback.format_exc())
     
@@ -732,9 +820,9 @@ async def perform_similarity_analysis(patent_draft_id: int, similarity_id: int):
         await save_similarity_results(patent_draft_id, similarity_id, final_results, now)
         print(f"유사도 결과 저장 완료")
         
-        # STEP 5: 상위 3개 특허에 대한 상세 비교 (KIPRIS API 연동)
+        # STEP 5: 상위 1개 특허에 대한 상세 비교 (KIPRIS API 연동) - 3개에서 1개로 변경
         print(f"상세 비교 시작: 특허 초안 ID {patent_draft_id}")
-        await perform_detailed_comparison(patent_draft_id, draft, final_results[:3], now)
+        await perform_detailed_comparison(patent_draft_id, draft, final_results[:1], now)  # [:3]에서 [:1]로 변경
         print(f"상세 비교 완료")
         
         return final_results
@@ -889,3 +977,180 @@ def check_context_fitness(text: str, field_type: str) -> float:
     except Exception as e:
         print(f"문맥 적합도 검사 중 오류: {str(e)}")
         return 0.0  # 오류 시 0점 반환
+
+@router.post("/patent/{patent_draft_id}/cluster-similarity", response_model=Dict[str, Any])
+async def create_cluster_similarity(patent_draft_id: int):
+    """클러스터 기반 특허 초안의 유사도 검사 실행"""
+    try:
+        # 클러스터 기반 유사도 검색 함수 호출
+        from app.services.cluster_similarity import perform_cluster_based_similarity_search
+        
+        result = await perform_cluster_based_similarity_search(patent_draft_id)
+        
+        if not result:
+            return {
+                "status": False,
+                "code": 404,
+                "data": None,
+                "error": {
+                    "code": "PATENT_DRAFT_NOT_FOUND",
+                    "message": "특허 초안을 찾을 수 없거나 클러스터 정보가 없습니다."
+                }
+            }
+        
+        return {
+            "data": {
+                "similarity_id": result["similarity_id"],
+                "execution_time_seconds": result.get("execution_time_seconds")
+            }
+        }
+    except Exception as e:
+        logger.error(f"클러스터 기반 유사도 검사 중 오류 발생: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        
+        return {
+            "status": False,
+            "code": 500,
+            "data": None,
+            "error": {
+                "code": "SIMILARITY_ERROR",
+                "message": f"클러스터 기반 유사도 검사 중 오류 발생: {str(e)}"
+            }
+        }
+
+@router.post("/patent/{patent_draft_id}/similarity", response_model=Dict[str, Any])
+async def create_similarity(patent_draft_id: int, force_legacy: bool = False):
+    """특허 초안의 유사도 검사 실행 - 클러스터 기반 검색 우선 시도"""
+    try:
+        # 특허 초안 존재 확인
+        draft_query = """
+        SELECT * FROM patent_draft 
+        WHERE patent_draft_id = :draft_id
+        """
+        draft = await database.fetch_one(
+            query=draft_query,
+            values={"draft_id": patent_draft_id}
+        )
+        
+        if not draft:
+            return {
+                "status": False,
+                "code": 404,
+                "data": None,
+                "error": {
+                    "code": "PATENT_DRAFT_NOT_FOUND",
+                    "message": "해당 ID의 특허 초안을 찾을 수 없습니다."
+                }
+            }
+        
+        # 클러스터 기반 검색을 강제로 건너뛰지 않는 경우
+        if not force_legacy:
+            try:
+                # 클러스터 정보 존재 확인
+                cluster_query = "SELECT COUNT(*) as count FROM cluster"
+                cluster_count = await database.fetch_val(query=cluster_query)
+                
+                # 클러스터 정보가 있으면 클러스터 기반 검색 시도
+                if cluster_count > 0:
+                    logger.info(f"클러스터 기반 유사도 검색 시도: 특허 초안 ID {patent_draft_id}")
+                    
+                    from app.services.cluster_similarity import perform_cluster_based_similarity_search
+                    result = await perform_cluster_based_similarity_search(patent_draft_id)
+                    
+                    if result:
+                        logger.info(f"클러스터 기반 유사도 검색 성공: ID {result['similarity_id']}, " 
+                                    f"소요 시간: {result.get('execution_time_seconds', 0):.2f}초")
+                        
+                        return {
+                            "data": {
+                                "similarity_id": result["similarity_id"],
+                                "execution_time_seconds": result.get("execution_time_seconds"),
+                                "search_method": "cluster"
+                            }
+                        }
+                    else:
+                        logger.warning(f"클러스터 기반 유사도 검색 실패: 기존 방식으로 전환")
+            
+            except Exception as e:
+                logger.error(f"클러스터 기반 유사도 검색 중 오류: {str(e)}")
+                logger.error(traceback.format_exc())
+                # 클러스터 기반 검색 실패 시 기존 방식으로 폴백
+        
+        # 기존 방식으로 유사도 검색 수행 (백그라운드 작업)
+        logger.info(f"기존 방식으로 유사도 검색 수행: 특허 초안 ID {patent_draft_id}")
+        
+        # similarity 엔티티 생성
+        now = datetime.now(timezone.utc)
+        similarity_query = """
+        INSERT INTO similarity (
+            patent_draft_id, 
+            similarity_created_at, 
+            similarity_updated_at
+        ) VALUES (
+            :draft_id,
+            :created_at,
+            :updated_at
+        )
+        """
+        
+        similarity_id = await database.execute(
+            query=similarity_query,
+            values={
+                "draft_id": patent_draft_id,
+                "created_at": now,
+                "updated_at": now
+            }
+        )
+        
+        # 백그라운드에서 분석 작업 실행
+        background_tasks = BackgroundTasks()
+        background_tasks.add_task(
+            perform_similarity_analysis,
+            patent_draft_id,
+            similarity_id
+        )
+        
+        return {
+            "data": {
+                "similarity_id": similarity_id,
+                "status": "ANALYZING",
+                "search_method": "legacy"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"유사도 검사 중 오류 발생: {str(e)}")
+        logger.error(traceback.format_exc())
+        
+        return {
+            "status": False,
+            "code": 500,
+            "data": None,
+            "error": {
+                "code": "SIMILARITY_ERROR",
+                "message": f"유사도 검사 중 오류 발생: {str(e)}"
+            }
+        }
+
+@router.post("/patent/{patent_draft_id}/legacy-similarity", response_model=Dict[str, Any])
+async def create_legacy_similarity(patent_draft_id: int, background_tasks: BackgroundTasks):
+    """기존 방식으로 특허 초안의 유사도 검사 실행 (클러스터 무시)"""
+    return await create_similarity(patent_draft_id, force_legacy=True)
+
+async def save_patent_public(patent_id: int, application_number: str) -> int:
+    """KIPRIS API를 호출하여 특허 공고전문을 가져와 저장합니다."""
+    try:
+        from app.api.routes.patent_public import get_patent_public
+        
+        # API 호출하여 공고전문 가져오기
+        response = await get_patent_public(application_number)
+        
+        if "data" in response and response.get("data"):
+            return response["data"].get("patent_public_id")
+        else:
+            logger.error(f"공고전문 저장 실패: {application_number}")
+            return None
+    except Exception as e:
+        logger.error(f"공고전문 저장 중 오류: {str(e)}")
+        return None

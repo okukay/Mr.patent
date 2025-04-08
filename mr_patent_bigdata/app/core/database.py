@@ -33,6 +33,7 @@ patent = Table(
     Column("patent_title_tfidf_vector", LargeBinary, nullable=False),
     Column("patent_summary_tfidf_vector", LargeBinary, nullable=False),
     Column("patent_claim_tfidf_vector", LargeBinary, nullable=False),
+    Column("cluster_id", BigInteger, nullable=True),  # 클러스터 ID 추가
     Column("patent_created_at", TIMESTAMP, nullable=False, default=datetime.utcnow),
     Column("patent_updated_at", TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 )
@@ -137,6 +138,16 @@ detailed_comparison = Table(
     Column("detailed_comparison_total_score", Float, nullable=False),
     Column("detailed_comparison_created_at", TIMESTAMP, nullable=False, default=datetime.utcnow),
     Column("detailed_comparison_updated_at", TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+)
+
+# 클러스터 테이블
+cluster = Table(
+    "cluster",
+    metadata,
+    Column("cluster_id", BigInteger, primary_key=True, autoincrement=True),
+    Column("cluster_center_vector", Text, nullable=False),
+    Column("cluster_size", Integer, nullable=False, default=0),
+    Column("created_at", TIMESTAMP, nullable=False, default=datetime.utcnow)
 )
 
 # 작업 상태 테이블
