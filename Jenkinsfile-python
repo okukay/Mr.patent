@@ -102,8 +102,8 @@ pipeline {
                     cp -f mr_patent_bigdata/Pipfile ${DOCKER_COMPOSE_DIR}/fastapi/
                     cp -f mr_patent_bigdata/Pipfile.lock ${DOCKER_COMPOSE_DIR}/fastapi/
                     cd mr_patent_bigdata
-                    pipenv lock --requirements > ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
-
+                    pipenv requirements --dev > ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
+    
                     # 백엔드 Dockerfile 복사
                     mkdir -p ${DOCKER_COMPOSE_DIR}/backend
                     cp -f deploy/backend/Dockerfile ${DOCKER_COMPOSE_DIR}/backend/Dockerfile
