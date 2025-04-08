@@ -51,8 +51,6 @@ pipeline {
                 echo '====== FastAPI 빌드 시작 ======'
                 dir('mr_patent_bigdata') {
                     sh '''
-                        python3 -m venv venv
-                        source venv/bin/activate
                         pip install --upgrade pip
                         pip install pipenv
                         pipenv install --dev || pipenv install
