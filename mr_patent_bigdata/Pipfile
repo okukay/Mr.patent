@@ -26,5 +26,7 @@ google-cloud = "*"
 findspark = "*"
 fpdf = "*"
 pdf2image = "*"
+httpx = "*"
+reportlab = "*"
 
 [dev-packages]

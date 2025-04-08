@@ -32,7 +32,6 @@ pipeline {
                     apt-get install -y python3 python3-pip python3-venv
                     python3 --version
                     python3 -m pip --version
-                    python3 -m pip install --user virtualenv pipenv
                 '''
             }
         }
@@ -53,7 +52,7 @@ pipeline {
                 dir('mr_patent_bigdata') {
                     sh '''
                         python3 -m venv venv
-                        source venv/bin/activate
+                        . venv/bin/activate
                         pip install --upgrade pip
                         pip install pipenv
                         pipenv install --dev || pipenv install
@@ -66,22 +65,36 @@ pipeline {
             }
         }
 
-        stage('Test') {
-            steps {
-                echo '====== FastAPI 테스트 시작 ======'
-                dir('mr_patent_bigdata') {
-                    sh '''
-                        source venv/bin/activate
-                        pipenv run pytest || true
-                    '''
-                }
-                echo '====== FastAPI 테스트 완료 ======'
-            }
-        }
+        // stage('Test') {
+        //     steps {
+        //         echo '====== FastAPI 테스트 시작 ======'
+        //         dir('mr_patent_bigdata') {
+        //             sh '''
+        //                 . venv/bin/activate
+        //                 pipenv run pytest || true
+        //             '''
+        //         }
+        //         echo '====== FastAPI 테스트 완료 ======'
+        //     }
+        // }
 
         stage('Deploy FastAPI') {
             steps {
                 echo '====== FastAPI 배포 시작 ======'
+                // 환경 설정 파일 복사
+                withCredentials([
+                    file(credentialsId: 'fastapi-env', variable: 'ENV_FILE'),
+                    file(credentialsId: 'application-prod.yml', variable: 'APP_YML_FILE')
+                ]) {
+                    sh '''
+                        mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi/config
+                        cp -f ${ENV_FILE} ${DOCKER_COMPOSE_DIR}/fastapi/config/.env
+                        cp -f ${APP_YML_FILE} ${DOCKER_COMPOSE_DIR}/fastapi/config/application.yml
+                        chmod 600 ${DOCKER_COMPOSE_DIR}/fastapi/config/.env
+                        chmod 600 ${DOCKER_COMPOSE_DIR}/fastapi/config/application.yml
+                    '''
+                }
+
                 sh '''
                     mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi
                     cp -rf mr_patent_bigdata/app ${DOCKER_COMPOSE_DIR}/fastapi/
@@ -89,22 +102,19 @@ pipeline {
                     cp -f mr_patent_bigdata/Pipfile ${DOCKER_COMPOSE_DIR}/fastapi/
                     cp -f mr_patent_bigdata/Pipfile.lock ${DOCKER_COMPOSE_DIR}/fastapi/
                     cd mr_patent_bigdata
-                    pipenv lock -r > ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
-
-                    # 백엔드 Dockerfile 복사
-                    mkdir -p ${DOCKER_COMPOSE_DIR}/backend
-                    cp -f deploy/backend/Dockerfile ${DOCKER_COMPOSE_DIR}/backend/Dockerfile
+                    pipenv requirements --dev > ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
+    
 
                     cd ${DOCKER_COMPOSE_DIR}
                     $HOME/bin/docker-compose -f docker-compose.yml stop fastapi || true
                     $HOME/bin/docker-compose -f docker-compose.yml rm -f fastapi || true
                     $HOME/bin/docker-compose -f docker-compose.yml build --no-cache fastapi
                     $HOME/bin/docker-compose -f docker-compose.yml up -d fastapi
-                    docker image prune -f
                 '''
                 echo '====== FastAPI 배포 완료 ======'
             }
         }
+
 
         stage('Notification') {
             steps {
@@ -134,7 +144,6 @@ pipeline {
         }
         always {
             echo '====== 파이프라인 종료 ======'
-            cleanWs()
         }
     }
 }

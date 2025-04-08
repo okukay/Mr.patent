@@ -59,7 +59,8 @@ def load_vectorizer(filename=VECTORIZER_PATH):
 def fit_tfidf_vectorizer(corpus: List[str]) -> None:
     """TF-IDF 벡터라이저 학습"""
     global tfidf_vectorizer
-    tfidf_vectorizer = TfidfVectorizer(max_features=1000)
+    
+    # 기존 벡터라이저 재사용 (새로 생성하지 않음)
     tfidf_vectorizer.fit(corpus)
     logger.info("TF-IDF 벡터라이저 학습 완료")
     
