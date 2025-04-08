@@ -222,23 +222,14 @@ async def get_recent_drafts(user_id: int):
         for draft in drafts:
             draft_dict = dict(draft)
             
-            # 날짜 포맷 변환
+            # 날짜 포맷 변환만 유지
             if "patent_draft_created_at" in draft_dict:
                 draft_dict["created_at"] = draft_dict.pop("patent_draft_created_at").isoformat() + 'Z'
             if "patent_draft_updated_at" in draft_dict:
                 draft_dict["updated_at"] = draft_dict.pop("patent_draft_updated_at").isoformat() + 'Z'
             
-            # 필드명 정리 (선택 사항)
-            formatted_draft = {}
-            for key, value in draft_dict.items():
-                if key.startswith("patent_draft_"):
-                    # patent_draft_ 접두사 제거
-                    formatted_key = key[len("patent_draft_"):]
-                    formatted_draft[formatted_key] = value
-                else:
-                    formatted_draft[key] = value
-            
-            result_drafts.append(formatted_draft)
+            # 접두사 제거 부분 삭제 - 필드명 그대로 유지
+            result_drafts.append(draft_dict)
         
         return {
             "data": {"patent_drafts": result_drafts},
