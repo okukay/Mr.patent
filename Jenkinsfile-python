@@ -104,9 +104,6 @@ pipeline {
                     cd mr_patent_bigdata
                     pipenv requirements --dev > ${DOCKER_COMPOSE_DIR}/fastapi/requirements.txt
     
-                    # 백엔드 Dockerfile 복사
-                    mkdir -p ${DOCKER_COMPOSE_DIR}/backend
-                    cp -f deploy/backend/Dockerfile ${DOCKER_COMPOSE_DIR}/backend/Dockerfile
 
                     cd ${DOCKER_COMPOSE_DIR}
                     $HOME/bin/docker-compose -f docker-compose.yml stop fastapi || true
