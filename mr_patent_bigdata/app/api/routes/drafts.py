@@ -60,11 +60,11 @@ async def get_patent_draft(patent_draft_id: int):
     }
 
 @router.post("/folder/{user_patent_folder_id}/draft", response_model=Dict[str, Any])
-async def create_or_update_draft(
+async def create_draft(
     user_patent_folder_id: int,
     draft: PatentDraftCreate
 ):
-    """특허 초안 저장 또는 수정"""
+    """특허 초안 저장"""
     try:
         # 폴더 존재 확인
         folder_query = """
@@ -111,140 +111,69 @@ async def create_or_update_draft(
                     vector_fields[f"patent_draft_{field}_tfidf_vector"] = np.zeros(1000).tobytes()
                     vector_fields[f"patent_draft_{field}_bert_vector"] = np.zeros(768).tobytes()
         
-        # 초안이 이미 존재하는지 확인
-        existing_draft_query = """
-        SELECT * FROM patent_draft
-        WHERE user_patent_folder_id = :folder_id
-        AND patent_draft_id = :draft_id
+        # 새 초안 생성
+        field_names = ["user_patent_folder_id"]
+        field_names.extend([f"patent_draft_{field}" for field in [
+            "title", "technical_field", "background", "problem", 
+            "solution", "effect", "detailed", "summary", "claim"
+        ]])
+        field_names.extend(["patent_draft_created_at", "patent_draft_updated_at"])
+        # 벡터 필드 추가
+        field_names.extend(vector_fields.keys())
+        
+        # 안전한 바인딩 파라미터 생성
+        placeholders = []
+        for field in field_names:
+            if field == "user_patent_folder_id":
+                placeholders.append(":user_patent_folder_id")
+            elif field == "patent_draft_created_at":
+                placeholders.append(":created_at")
+            elif field == "patent_draft_updated_at":
+                placeholders.append(":updated_at")
+            else:
+                field_suffix = field.split('patent_draft_')[1]
+                placeholders.append(f":{field_suffix}")
+        
+        insert_query = f"""
+        INSERT INTO patent_draft (
+            {', '.join(field_names)}
+        ) VALUES (
+            {', '.join(placeholders)}
+        )
         """
         
-        draft_id = getattr(draft, "patent_draft_id", None)
-        existing_draft = None
+        # 안전하게 draft 필드만 추출
+        draft_values = {}
+        for field in draft.__dict__:
+            if field.startswith("patent_draft_"):
+                field_suffix = field.split("patent_draft_")[1]
+                draft_values[field_suffix] = getattr(draft, field)
         
-        if draft_id:
-            existing_draft = await database.fetch_one(
-                query=existing_draft_query,
-                values={
-                    "folder_id": user_patent_folder_id,
-                    "draft_id": draft_id
-                }
-            )
+        values = draft_values
+        values.update({
+            "user_patent_folder_id": user_patent_folder_id,
+            "created_at": now,
+            "updated_at": now
+        })
         
-        if existing_draft:
-            # 초안 업데이트
-            update_fields = ", ".join([
-                f"patent_draft_{field} = :{field}" 
-                for field in ["title", "technical_field", "background", "problem", 
-                            "solution", "effect", "detailed", "summary", "claim"]
-            ])
-            update_fields += ", patent_draft_updated_at = :updated_at"
+        # 벡터 값 추가 (안전하게)
+        for field_name, vector_value in vector_fields.items():
+            field_suffix = field_name.split('patent_draft_')[1]
+            values[field_suffix] = vector_value
+        
+        # id 키가 포함되어 있으면 제거 (SQL 바인딩 오류 방지)
+        if 'id' in values and ':id' not in insert_query:
+            values.pop('id')
             
-            # 벡터 필드 추가
-            for field_name in vector_fields.keys():
-                field_suffix = field_name.split('patent_draft_')[1]
-                update_fields += f", {field_name} = :{field_suffix}"
-            
-            update_query = f"""
-            UPDATE patent_draft
-            SET {update_fields}
-            WHERE patent_draft_id = :draft_id
-            """
-            
-            # 안전하게 draft 필드만 추출
-            draft_values = {}
-            for field in draft.__dict__:
-                if field.startswith("patent_draft_"):
-                    field_suffix = field.split("patent_draft_")[1]
-                    draft_values[field_suffix] = getattr(draft, field)
-            
-            values = draft_values
-            values.update({
-                "updated_at": now,
-                "draft_id": existing_draft["patent_draft_id"]
-            })
-            
-            # 벡터 값 추가 (안전하게)
-            for field_name, vector_value in vector_fields.items():
-                field_suffix = field_name.split('patent_draft_')[1]
-                values[field_suffix] = vector_value
-            
-            # id 키가 포함되어 있으면 제거 (SQL 바인딩 오류 방지)
-            if 'id' in values and ':id' not in update_query:
-                values.pop('id')
-            
-            await database.execute(query=update_query, values=values)
-            
-            return {
-                "data": {
-                    "patent_draft_id": existing_draft["patent_draft_id"],
-                    "created_at": now.isoformat().replace('+00:00', 'Z')
-                },
-                "timestamp": get_current_timestamp()
-            }
-        else:
-            # 새 초안 생성
-            field_names = ["user_patent_folder_id"]
-            field_names.extend([f"patent_draft_{field}" for field in [
-                "title", "technical_field", "background", "problem", 
-                "solution", "effect", "detailed", "summary", "claim"
-            ]])
-            field_names.extend(["patent_draft_created_at", "patent_draft_updated_at"])
-            # 벡터 필드 추가
-            field_names.extend(vector_fields.keys())
-            
-            # 안전한 바인딩 파라미터 생성
-            placeholders = []
-            for field in field_names:
-                if field == "user_patent_folder_id":
-                    placeholders.append(":user_patent_folder_id")
-                elif field == "patent_draft_created_at":
-                    placeholders.append(":created_at")
-                elif field == "patent_draft_updated_at":
-                    placeholders.append(":updated_at")
-                else:
-                    field_suffix = field.split('patent_draft_')[1]
-                    placeholders.append(f":{field_suffix}")
-            
-            insert_query = f"""
-            INSERT INTO patent_draft (
-                {', '.join(field_names)}
-            ) VALUES (
-                {', '.join(placeholders)}
-            )
-            """
-            
-            # 안전하게 draft 필드만 추출
-            draft_values = {}
-            for field in draft.__dict__:
-                if field.startswith("patent_draft_"):
-                    field_suffix = field.split("patent_draft_")[1]
-                    draft_values[field_suffix] = getattr(draft, field)
-            
-            values = draft_values
-            values.update({
-                "user_patent_folder_id": user_patent_folder_id,
-                "created_at": now,
-                "updated_at": now
-            })
-            
-            # 벡터 값 추가 (안전하게)
-            for field_name, vector_value in vector_fields.items():
-                field_suffix = field_name.split('patent_draft_')[1]
-                values[field_suffix] = vector_value
-            
-            # id 키가 포함되어 있으면 제거 (SQL 바인딩 오류 방지)
-            if 'id' in values and ':id' not in insert_query:
-                values.pop('id')
-                
-            draft_id = await database.execute(query=insert_query, values=values)
-            
-            return {
-                "data": {
-                    "patent_draft_id": draft_id,
-                    "created_at": now.isoformat().replace('+00:00', 'Z')
-                },
-                "timestamp": get_current_timestamp()
-            }
+        draft_id = await database.execute(query=insert_query, values=values)
+        
+        return {
+            "data": {
+                "patent_draft_id": draft_id,
+                "created_at": now.isoformat().replace('+00:00', 'Z')
+            },
+            "timestamp": get_current_timestamp()
+        }
     except Exception as e:
         logger.error(f"특허 초안 저장 중 오류: {str(e)}")
         raise HTTPException(

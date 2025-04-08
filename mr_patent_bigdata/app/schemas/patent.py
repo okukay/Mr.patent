@@ -49,7 +49,6 @@ class PatentDraftBase(BaseModel):
     patent_draft_claim: str = ""
 
 class PatentDraftCreate(PatentDraftBase):
-    patent_draft_id: Optional[int] = None
     user_patent_folder_id: Optional[int] = None
     
 class PatentDraftResponse(PatentDraftBase):
