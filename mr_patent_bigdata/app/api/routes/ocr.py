@@ -76,6 +76,12 @@ def parse_patent_document(ocr_text: str) -> Dict[str, str]:
     effect_match = re.search(effect_pattern, ocr_text, re.DOTALL | re.IGNORECASE)
     if effect_match:
         patent_draft["patent_draft_effect"] = effect_match.group(1).strip()
+
+    # 발명을 실시하기 위한 구체적인 내용 추출 (개선된 패턴)
+    detailed_pattern = r"(?:【발명을 실시하기 위한 구체적인 내용】|발명을\s*실시하기\s*위한\s*구체적인\s*내용)\s*(.*?)(?:【청구범위】|청구\s*범위|【요약】)"
+    detailed_match = re.search(detailed_pattern, ocr_text, re.DOTALL | re.IGNORECASE)
+    if detailed_match:
+        patent_draft["patent_draft_detailed"] = detailed_match.group(1).strip()
     
     # 요약 추출 (개선된 패턴)
     summary_pattern = r"(?:【요약】|요\s*약)\s*(.*?)(?:$)"
@@ -126,7 +132,7 @@ def parse_patent_document(ocr_text: str) -> Dict[str, str]:
     return patent_draft
 
 
-def extract_text(pdf_path: str) -> str:
+async def extract_text(pdf_path: str) -> str:
     """PDF에서 텍스트 추출 (Google Cloud Vision API 사용)"""
     try:
         # Vision API 클라이언트 초기화
@@ -201,8 +207,6 @@ async def parse_patent_from_pdf(file: UploadFile = File(...)):
             patent_data["patent_draft_title"] = file.filename.replace(".pdf", "")
         
         return {
-            "status": "success",
-            "message": "특허 PDF에서 텍스트를 추출하고 파싱했습니다.",
             "data": patent_data
         }
         
@@ -213,3 +217,4 @@ async def parse_patent_from_pdf(file: UploadFile = File(...)):
             
         logger.error(f"특허 PDF 파싱 중 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"특허 PDF 파싱 중 오류: {str(e)}")
+
