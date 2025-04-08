@@ -4,7 +4,6 @@ import logging
 
 from app.scripts.train_vectorizer import train_vectorizer_from_patents
 from app.services.vectorizer import load_vectorizer
-from app.services.clustering import create_patent_clusters
 from app.services.spark_vectorizer import process_patents_with_spark
 from app.core.database import database
 
@@ -30,61 +29,6 @@ async def load_tfidf_vectorizer():
         raise HTTPException(
             status_code=500,
             detail=f"벡터라이저 로드 실패: {str(e)}"
-        )
-
-# 클러스터링 관련 API (commands.py)
-@router.post("/cluster-patents", response_model=Dict[str, Any])
-async def run_patent_clustering(n_clusters: int = 100):
-    """특허 데이터 군집화 실행 (서버용)"""
-    try:
-        result = await create_patent_clusters(n_clusters)
-        return {
-            "success": True,
-            "data": result
-        }
-    except Exception as e:
-        logger.error(f"특허 군집화 중 오류 발생: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
-        
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "success": False,
-                "error": f"특허 군집화 중 오류 발생: {str(e)}"
-            }
-        )
-
-@router.post("/test-similarity/{patent_draft_id}", response_model=Dict[str, Any])
-async def test_similarity_search(patent_draft_id: int, top_k: int = 20):
-    """클러스터 기반 유사도 검색 테스트"""
-    try:
-        from app.services.cluster_similarity import perform_cluster_based_similarity_search
-        
-        result = await perform_cluster_based_similarity_search(patent_draft_id, top_k)
-        if not result:
-            raise HTTPException(
-                status_code=404,
-                detail={"success": False, "error": "특허 초안을 찾을 수 없거나 클러스터 정보가 없습니다."}
-            )
-        
-        return {
-            "success": True,
-            "data": result
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"유사도 검색 중 오류 발생: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
-        
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "success": False,
-                "error": f"유사도 검색 중 오류 발생: {str(e)}"
-            }
         )
 
 @router.post("/rebuild-vectors", response_model=Dict[str, Any])

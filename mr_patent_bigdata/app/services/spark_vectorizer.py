@@ -236,10 +236,10 @@ async def process_patents_with_spark(all_patents, batch_size=None, with_bert=Fal
             # 특허 필터링 기준 완화
             for p in batch_patents:
                 # 세 필드 중 하나라도 의미 있는 길이면 포함
-                if any(len(str(field)) > 10 for field in [p.patent_title, p.patent_summary, p.patent_claim]):
+                if any(len(str(field)) > 10 for field in [p["patent_title"], p["patent_summary"], p["patent_claim"]]):
                     valid_patents.append(p)
                 else:
-                    logger.warning(f"유효하지 않은 특허 데이터 건너뜀: {p.patent_title[:30] if p.patent_title else ''}...")
+                    logger.warning(f"유효하지 않은 특허 데이터 건너뜀: {p['patent_title'][:30] if p['patent_title'] else ''}...")
             
             batch_data = prepare_batch_data(valid_patents, schema)
             
@@ -335,12 +335,12 @@ def prepare_batch_data(batch_patents, schema):
     for p in batch_patents:
         try:
             batch_data.append((
-                p.patent_id,
-                p.patent_title,
-                p.patent_summary,
-                p.patent_claim,
-                p.patent_application_number,
-                p.patent_ipc
+                p["patent_id"],
+                p["patent_title"],
+                p["patent_summary"],
+                p["patent_claim"],
+                p["patent_application_number"],
+                p["patent_ipc"]
             ))
         except Exception as e:
             logger.error(f"특허 데이터 변환 오류: {str(e)}")

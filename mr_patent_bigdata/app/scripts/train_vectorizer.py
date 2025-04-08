@@ -3,12 +3,18 @@ import os
 import asyncio
 from databases import Database
 import numpy as np
+import shutil
+from datetime import datetime
 
 # 프로젝트 루트 디렉토리를 PYTHONPATH에 추가
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from app.services.vectorizer import train_and_save_vectorizer, get_tfidf_vector, get_bert_vector, safe_vector
 from app.core.config import settings
+
+# 실행 전 기존 모델 백업
+backup_path = f"models/backup/tfidf_vectorizer_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
+shutil.copy("models/tfidf_vectorizer.pkl", backup_path)
 
 # 데이터베이스 연결
 DATABASE_URL = settings.DATABASE_URL

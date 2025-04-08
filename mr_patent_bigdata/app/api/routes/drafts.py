@@ -186,58 +186,35 @@ async def create_draft(
         )
 
 @router.get("/drafts/recent", response_model=Dict[str, Any])
-async def get_recent_drafts(
-    user_id: int, 
-    limit: int = Query(5, ge=1, le=50, description="조회할 최대 항목 수")
-):
-    """사용자의 최근 특허 초안 목록 조회 (최대 5개) - 벡터 필드 제외한 모든 정보 반환"""
+async def get_recent_drafts(user_id: int):
+    """사용자의 최근 특허 초안 목록 조회 (최근 5개)"""
     try:
-        # 사용자 폴더 확인
-        folder_query = """
-        SELECT user_patent_folder_id FROM user_patent_folder 
-        WHERE user_id = :user_id
-        """
-        
-        folders = await database.fetch_all(
-            query=folder_query,
-            values={"user_id": user_id}
-        )
-        
-        if not folders:
-            return {
-                "data": {"patent_drafts": []},
-                "timestamp": get_current_timestamp()
-            }
-        
-        # 폴더 ID 목록 추출
-        folder_ids = [folder["user_patent_folder_id"] for folder in folders]
-        folder_ids_str = ",".join(map(str, folder_ids))
-        
-        # 최근 특허 초안 조회 - 벡터 필드를 제외한 모든 정보 가져오기
-        draft_query = f"""
+        # 모든 폴더에 있는 최근 초안을 바로 조회하는 간소화된 쿼리
+        draft_query = """
         SELECT 
-            patent_draft_id,
-            user_patent_folder_id,
-            patent_draft_title,
-            patent_draft_technical_field,
-            patent_draft_background,
-            patent_draft_problem,
-            patent_draft_solution,
-            patent_draft_effect,
-            patent_draft_detailed,
-            patent_draft_summary,
-            patent_draft_claim,
-            patent_draft_created_at,
-            patent_draft_updated_at
-        FROM patent_draft
-        WHERE user_patent_folder_id IN ({folder_ids_str})
-        ORDER BY patent_draft_updated_at DESC
-        LIMIT :limit
+            pd.patent_draft_id,
+            pd.user_patent_folder_id,
+            pd.patent_draft_title,
+            pd.patent_draft_technical_field,
+            pd.patent_draft_background,
+            pd.patent_draft_problem,
+            pd.patent_draft_solution,
+            pd.patent_draft_effect,
+            pd.patent_draft_detailed,
+            pd.patent_draft_summary,
+            pd.patent_draft_claim,
+            pd.patent_draft_created_at,
+            pd.patent_draft_updated_at
+        FROM patent_draft pd
+        JOIN user_patent_folder upf ON pd.user_patent_folder_id = upf.user_patent_folder_id
+        WHERE upf.user_id = :user_id
+        ORDER BY pd.patent_draft_updated_at DESC
+        LIMIT 5
         """
         
         drafts = await database.fetch_all(
             query=draft_query,
-            values={"limit": limit}
+            values={"user_id": user_id}
         )
         
         # 결과 포맷팅
