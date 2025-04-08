@@ -68,7 +68,7 @@ pipeline {
                 echo '====== FastAPI 테스트 시작 ======'
                 dir('mr_patent_bigdata') {
                     sh '''
-                        source venv/bin/activate
+                        . venv/bin/activate
                         pipenv run pytest || true
                     '''
                 }
