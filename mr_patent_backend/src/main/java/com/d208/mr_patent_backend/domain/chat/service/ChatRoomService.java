@@ -99,7 +99,7 @@ public class ChatRoomService {
                     if (userImage != null && !userImage.isBlank()) {
                         downUrl = s3Service.generatePresignedDownloadUrl(userImage);
                     }
-//                    String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+//
 
                     // receiverId를 가지고 expert인지 확인하고 expertId 반환
                     Integer receiverId = room.getReceiverId();
