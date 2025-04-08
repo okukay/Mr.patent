@@ -82,6 +82,20 @@ pipeline {
         stage('Deploy FastAPI') {
             steps {
                 echo '====== FastAPI 배포 시작 ======'
+                // 환경 설정 파일 복사
+                withCredentials([
+                    file(credentialsId: 'env_file', variable: 'ENV_FILE'),
+                    file(credentialsId: 'application_yml_file', variable: 'APP_YML_FILE')
+                ]) {
+                    sh '''
+                        mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi/config
+                        cp -f ${ENV_FILE} ${DOCKER_COMPOSE_DIR}/fastapi/config/.env
+                        cp -f ${APP_YML_FILE} ${DOCKER_COMPOSE_DIR}/fastapi/config/application.yml
+                        chmod 600 ${DOCKER_COMPOSE_DIR}/fastapi/config/.env
+                        chmod 600 ${DOCKER_COMPOSE_DIR}/fastapi/config/application.yml
+                    '''
+                }
+
                 sh '''
                     mkdir -p ${DOCKER_COMPOSE_DIR}/fastapi
                     cp -rf mr_patent_bigdata/app ${DOCKER_COMPOSE_DIR}/fastapi/
@@ -105,6 +119,7 @@ pipeline {
                 echo '====== FastAPI 배포 완료 ======'
             }
         }
+
 
         stage('Notification') {
             steps {
