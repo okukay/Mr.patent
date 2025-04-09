@@ -38,4 +38,5 @@ public class SwaggerConfig {
                 .description("특출난 허동욱씨: 특허는 이렇게 내는 거야.")
                 .version("1.0.0");
     }
+
 }
