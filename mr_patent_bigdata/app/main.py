@@ -42,9 +42,6 @@ async def startup():
     await database.connect()
     logger.info("데이터베이스 연결 성공")
 
-    from app.services.knn_search import load_vectors_to_memory
-    await load_vectors_to_memory()
-
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
