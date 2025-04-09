@@ -49,6 +49,7 @@ public class HeartbeatService {
                         "message", "network error"
                 );
                 messagingTemplate.convertAndSend("/sub/chat/room/" + room.getRoomId(), statusMessage);
+                System.out.println(" heartbeat로 네트워크 끊김 감지: " + statusMessage);
 
                 // sessionId 초기화
                 room.setSessionId(null);

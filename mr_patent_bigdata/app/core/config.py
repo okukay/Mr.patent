@@ -7,13 +7,6 @@ class Settings(BaseSettings):
     google_credentials_path: str
     kipris_service_key: str
     
-    # ElasticSearch 설정 추가
-    elasticsearch_host: str
-    elasticsearch_use_ssl: bool = True
-    elasticsearch_verify_certs: bool = False
-    elasticsearch_username: str
-    elasticsearch_password: str
-    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8"

@@ -7,7 +7,7 @@ import numpy as np
 # 프로젝트 루트 디렉토리를 PYTHONPATH에 추가
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from app.services.vectorizer import train_and_save_vectorizer, get_tfidf_vector, get_bert_vector
+from app.services.vectorizer import train_and_save_vectorizer, get_tfidf_vector, get_bert_vector, safe_vector
 from app.core.config import settings
 
 # 데이터베이스 연결
@@ -52,9 +52,10 @@ async def train_vectorizer_from_patents():
         claim = patent["patent_claim"] or ""
         
         # 각 필드별 벡터 생성
-        title_tfidf = get_tfidf_vector(title)
-        summary_tfidf = get_tfidf_vector(summary)
-        claim_tfidf = get_tfidf_vector(claim)
+        # 벡터 저장 전 유효성 검증 추가
+        title_tfidf = safe_vector(get_tfidf_vector(title))
+        summary_tfidf = safe_vector(get_tfidf_vector(summary))
+        claim_tfidf = safe_vector(get_tfidf_vector(claim))
         
         # 필드별 벡터 업데이트 (통합 벡터 필드 제거)
         update_query = """

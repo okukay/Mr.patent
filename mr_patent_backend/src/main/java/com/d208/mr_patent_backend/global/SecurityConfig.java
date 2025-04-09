@@ -56,6 +56,10 @@ public class SecurityConfig {
                                 .requestMatchers("/api/user/reissue").permitAll()
                                 .requestMatchers("/api/email/**").permitAll()
                                 .requestMatchers("/api/expert-approve/**").permitAll()
+//                                .requestMatchers("/api/fcm/token").permitAll()
+//                                .requestMatchers("/api/fcm/token/delete/**").permitAll()
+
+
 //                        .requestMatchers("/api/expert-approve/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                 )
