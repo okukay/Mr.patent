@@ -40,7 +40,7 @@ public class ExpertService {
                 .collect(Collectors.toList());
 
         String userImage = expert.getUser().getUserImage();
-        String imageUrl = (userImage != null && !userImage.isBlank()) ? s3Service.generatePresignedDownloadUrl(userImage) : null;
+        String imageUrl = s3Service.generatePresignedDownloadUrl(userImage);
 
 
         return ExpertResponseDTO.builder()
@@ -69,7 +69,7 @@ public class ExpertService {
 
         // image 다운로드 url 추출
         String presignedUrl = s3Service.generatePresignedDownloadUrl(user.getUserImage());
-
+        System.out.println(presignedUrl);
 
         // 카테고리 이름 리스트 추출
         List<ExpertCategoryDTO> categories = expert.getExpertCategory().stream()
