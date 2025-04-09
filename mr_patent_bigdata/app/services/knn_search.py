@@ -7,6 +7,7 @@ import faiss  # FAISS 라이브러리 추가
 from app.core.database import database
 from app.services.vectorizer import get_tfidf_vector
 from app.api.routes.similarity import safe_frombuffer, safe_cosine_similarity
+from app.services.vectorizer import safe_vector
 
 logger = logging.getLogger(__name__)
 
@@ -111,16 +112,29 @@ async def build_faiss_index(force_rebuild=False) -> Tuple[faiss.Index, List[int]
     # NumPy 배열로 변환
     vector_array = np.array(patent_vectors, dtype=np.float32)
     
+    # 벡터가 모두 0인지 확인
+    zero_vectors = np.all(vector_array == 0, axis=1)
+    if np.any(zero_vectors):
+        logger.warning(f"0인 벡터가 {np.sum(zero_vectors)}개 발견됨. 이 벡터들은 검색 결과가 정확하지 않을 수 있습니다.")
+
+    # 벡터 노름 확인
+    norms = np.linalg.norm(vector_array, axis=1)
+    logger.info(f"벡터 노름 평균: {np.mean(norms):.6f}, 최소: {np.min(norms):.6f}, 최대: {np.max(norms):.6f}")
+
     # FAISS 인덱스 구축
     vector_dimension = vector_array.shape[1]
     index = faiss.IndexFlatIP(vector_dimension)  # 내적(코사인 유사도)을 사용하는 플랫 인덱스
-    
+
     # 정규화 (L2 norm = 1)하여 내적이 코사인 유사도가 되게 함
     faiss.normalize_L2(vector_array)
-    
+
+    # 정규화 후 노름 다시 확인 (디버깅용)
+    norms_after = np.linalg.norm(vector_array, axis=1)
+    logger.info(f"정규화 후 벡터 노름 평균: {np.mean(norms_after):.6f}")
+
     # 인덱스에 벡터 추가
     index.add(vector_array)
-    
+
     # 메모리에 결과 저장
     _FAISS_INDEX = index
     _INDEX_TO_PATENT_ID = patent_ids
@@ -184,11 +198,24 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
         
         # 결합 벡터 생성
         query_vector = title_vector * 0.3 + summary_vector * 0.3 + claim_vector * 0.4
+
+        # 벡터 확인 및 로깅
+        logger.info(f"쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
+        logger.info(f"쿼리 벡터 샘플 (처음 5개 값): {query_vector[:5]}")
+
+        # 벡터가 모두 0인지 확인
+        if np.all(query_vector == 0):
+            logger.warning("쿼리 벡터가 모두 0입니다. 안전한 벡터로 대체합니다.")
+            query_vector = safe_vector(query_vector)
         
         # 벡터 정규화 (FAISS 인덱스와 일치)
+        # 벡터 정규화 (L2 norm = 1)
         query_vector = query_vector.astype(np.float32)
         query_vector = query_vector.reshape(1, -1)  # 2D 배열로 변환
         faiss.normalize_L2(query_vector)
+
+        # 정규화 후 다시 확인
+        logger.info(f"정규화 후 쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
         
     except Exception as e:
         logger.error(f"특허 초안 벡터 처리 중 오류: {str(e)}")
@@ -217,6 +244,9 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
             # 내적은 1에 가까울수록 유사도가 높음
             similarity = float(distance)
             patent_id = patent_ids[idx]
+
+            # 유사도 점수 로깅 (디버깅용)
+            logger.info(f"특허 ID {patent_id}의 유사도 점수: {similarity:.4f}")
             
             if patent_id in patent_details:
                 result = {
@@ -239,27 +269,80 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
     # 5. 유사도 결과 저장
     now = datetime.now(timezone.utc)
     
-    # similarity 테이블에 레코드 생성
-    similarity_query = """
-    INSERT INTO similarity (
-        patent_draft_id, similarity_created_at, similarity_updated_at
-    ) VALUES (
-        :patent_draft_id, :created_at, :updated_at
-    )
+    # 중복 확인 로직 추가 (여기에 삽입)
+    existing_query = """
+    SELECT similarity_id FROM similarity 
+    WHERE patent_draft_id = :patent_draft_id
+    ORDER BY similarity_created_at DESC LIMIT 1
     """
-    
-    similarity_id = await database.execute(
-        query=similarity_query,
-        values={
-            "patent_draft_id": patent_draft_id,
-            "created_at": now,
-            "updated_at": now
-        }
+    existing = await database.fetch_one(
+        query=existing_query,
+        values={"patent_draft_id": patent_draft_id}
     )
+
+    if existing:
+        # 먼저 detailed_comparison 테이블의 관련 레코드 삭제
+        delete_detailed_query = """
+        DELETE FROM detailed_comparison 
+        WHERE similarity_patent_id IN (
+            SELECT similarity_patent_id FROM similarity_patent 
+            WHERE similarity_id = :similarity_id
+        )
+        """
+        await database.execute(
+            query=delete_detailed_query,
+            values={"similarity_id": existing["similarity_id"]}
+        )
+        
+        # 그 다음 similarity_patent 테이블의 레코드 삭제
+        delete_query = """
+        DELETE FROM similarity_patent WHERE similarity_id = :similarity_id
+        """
+        await database.execute(
+            query=delete_query,
+            values={"similarity_id": existing["similarity_id"]}
+        )
+        
+        # 기존 similarity_id 재사용
+        similarity_id = existing["similarity_id"]
+        
+        # 기존 similarity 레코드 업데이트
+        update_query = """
+        UPDATE similarity SET similarity_updated_at = :updated_at
+        WHERE similarity_id = :similarity_id
+        """
+        await database.execute(
+            query=update_query,
+            values={
+                "similarity_id": similarity_id,
+                "updated_at": now
+            }
+        )
+    else:
+        # 새 similarity 레코드 생성
+        similarity_query = """
+        INSERT INTO similarity (
+            patent_draft_id, similarity_created_at, similarity_updated_at
+        ) VALUES (
+            :patent_draft_id, :created_at, :updated_at
+        )
+        """
+        
+        similarity_id = await database.execute(
+            query=similarity_query,
+            values={
+                "patent_draft_id": patent_draft_id,
+                "created_at": now,
+                "updated_at": now
+            }
+        )
     
     # 각 유사 특허 저장
     formatted_results = []
     for i, (similarity, patent) in enumerate(top_results):
+        # 저장할 유사도 점수 로깅
+        logger.info(f"저장할 유사도 점수: 특허 ID {patent['patent_id']} - 점수: {similarity:.4f}")
+
         similarity_patent_query = """
         INSERT INTO similarity_patent (
             similarity_id, patent_id, similarity_patent_score,
@@ -271,16 +354,19 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
             :created_at, :updated_at
         )
         """
+
+        # 값 매핑 시 반올림 적용하여 정밀도 문제 해결
+        score_value = round(float(similarity), 6)
         
         similarity_patent_id = await database.execute(
             query=similarity_patent_query,
             values={
                 "similarity_id": similarity_id,
                 "patent_id": patent["patent_id"],
-                "score": similarity,
-                "title_score": similarity,  # 현재는 동일한 점수 사용
-                "claim_score": similarity,
-                "summary_score": similarity,
+                "score": score_value,
+                "title_score": score_value,
+                "claim_score": score_value,
+                "summary_score": score_value,
                 "created_at": now,
                 "updated_at": now
             }

@@ -72,7 +72,7 @@ def parse_patent_document(ocr_text: str) -> Dict[str, str]:
         patent_draft["patent_draft_solution"] = solution_match.group(1).strip()
     
     # 발명의 효과 추출 (개선된 패턴)
-    effect_pattern = r"(?:【발명의\s*효과】|발명의\s*효과)\s*(.*?)(?:【청구항\s*1】|청구항\s*1|제\s*1\s*항)"
+    effect_pattern = r"(?:【발명의\s*효과】|발명의\s*효과)\s*(.*?)(?:【발명을\s*실시하기\s*위한\s*구체적인\s*내용】|발명을\s*실시하기\s*위한\s*구체적인\s*내용|【요약】|요\s*약|【청구항\s*1】|청구항\s*1|제\s*1\s*항)"
     effect_match = re.search(effect_pattern, ocr_text, re.DOTALL | re.IGNORECASE)
     if effect_match:
         patent_draft["patent_draft_effect"] = effect_match.group(1).strip()
@@ -82,9 +82,8 @@ def parse_patent_document(ocr_text: str) -> Dict[str, str]:
     detailed_match = re.search(detailed_pattern, ocr_text, re.DOTALL | re.IGNORECASE)
     if detailed_match:
         patent_draft["patent_draft_detailed"] = detailed_match.group(1).strip()
-
     # 위 패턴이 실패할 경우 대안 패턴 시도
-    if not patent_draft["patent_draft_detailed"]:
+    else:
         alt_detailed_pattern = r"발명을\s*실시하기\s*위한\s*구체적인\s*내용\s*(.*?)(?=요약|청구항)"
         alt_detailed_match = re.search(alt_detailed_pattern, ocr_text, re.DOTALL | re.IGNORECASE)
         if alt_detailed_match:
