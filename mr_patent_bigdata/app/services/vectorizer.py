@@ -93,6 +93,14 @@ def get_tfidf_vector(text: str) -> np.ndarray:
             # 빈 벡터 반환
             logger.warning("벡터라이저 로드 실패. 영벡터를 반환합니다.")
             return np.zeros(1000)
+        
+# vectorizer.py에 추가
+def safe_vector(vec, dim=1000):
+    """안전한 벡터 반환 (NaN, 영벡터 처리)"""
+    if vec is None or (isinstance(vec, np.ndarray) and (np.all(vec == 0) or np.isnan(vec).any())):
+        # 랜덤 소음 추가 (정규분포, 작은 표준편차)
+        return np.random.normal(0, 0.01, dim)
+    return vec
 
 def get_bert_vector(text: str, max_length: int = 512) -> np.ndarray:
     """텍스트의 KLUE BERT 벡터 계산"""

@@ -42,12 +42,6 @@ async def startup():
     await database.connect()
     logger.info("데이터베이스 연결 성공")
 
-    # 벡터라이저 로드
-    try:
-        load_vectorizer()
-    except Exception as e:
-        logger.error(f"벡터라이저 로드 실패: {e}")
-
 @app.on_event("shutdown")
 async def shutdown():
     await database.disconnect()
