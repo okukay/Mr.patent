@@ -40,10 +40,8 @@ public class ChatController {
             message.setFileUrl(presignedUrl);
         }
 
-        //DB 저장
         ChatMessageDto savedMessage = chatService.saveMessage(message);
 
-        // 웹소켓 전송
         messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), savedMessage);
 
         //fcm 보내기

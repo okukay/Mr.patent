@@ -22,4 +22,5 @@ public class ExpertResponseDTO {
     private String expertPhone;
     private LocalDate expertGetDate;
     private List<ExpertCategoryDTO> expertCategories;
+    private String userImage;
 }
