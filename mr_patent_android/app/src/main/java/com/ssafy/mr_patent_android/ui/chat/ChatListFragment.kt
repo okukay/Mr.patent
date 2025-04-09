@@ -35,6 +35,7 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "onViewCreated: ${viewModel.chatRoomList.value} ")
         mainActivity = activity as MainActivity
         initView()
         initObserver()
@@ -49,10 +50,10 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
                     SseEventHandler(viewModel),
                     EventSource.Builder(
                         ConnectStrategy
-                            .http(URL("http://192.168.100.130:8080/api/chat/rooms/subscribe/${sharedPreferences.getUser().userId}"))
+//                            .http(URL("http://192.168.100.130:8080/api/chat/rooms/subscribe/${sharedPreferences.getUser().userId}"))
 //                            .http(URL("http://192.168.100.130:8080/api/chat/rooms/subscribe/${sharedPreferences.getUser().userId}"))
 //                            .http(URL("http://172.20.10.3:8080/api/chat/rooms/subscribe/${sharedPreferences.getUser().userId}"))
-//                            .http(URL("http://j12d208.p.ssafy.io/api/chat/rooms/subscribe/${sharedPreferences.getUser().userId}"))
+                            .http(URL("https://j12d208.p.ssafy.io/api/chat/rooms/subscribe/${sharedPreferences.getUser().userId}"))
                             .header("Authorization", "Bearer ${sharedPreferences.getAToken()}")
                             .connectTimeout(5, TimeUnit.SECONDS)
                             .readTimeout(10, TimeUnit.MINUTES)
@@ -105,6 +106,13 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
             Log.d(TAG, "initObserver: $chatList")
             adapter.submitList(chatList)
         }
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.setChatRoomList(emptyList())
+        Log.d(TAG, "onDestroy: ")
     }
 
 
