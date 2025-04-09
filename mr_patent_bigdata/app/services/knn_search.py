@@ -265,9 +265,3 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
         "results": formatted_results,
         "execution_time_seconds": duration
     }
-
-# 호환성을 위한 더미 함수
-async def load_vectors_to_memory(limit=None, batch_size=1000):
-    """호환성을 위한 더미 함수 - FAISS 기반 방식으로 전환되어 벡터를 미리 로드하지 않음"""
-    logger.info("벡터 로드 함수가 호출되었지만, FAISS 기반 방식으로 전환되어 벡터를 미리 로드하지 않습니다")
-    return []
