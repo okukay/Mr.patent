@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.signature.ObjectKey
 import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.data.model.dto.UserDto
 import com.ssafy.mr_patent_android.databinding.ListItemExpertBinding
@@ -49,6 +51,9 @@ class ExpertListAdapter(val groupList: List<UserDto>, val itemClickListener:Item
 
             Glide.with(binding.root)
                 .load(groupList[position].userImage)
+                .circleCrop()
+                .signature(ObjectKey(groupList[position].userImage))
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .error(R.drawable.user_profile)
                 .into(binding.ivExpert)
             binding.tvExpertName.text = groupList[position].userName

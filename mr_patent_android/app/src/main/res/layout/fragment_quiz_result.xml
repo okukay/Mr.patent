@@ -156,7 +156,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:text="틀린 문제 다시보기\nⅴ\nⅴ\nⅴ"
+        android:text="^\n틀린 문제 다시보기"
         android:gravity="center"
         android:textColor="@color/mr_gray"
         />
