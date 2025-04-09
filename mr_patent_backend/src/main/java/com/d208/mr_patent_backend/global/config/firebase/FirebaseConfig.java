@@ -37,7 +37,7 @@ public class FirebaseConfig {
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
                 isFirebaseInitialized = true;
-                log.info("FCM 초기화 완료");
+                log.info("✅✅✅FCM 초기화 완료");
             } else {
                 isFirebaseInitialized = true;
                 log.info("FCM은 이미 초기화되어 있음");
