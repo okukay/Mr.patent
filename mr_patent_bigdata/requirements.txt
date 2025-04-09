@@ -22,6 +22,7 @@ defusedxml==0.7.1
 elastic-transport==8.17.1
 elasticsearch==8.11.0
 exceptiongroup==1.2.2
+faiss-cpu==1.7.4
 fastapi==0.115.12
 filelock==3.18.0
 findspark==2.0.1

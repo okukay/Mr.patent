@@ -16,6 +16,128 @@ logger = logging.getLogger(__name__)
 # KIPRIS API 서비스 키 (URL 인코딩 적용)
 KIPRIS_SERVICE_KEY = settings.kipris_service_key
 
+# 캐싱을 위한 딕셔너리
+_patent_info_cache = {}
+_patent_pdf_cache = {}
+
+async def get_patent_info_and_pdf(application_number: str) -> Tuple[Dict[str, Any], str, str]:
+    """특허 정보 조회와 PDF 다운로드를 통합한 함수"""
+    
+    # 캐싱: 이미 조회한 정보가 있으면 재사용
+    cache_key = str(application_number)
+    if cache_key in _patent_info_cache and cache_key in _patent_pdf_cache:
+        logger.info(f"캐시에서 특허 정보 및 PDF 정보 로드: {application_number}")
+        return _patent_info_cache[cache_key], _patent_pdf_cache[cache_key][0], _patent_pdf_cache[cache_key][1]
+    
+    # 공고전문 API만 호출 (getAnnFullTextInfoSearch)
+    endpoint = "getAnnFullTextInfoSearch"
+    description = "공고전문"
+    
+    # API 호출 및 파싱
+    try:
+        url = f"http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/{endpoint}"
+        
+        params = {
+            "applicationNumber": application_number,
+            "ServiceKey": KIPRIS_SERVICE_KEY
+        }
+        
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "Accept": "application/xml, text/xml, */*",
+            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7"
+        }
+        
+        logger.info(f"KIPRIS {description} API 통합 호출: {application_number} ({endpoint})")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params, headers=headers, timeout=30.0)
+            
+            if response.status_code != 200:
+                logger.error(f"KIPRIS API 오류: 상태코드 {response.status_code}")
+                return None, "", ""
+            
+            try:
+                # XML 응답 파싱
+                root = ET.fromstring(response.text)
+                
+                # 성공 여부 확인
+                success_yn = root.find(".//successYN")
+                result_code = root.find(".//resultCode")
+                
+                success = (success_yn is not None and success_yn.text == "Y") or \
+                          (result_code is not None and result_code.text == "00")
+                
+                if not success:
+                    result_msg = root.find(".//resultMsg")
+                    msg = result_msg.text if result_msg is not None else "알 수 없는 오류"
+                    logger.error(f"KIPRIS API 응답 오류: {msg}")
+                    return None, "", ""
+                    
+                # 문서 정보 추출
+                item = root.find(".//item")
+                if item is None:
+                    logger.error(f"KIPRIS API 응답에 문서 정보가 없습니다")
+                    return None, "", ""
+                    
+                doc_name = item.find("docName")
+                path = item.find("path")
+                
+                if doc_name is None or path is None:
+                    logger.error(f"KIPRIS API 응답에 필수 정보가 누락되었습니다")
+                    return None, "", ""
+                    
+                # 특허 정보 생성
+                publication_number = doc_name.text.replace(".pdf", "").replace(".PDF", "")
+                patent_info = {
+                    "publication_number": publication_number,
+                    "doc_name": doc_name.text,
+                    "path": path.text,
+                    "type": description
+                }
+                
+                # 정보 캐시에 저장
+                _patent_info_cache[cache_key] = patent_info
+                
+                # PDF 다운로드 처리
+                pdf_url = path.text
+                pdf_name = doc_name.text
+                
+                logger.info(f"특허 PDF 다운로드 시작: {pdf_name}")
+                
+                # 임시 폴더에 PDF 저장
+                temp_dir = tempfile.gettempdir()
+                local_path = os.path.join(temp_dir, pdf_name)
+                
+                # PDF 다운로드
+                async with httpx.AsyncClient() as pdf_client:
+                    pdf_response = await pdf_client.get(pdf_url, headers=headers, timeout=60.0)
+                    
+                    if pdf_response.status_code != 200:
+                        logger.error(f"PDF 다운로드 오류: 상태코드 {pdf_response.status_code}")
+                        return patent_info, "", ""
+                    
+                    # 파일 저장
+                    with open(local_path, "wb") as f:
+                        f.write(pdf_response.content)
+                    
+                    logger.info(f"PDF 다운로드 완료: {local_path}, 크기: {len(pdf_response.content)} 바이트")
+                    
+                    # PDF 정보 캐시에 저장
+                    _patent_pdf_cache[cache_key] = (local_path, pdf_name)
+                    
+                    return patent_info, local_path, pdf_name
+                    
+            except ET.ParseError as e:
+                logger.error(f"KIPRIS API 응답 XML 파싱 오류: {str(e)}")
+                return None, "", ""
+                
+    except Exception as e:
+        logger.error(f"KIPRIS API 통합 호출 중 오류: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return None, "", ""
+
 async def test_kipris_apis(application_number: str) -> Dict[str, Any]:
     """모든 KIPRIS API 직접 테스트 (디버깅용)"""
     results = {}
@@ -115,20 +237,29 @@ async def test_kipris_apis(application_number: str) -> Dict[str, Any]:
     
     return results
 
-async def get_patent_public_info(application_number: str) -> Optional[Dict[str, str]]:
-    """KIPRIS API를 통해 특허 공고전문 또는 공개전문 정보를 가져옵니다."""
+# 기존 함수들 캐싱 적용
+async def get_patent_public_info(application_number: str, only_ann=False) -> Optional[Dict[str, str]]:
+    """KIPRIS API를 통해 특허 공고전문 정보를 가져옵니다."""
     
-    # 문자열 타입 보장만 수행
+    # 캐시 확인
+    cache_key = str(application_number)
+    if cache_key in _patent_info_cache:
+        logger.info(f"캐시에서 특허 정보 로드: {application_number}")
+        return _patent_info_cache[cache_key]
+    
     if not isinstance(application_number, str):
         application_number = str(application_number)
     
     logger.info(f"KIPRIS API 호출 준비: {application_number} (타입: {type(application_number)})")
     
-    # 시도할 API 엔드포인트 목록 (공고전문 -> 공개전문 순으로 시도)
-    endpoints = [
-        ("getAnnFullTextInfoSearch", "공고전문"),
-        ("getPubFullTextInfoSearch", "공개전문")
-    ]
+    # 공고전문 API만 호출
+    endpoint = "getAnnFullTextInfoSearch"
+    description = "공고전문"
+    
+    # 공개전문까지 시도하는 기존 로직은 only_ann=False인 경우에만 실행
+    endpoints = [(endpoint, description)]
+    if not only_ann:
+        endpoints.append(("getPubFullTextInfoSearch", "공개전문"))
     
     for endpoint, description in endpoints:
         url = f"http://plus.kipris.or.kr/kipo-api/kipi/patUtiModInfoSearchSevice/{endpoint}"
@@ -218,15 +349,20 @@ async def get_patent_public_info(application_number: str) -> Optional[Dict[str, 
     logger.error(f"모든 KIPRIS API 시도 실패: {application_number}")
     return None
 
-async def download_patent_pdf(application_number: str) -> Tuple[str, str]:
+async def download_patent_pdf(application_number: str, info=None) -> Tuple[str, str]:
     """KIPRIS API를 통해 특허 공고전문 PDF를 다운로드합니다."""
     
-    # 먼저 PDF 정보 얻기
-    info = await get_patent_public_info(application_number)
+    # 캐시 확인
+    cache_key = str(application_number)
+    if cache_key in _patent_pdf_cache:
+        logger.info(f"캐시에서 PDF 정보 로드: {application_number}")
+        return _patent_pdf_cache[cache_key]
     
+    # 정보가 전달되지 않은 경우 통합 함수 사용
     if not info:
-        logger.error(f"특허 공고전문 정보를 찾을 수 없습니다: {application_number}")
-        return "", ""
+        patent_info, pdf_path, pdf_name = await get_patent_info_and_pdf(application_number)
+        if pdf_path:
+            return pdf_path, pdf_name
         
     pdf_url = info["path"]
     pdf_name = info["doc_name"]

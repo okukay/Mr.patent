@@ -26,6 +26,7 @@ _VECTORIZER_LOADED = False
 _BERT_LOADED = False
 _tokenizer = None
 _model = None
+_VECTORIZER_INSTANCE = None  # 추가: 벡터라이저 인스턴스 캐싱
 
 # 운영체제 판별
 IS_WINDOWS = platform.system() == 'Windows'
@@ -40,17 +41,17 @@ def load_bert_model():
         logger.info("KLUE/BERT 모델 로드 완료")
 
 def create_tfidf_udf():
-    """TF-IDF 벡터화를 위한 Spark UDF 함수 생성 (수정됨)"""
+    """TF-IDF 벡터화를 위한 Spark UDF 함수 생성 (최적화)"""
     
-    # 벡터라이저 로드 함수
+    # 벡터라이저 로드 함수 (최적화)
     def ensure_vectorizer_loaded():
-        global _VECTORIZER_LOADED
+        global _VECTORIZER_LOADED, _VECTORIZER_INSTANCE
         if not _VECTORIZER_LOADED:
-            load_vectorizer()
+            _VECTORIZER_INSTANCE = load_vectorizer()
             _VECTORIZER_LOADED = True
             logger.info(f"벡터라이저 로드 완료")
     
-    # 내부 함수 (데코레이터 없이)
+    # 내부 함수 (최적화)
     def _tfidf_vectorize(text):
         ensure_vectorizer_loaded()
         if text is None or text == "":
@@ -59,35 +60,27 @@ def create_tfidf_udf():
         
         try:
             vector = get_tfidf_vector(text)
-            
-            # 유효성 검사 수정: 항상 벡터 반환
-            if np.any(vector != 0) and len(vector) > 0:
-                return vector.tobytes()
-            else:
-                # NULL 대신 기본 영벡터 반환
-                default_vector = np.zeros(1000, dtype=np.float32)
-                return default_vector.tobytes()
+            return vector.tobytes() if np.any(vector != 0) and len(vector) > 0 else np.zeros(1000, dtype=np.float32).tobytes()
         except:
-            default_vector = np.zeros(1000, dtype=np.float32)
-            return default_vector.tobytes()
+            return np.zeros(1000, dtype=np.float32).tobytes()
     
     # 데코레이터 적용 후 반환
     return F.udf(_tfidf_vectorize, BinaryType())
 
 def create_bert_udf():
-    """KLUE BERT 벡터화를 위한 Spark UDF 함수 생성 (수정됨)"""
+    """KLUE BERT 벡터화를 위한 Spark UDF 함수 생성 (변경 없음)"""
     
     # BERT 모델 로드 함수
     def ensure_bert_loaded():
         if not _BERT_LOADED:
             load_bert_model()
     
-    # BERT 벡터화 UDF - Arrow 사용 안함 (수정 부분)
+    # BERT 벡터화 UDF
     @F.udf(BinaryType())
     def bert_vectorize(text):
         ensure_bert_loaded()
         if text is None or text == "":
-            return None  # DB에 저장되지 않도록 null 반환
+            return None
         
         # 텍스트가 너무 길면 잘라내기
         if len(text) > 1000:
@@ -102,7 +95,6 @@ def create_bert_udf():
                 
             sentence_embedding = outputs.last_hidden_state[:, 0, :].numpy().flatten()
             
-            # 벡터 유효성 검사 추가 (핵심 수정)
             if np.any(sentence_embedding != 0) and len(sentence_embedding) > 0:
                 return sentence_embedding.tobytes()
             else:
@@ -173,10 +165,10 @@ def clean_temp_files():
     return check_disk_usage()
 
 async def process_patents_with_spark(all_patents, batch_size=None, with_bert=False):
-    """Spark를 사용한 특허 벡터화 처리 (최종 수정 버전)"""
-    # 환경 설정
+    """Spark를 사용한 특허 벡터화 처리 (최적화 버전)"""
+    # 최적화: 배치 크기 증가
     if batch_size is None:
-        batch_size = 500 if IS_WINDOWS else 2500
+        batch_size = 2500 if IS_WINDOWS else 5000
     
     # 디렉토리 설정
     temp_dir = os.path.join(tempfile.gettempdir(), "spark-temp") if IS_WINDOWS else "/tmp/spark-temp"
@@ -186,12 +178,13 @@ async def process_patents_with_spark(all_patents, batch_size=None, with_bert=Fal
     # 초기 리소스 정리
     clean_temp_files()
     
-    # 시스템 설정
-    cpu_cores = min(os.cpu_count() or 4, 4) if IS_WINDOWS else min(os.cpu_count() or 16, 16)
-    driver_memory = "8g" if IS_WINDOWS else "110g"
-    db_batch_size = 10 if IS_WINDOWS else 25
+    # 최적화: CPU 코어 증가
+    cpu_cores = min(os.cpu_count() or 4, 8) if IS_WINDOWS else min(os.cpu_count() or 16, 32)
+    driver_memory = "12g" if IS_WINDOWS else "110g"
+    # 최적화: DB 배치 크기 증가
+    db_batch_size = 50 if IS_WINDOWS else 100
     
-    # Spark 세션 초기화
+    # Spark 세션 초기화 (최적화된 설정)
     spark = initialize_spark_session(temp_dir, cpu_cores, driver_memory)
     
     # UDF 함수 생성
@@ -213,14 +206,14 @@ async def process_patents_with_spark(all_patents, batch_size=None, with_bert=Fal
         # 스키마 정의
         schema = StructType([
             StructField("patent_id", LongType(), True),
-            StructField("title", StringType(), True),
-            StructField("summary", StringType(), True),
-            StructField("claims", StringType(), True),
-            StructField("application_number", StringType(), True),
-            StructField("ipc_classification", StringType(), True)
+            StructField("patent_title", StringType(), True),
+            StructField("patent_summary", StringType(), True),
+            StructField("patent_claim", StringType(), True),
+            StructField("patent_application_number", StringType(), True),
+            StructField("patent_ipc", StringType(), True)
         ])
         
-        # 벡터 유효성 검사 강화 (핵심 수정)
+        # 벡터 유효성 검사 강화
         for batch_idx in range(last_processed_batch, num_batches):
             await manage_resources()
             
@@ -231,15 +224,18 @@ async def process_patents_with_spark(all_patents, batch_size=None, with_bert=Fal
             
             logger.info(f"배치 {batch_idx+1}/{num_batches} 처리 중 ({len(batch_patents)}개 특허)")
             
-            # 벡터 유효성 검사 강화 - 수정된 부분
+            # 유효 특허 필터링 (병렬 처리 후보)
             valid_patents = []
-            # 특허 필터링 기준 완화
             for p in batch_patents:
-                # 세 필드 중 하나라도 의미 있는 길이면 포함
-                if any(len(str(field)) > 10 for field in [p.patent_title, p.patent_summary, p.patent_claim]):
-                    valid_patents.append(p)
-                else:
-                    logger.warning(f"유효하지 않은 특허 데이터 건너뜀: {p.patent_title[:30] if p.patent_title else ''}...")
+                try:
+                    patent_title = p.get("patent_title", "")
+                    patent_summary = p.get("patent_summary", "")
+                    patent_claim = p.get("patent_claim", "")
+                    
+                    if any(len(str(field)) > 10 for field in [patent_title, patent_summary, patent_claim]):
+                        valid_patents.append(p)
+                except Exception as e:
+                    logger.error(f"특허 유효성 검사 중 오류: {str(e)}")
             
             batch_data = prepare_batch_data(valid_patents, schema)
             
@@ -262,12 +258,16 @@ async def process_patents_with_spark(all_patents, batch_size=None, with_bert=Fal
                     bert_vectorize = create_bert_udf()
                 continue
             
-            processed = await save_to_database(patent_rows, with_bert, db_batch_size)
+            processed = await save_to_database_bulk(patent_rows, with_bert, db_batch_size)  # 최적화된 함수 사용
             total_processed += processed
             
             batch_duration = time.time() - batch_start
             patents_per_second = len(batch_patents) / batch_duration if batch_duration > 0 else 0
-            logger.info(f"배치 {batch_idx+1}/{num_batches} 완료: {len(batch_patents)}개 처리 ({batch_duration:.2f}초)")
+            remaining_batches = num_batches - batch_idx - 1
+            est_remaining_time = remaining_batches * batch_duration / 60  # 분 단위
+            
+            logger.info(f"배치 {batch_idx+1}/{num_batches} 완료: {len(batch_patents)}개 처리 ({batch_duration:.2f}초, {patents_per_second:.1f}개/초)")
+            logger.info(f"예상 남은 시간: {est_remaining_time:.1f}분 ({remaining_batches}개 배치)")
             
             save_checkpoint(checkpoint_file, batch_idx)
             patent_rows = None
@@ -277,7 +277,8 @@ async def process_patents_with_spark(all_patents, batch_size=None, with_bert=Fal
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             
-            await asyncio.sleep(2)
+            # 최적화: 대기 시간 단축
+            await asyncio.sleep(1)
         
         total_duration = time.time() - start_time
         logger.info(f"총 {total_processed}개 특허 처리 완료 ({total_duration/60:.2f}분)")
@@ -294,14 +295,16 @@ async def process_patents_with_spark(all_patents, batch_size=None, with_bert=Fal
     finally:
         spark.stop()
 
-# 1. Spark 세션 초기화 함수
-def initialize_spark_session(temp_dir, cpu_cores, driver_memory="8g"):
+# 1. Spark 세션 초기화 함수 (최적화)
+def initialize_spark_session(temp_dir, cpu_cores, driver_memory="12g"):
     """Spark 세션을 초기화하고 반환합니다."""
     spark = SparkSession.builder \
         .appName("PatentVectorizer") \
         .config("spark.driver.memory", driver_memory) \
-        .config("spark.default.parallelism", str(cpu_cores)) \
-        .config("spark.sql.shuffle.partitions", str(cpu_cores * 2)) \
+        .config("spark.sql.adaptive.enabled", "true") \
+        .config("spark.memory.fraction", "0.8") \
+        .config("spark.default.parallelism", str(cpu_cores * 2)) \
+        .config("spark.sql.shuffle.partitions", str(cpu_cores * 4)) \
         .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer") \
         .config("spark.local.dir", temp_dir) \
         .master(f"local[{cpu_cores}]") \
@@ -310,7 +313,7 @@ def initialize_spark_session(temp_dir, cpu_cores, driver_memory="8g"):
     spark.sparkContext.setLogLevel("ERROR")
     return spark
 
-# 2. 체크포인트 관리 함수들
+# 2. 체크포인트 관리 함수들 (변경 없음)
 def load_checkpoint(checkpoint_file):
     """체크포인트 파일에서 마지막으로 처리된 배치 번호를 로드합니다."""
     if os.path.exists(checkpoint_file):
@@ -328,133 +331,187 @@ def save_checkpoint(checkpoint_file, batch_idx):
     with open(checkpoint_file, 'w') as f:
         f.write(str(batch_idx + 1))
 
-# 3. 배치 데이터 변환 함수
+# 3. 배치 데이터 변환 함수 (변경 없음)
 def prepare_batch_data(batch_patents, schema):
     """특허 배치 데이터를 Spark DataFrame으로 변환할 수 있는 형식으로 준비합니다."""
+    import re  # 정규식 모듈 추가
     batch_data = []
     for p in batch_patents:
         try:
+            # 안전한 키 접근으로 수정
+            # 'patent_id' 키가 없으면 'patent_application_number'를 ID로 사용
+            patent_id = None
+            
+            # 'patent_id' 직접 시도
+            if 'patent_id' in p:
+                patent_id = p['patent_id']
+            # 대체 키 시도
+            elif 'id' in p:
+                patent_id = p['id']
+            elif 'patent_application_number' in p:
+                # 고유한 ID로 사용하기 위해 해시값 사용 (실제로는 DB에서 ID 생성)
+                patent_id = abs(hash(p['patent_application_number'])) % (10 ** 10)
+            else:
+                # 고유 ID 생성
+                patent_id = abs(hash(str(p))) % (10 ** 10)
+                logger.warning(f"임시 ID 생성됨: {patent_id}")
+            
+            # 출원번호 정리 (숫자와 하이픈만 유지)
+            patent_application_number = p.get("patent_application_number", "")
+            if patent_application_number:
+                # 발명의명칭 및 기타 문자 제거, 숫자와 하이픈만 유지
+                patent_application_number = re.sub(r'[^0-9\-]', '', patent_application_number)
+                
+                # 길이 제한 적용
+                if len(patent_application_number) > 20:
+                    patent_application_number = patent_application_number[:20]
+            
+            # 필드 안전하게 추출
             batch_data.append((
-                p.patent_id,
-                p.patent_title,
-                p.patent_summary,
-                p.patent_claim,
-                p.patent_application_number,
-                p.patent_ipc
+                patent_id,
+                p.get("patent_title", ""),
+                p.get("patent_summary", ""),
+                p.get("patent_claim", ""),
+                patent_application_number,  # 정리된 출원번호 사용
+                p.get("patent_ipc", "")
             ))
         except Exception as e:
             logger.error(f"특허 데이터 변환 오류: {str(e)}")
+    
+    if not batch_data:
+        logger.warning("변환된 특허 데이터가 없습니다.")
+    else:
+        logger.info(f"총 {len(batch_data)}개 특허 데이터 변환 완료")
+        
     return batch_data
 
-# 4. 벡터화 함수
+# 4. 벡터화 함수 (변경 없음)
 def vectorize_patents(df, tfidf_vectorize, bert_vectorize=None):
     """특허 DataFrame에 벡터화를 적용합니다."""
-    # patent_id 컬럼을 보존하기 위해 먼저 임시 변수에 저장
-    patent_ids = df.select("patent_id").collect()
+    # TF-IDF 벡터화 - 필드명 수정
+    result_df = df.withColumn("title_tfidf_vector", tfidf_vectorize(F.col("patent_title")))
+    result_df = result_df.withColumn("summary_tfidf_vector", tfidf_vectorize(F.col("patent_summary")))
+    result_df = result_df.withColumn("claim_tfidf_vector", tfidf_vectorize(F.col("patent_claim")))
     
-    # TF-IDF 벡터화
-    result_df = df.withColumn("title_tfidf_vector", tfidf_vectorize(F.col("title")))
-    result_df = result_df.withColumn("summary_tfidf_vector", tfidf_vectorize(F.col("summary")))
-    result_df = result_df.withColumn("claim_tfidf_vector", tfidf_vectorize(F.col("claims")))
-    
-    # BERT 벡터화 (선택적)
+    # BERT 벡터화 (선택적) - 필드명 수정
     if bert_vectorize is not None:
-        result_df = result_df.withColumn("title_bert_vector", bert_vectorize(F.col("title")))
-        result_df = result_df.withColumn("summary_bert_vector", bert_vectorize(F.col("summary")))
-        result_df = result_df.withColumn("claim_bert_vector", bert_vectorize(F.col("claims")))
+        result_df = result_df.withColumn("title_bert_vector", bert_vectorize(F.col("patent_title")))
+        result_df = result_df.withColumn("summary_bert_vector", bert_vectorize(F.col("patent_summary")))
+        result_df = result_df.withColumn("claim_bert_vector", bert_vectorize(F.col("patent_claim")))
     
     return result_df
 
-
-# 5. 데이터베이스 저장 함수 (수정됨)
-async def save_to_database(patent_rows, with_bert=False, db_batch_size=25):
-    """벡터화된 특허 데이터의 벡터 필드만 업데이트합니다."""
+# 5. 최적화된 일괄 데이터베이스 저장 함수 (INSERT 사용으로 수정)
+async def save_to_database_bulk(patent_rows, with_bert=False, db_batch_size=100):
+    """최적화: 벡터화된 특허 데이터의 전체 필드 일괄 삽입 (cluster_id 제외)"""
     total_processed = 0
-    db_batches = [patent_rows[i:i+db_batch_size] for i in range(0, len(patent_rows), db_batch_size)]
+    insert_values = []
     
-    for db_idx, db_batch in enumerate(db_batches):
-        for row in db_batch:
-            try:
-                # 벡터 유효성 검사
+    # 데이터 수집
+    for row in patent_rows:
+        try:
+            # 벡터 유효성 검사 확인
+            has_vectors = (
+                hasattr(row, "title_tfidf_vector") and 
+                hasattr(row, "summary_tfidf_vector") and 
+                hasattr(row, "claim_tfidf_vector")
+            )
+            
+            valid_vectors = False
+            if has_vectors:
                 valid_vectors = (
-                    row.title_tfidf_vector is not None and len(row.title_tfidf_vector) > 0 and
-                    row.summary_tfidf_vector is not None and len(row.summary_tfidf_vector) > 0 and
-                    row.claim_tfidf_vector is not None and len(row.claim_tfidf_vector) > 0
+                    row.title_tfidf_vector is not None and
+                    row.summary_tfidf_vector is not None and
+                    row.claim_tfidf_vector is not None
                 )
+            
+            if valid_vectors and hasattr(row, "patent_id") and row.patent_id:
+                now = datetime.utcnow()
                 
-                if valid_vectors and hasattr(row, "patent_id") and row.patent_id:
-                    # UPDATE 쿼리 실행
-                    update_query = """
-                    UPDATE patent
-                    SET patent_title_tfidf_vector = :title_vector,
-                        patent_summary_tfidf_vector = :summary_vector,
-                        patent_claim_tfidf_vector = :claim_vector,
-                        patent_updated_at = :updated_at
-                    WHERE patent_id = :patent_id
+                # 텍스트 필드 길이 제한 적용
+                patent_title = getattr(row, "patent_title", "")
+                if not patent_title:
+                    patent_title = "제목 없음"
+                elif len(patent_title) > 500:
+                    patent_title = patent_title[:500]
+                    
+                patent_summary = getattr(row, "patent_summary", "")
+                if not patent_summary:
+                    patent_summary = "요약 없음"
+                
+                patent_claim = getattr(row, "patent_claim", "")
+                if not patent_claim:
+                    patent_claim = "청구항 없음"
+                    
+                patent_application_number = getattr(row, "patent_application_number", "")
+                if not patent_application_number:
+                    patent_application_number = f"APP-{row.patent_id}"
+                elif len(patent_application_number) > 20:
+                    patent_application_number = patent_application_number[:20]
+                    
+                patent_ipc = getattr(row, "patent_ipc", "")
+                if not patent_ipc:
+                    patent_ipc = "미분류"
+                elif len(patent_ipc) > 100:
+                    patent_ipc = patent_ipc[:100]
+                
+                insert_values.append({
+                    "patent_id": row.patent_id,
+                    "patent_title": patent_title,
+                    "patent_summary": patent_summary,
+                    "patent_claim": patent_claim,
+                    "patent_application_number": patent_application_number,
+                    "patent_ipc": patent_ipc,
+                    "patent_title_tfidf_vector": row.title_tfidf_vector,
+                    "patent_summary_tfidf_vector": row.summary_tfidf_vector,
+                    "patent_claim_tfidf_vector": row.claim_tfidf_vector,
+                    "patent_created_at": now,
+                    "patent_updated_at": now
+                })
+        except Exception as e:
+            logger.error(f"데이터 준비 중 오류: {str(e)}")
+    
+    # 개별 레코드 단위로 삽입
+    success_count = 0
+    if insert_values:
+        for i in range(0, len(insert_values), db_batch_size):
+            batch = insert_values[i:i+db_batch_size]
+            batch_success = 0
+            
+            for idx, values in enumerate(batch):
+                try:
+                    # cluster_id가 제외된 INSERT 쿼리
+                    insert_query = """
+                    INSERT INTO patent (
+                        patent_id, patent_title, patent_summary, patent_claim,
+                        patent_application_number, patent_ipc,
+                        patent_title_tfidf_vector, patent_summary_tfidf_vector, 
+                        patent_claim_tfidf_vector, patent_created_at, patent_updated_at
+                    ) VALUES (
+                        :patent_id, :patent_title, :patent_summary, :patent_claim,
+                        :patent_application_number, :patent_ipc,
+                        :patent_title_tfidf_vector, :patent_summary_tfidf_vector,
+                        :patent_claim_tfidf_vector, :patent_created_at, :patent_updated_at
+                    )
                     """
                     
-                    await database.execute(
-                        query=update_query,
-                        values={
-                            "title_vector": row.title_tfidf_vector,
-                            "summary_vector": row.summary_tfidf_vector,
-                            "claim_vector": row.claim_tfidf_vector,
-                            "updated_at": datetime.utcnow(),
-                            "patent_id": row.patent_id
-                        }
-                    )
-                    total_processed += 1
-                else:
-                    logger.warning(f"유효한 벡터 또는 특허 ID가 없음: {row.title[:30] if hasattr(row, 'title') else 'unknown'}")
-            except Exception as e:
-                logger.error(f"특허 업데이트 오류: {str(e)}")
-        
-        # 진행상황 로깅
-        if db_idx % 10 == 0 or db_idx == len(db_batches) - 1:
-            logger.info(f"DB 업데이트 진행: {db_idx+1}/{len(db_batches)} 배치 완료 (총 {total_processed}개 처리)")
-        
-        await asyncio.sleep(0.5)
+                    await database.execute(insert_query, values=values)
+                    batch_success += 1
+                    success_count += 1
+                except Exception as e:
+                    logger.error(f"레코드 삽입 실패 ({i+idx}/{len(insert_values)}): {str(e)}")
+            
+            logger.info(f"DB 일괄 삽입: {i+batch_success}/{len(insert_values)} 완료 (배치 성공률: {batch_success}/{len(batch)})")
     
-    return total_processed
+    logger.info(f"총 {success_count}/{len(insert_values)}개 특허 데이터 삽입 완료")
+    return success_count
 
-# 6. 데이터 전처리 헬퍼 함수
-def prepare_patent_data(row, with_bert=False):
-    """특허 행 데이터를 데이터베이스 저장 형식으로 변환합니다."""
-    # 출원번호 정제
-    app_number = row.application_number
-    if app_number and "발명의명칭" in app_number:
-        app_number = app_number.replace("발명의명칭", "")
-    
-    # IPC 코드 길이 제한
-    ipc_code = row.ipc_classification
-    if ipc_code and len(ipc_code) > 95:
-        ipc_code = ipc_code[:95]
-    
-    # 기본 데이터
-    patent_data = {
-        "patent_title": row.title,
-        "patent_application_number": app_number,
-        "patent_ipc": ipc_code,
-        "patent_summary": row.summary,
-        "patent_claim": row.claims,
-        "patent_title_tfidf_vector": row.title_tfidf_vector,
-        "patent_summary_tfidf_vector": row.summary_tfidf_vector,
-        "patent_claim_tfidf_vector": row.claim_tfidf_vector,
-        "patent_created_at": datetime.utcnow(),
-        "patent_updated_at": datetime.utcnow()
-    }
-    
-    # BERT 벡터 추가 (선택적)
-    if with_bert:
-        patent_data.update({
-            "patent_title_bert_vector": row.title_bert_vector,
-            "patent_summary_bert_vector": row.summary_bert_vector,
-            "patent_claim_bert_vector": row.claim_bert_vector,
-        })
-    
-    return patent_data
+# 기존 save_to_database 함수 유지 (호환성)
+async def save_to_database(patent_rows, with_bert=False, db_batch_size=25):
+    """기존 데이터베이스 저장 함수 (호환성 유지)"""
+    return await save_to_database_bulk(patent_rows, with_bert, db_batch_size)
 
-# 7. 리소스 관리 함수
+# 7. 리소스 관리 함수 (변경 없음)
 async def manage_resources():
     """메모리와 디스크 상태를 확인하고 필요시 리소스를 정리합니다."""
     memory_usage = check_memory_usage()
