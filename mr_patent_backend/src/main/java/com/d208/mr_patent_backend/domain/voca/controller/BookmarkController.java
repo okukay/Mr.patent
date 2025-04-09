@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@Tag(name = "북마크 API", description = "단어 북마크 추가, 조회, 삭제 기능")
+@Tag(name = "북마크 API", description = "단어 북마크 추가/조회/삭제")
 @RestController
 @RequestMapping("/api/bookmarks")
 @RequiredArgsConstructor
