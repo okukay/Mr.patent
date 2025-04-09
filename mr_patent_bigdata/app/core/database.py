@@ -94,7 +94,7 @@ patent_public = Table(
     Column("patent_id", BigInteger, ForeignKey("patent.patent_id"), nullable=False),
     Column("patent_public_number", String(20), nullable=False),
     Column("patent_public_content", MEDIUMTEXT, nullable=False),
-    Column("patent_public_api_response", Text, nullable=False),
+    Column("patent_public_api_response", MEDIUMTEXT, nullable=False),
     Column("patent_public_created_at", TIMESTAMP, nullable=False, default=datetime.utcnow),
     Column("patent_public_updated_at", TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 )
@@ -154,10 +154,11 @@ task_status = Table(
     "task_status",
     metadata,
     Column("task_id", String(50), primary_key=True),
-    Column("status", String(20)),
-    Column("progress", Integer),
-    Column("total_files", Integer),
-    Column("processed_files", Integer),
-    Column("created_at", TIMESTAMP, default=datetime.utcnow),
-    Column("updated_at", TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Column("patent_draft_id", BigInteger, ForeignKey("patent_draft.patent_draft_id"), nullable=False),
+    Column("task_type", String(50), nullable=False),
+    Column("task_status", String(50), nullable=False),
+    Column("task_error_message", Text),
+    Column("task_created_at", TIMESTAMP, nullable=False, default=datetime.utcnow),
+    Column("task_updated_at", TIMESTAMP, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 )
+
