@@ -269,7 +269,7 @@ async def resume_from_saved(request: ResumeRequest, background_tasks: Background
     await database.execute(
         task_status.insert().values(
             task_id=task_id,
-            patent_draft_id=0,  # 특허 파일 처리는 특정 초안과 관련 없음
+            patent_draft_id=None,  # 특허 파일 처리는 특정 초안과 관련 없음
             task_type="resume_processing",
             task_status="PENDING",
             task_error_message=None,

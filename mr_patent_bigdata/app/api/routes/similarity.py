@@ -730,7 +730,6 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
             detailed_comparison_query = """
             INSERT INTO detailed_comparison (
                 patent_draft_id,
-                patent_id,
                 similarity_patent_id,
                 patent_public_id,
                 detailed_comparison_total_score,
@@ -740,7 +739,6 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                 detailed_comparison_updated_at
             ) VALUES (
                 :draft_id,
-                :patent_id,
                 :similarity_patent_id,
                 :public_id,
                 :total_score,
@@ -750,7 +748,7 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                 :updated_at
             )
             """
-            
+
             print(f"상세 비교 결과 저장 시작: {patent_app_number}")
             await database.execute(
                 query=detailed_comparison_query,

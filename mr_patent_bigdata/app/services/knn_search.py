@@ -1,5 +1,6 @@
 import numpy as np
 import logging
+import os
 from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime, timezone
 import faiss  # FAISS 라이브러리 추가
@@ -8,6 +9,13 @@ from app.services.vectorizer import get_tfidf_vector
 from app.api.routes.similarity import safe_frombuffer, safe_cosine_similarity
 
 logger = logging.getLogger(__name__)
+
+# FAISS 인덱스 저장 경로 설정 (OS 독립적)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+faiss_dir = os.path.join(current_dir, "..", "..", "faiss_indexes")
+os.makedirs(faiss_dir, exist_ok=True)
+index_path = os.path.join(faiss_dir, "patent_index.index")
+metadata_path = os.path.join(faiss_dir, "patent_index_metadata.npz")
 
 # FAISS 인덱스를 저장할 전역 변수
 _FAISS_INDEX = None
@@ -18,10 +26,26 @@ async def build_faiss_index(force_rebuild=False) -> Tuple[faiss.Index, List[int]
     """특허 벡터를 사용하여 FAISS 인덱스를 생성합니다."""
     global _FAISS_INDEX, _INDEX_TO_PATENT_ID, _PATENT_DETAILS
     
-    # 이미 인덱스가 있고 강제 재구축이 아니면 캐시된 인덱스 반환
+    # 이미 메모리에 인덱스가 있고 강제 재구축이 아니면 캐시된 인덱스 반환
     if _FAISS_INDEX is not None and not force_rebuild:
-        logger.info(f"캐시된 FAISS 인덱스 사용 (벡터 수: {len(_INDEX_TO_PATENT_ID)})")
+        logger.info(f"메모리에 캐시된 FAISS 인덱스 사용 (벡터 수: {len(_INDEX_TO_PATENT_ID)})")
         return _FAISS_INDEX, _INDEX_TO_PATENT_ID, _PATENT_DETAILS
+    
+    # 파일에서 인덱스 로드 시도 (강제 재구축이 아닌 경우)
+    if os.path.exists(index_path) and os.path.exists(metadata_path) and not force_rebuild:
+        try:
+            logger.info(f"파일에서 FAISS 인덱스 로드 중: {index_path}")
+            _FAISS_INDEX = faiss.read_index(index_path)
+            
+            metadata = np.load(metadata_path, allow_pickle=True)
+            _INDEX_TO_PATENT_ID = metadata['patent_ids'].tolist()
+            _PATENT_DETAILS = metadata['patent_details'].item()
+            
+            logger.info(f"FAISS 인덱스 로드 완료: {len(_INDEX_TO_PATENT_ID)}개 특허")
+            return _FAISS_INDEX, _INDEX_TO_PATENT_ID, _PATENT_DETAILS
+        except Exception as e:
+            logger.error(f"파일에서 FAISS 인덱스 로드 실패: {str(e)}")
+            # 로드 실패 시 새로 구축 진행
     
     start_time = datetime.now()
     logger.info("FAISS 인덱스 구축 시작")
@@ -101,6 +125,20 @@ async def build_faiss_index(force_rebuild=False) -> Tuple[faiss.Index, List[int]
     _FAISS_INDEX = index
     _INDEX_TO_PATENT_ID = patent_ids
     _PATENT_DETAILS = patent_details
+    
+    # 인덱스를 파일에 저장 (OS 독립적 경로)
+    try:
+        logger.info(f"FAISS 인덱스 파일 저장 중: {index_path}")
+        faiss.write_index(index, index_path)
+        
+        # 메타데이터 저장 (patent_ids와 patent_details)
+        np.savez(metadata_path, 
+                 patent_ids=np.array(patent_ids),
+                 patent_details=patent_details)
+        
+        logger.info(f"FAISS 인덱스 파일 저장 완료")
+    except Exception as e:
+        logger.error(f"FAISS 인덱스 파일 저장 실패: {str(e)}")
     
     end_time = datetime.now()
     duration = (end_time - start_time).total_seconds()
