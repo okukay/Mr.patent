@@ -1,5 +1,6 @@
 package com.d208.mr_patent_backend.domain.user.service;
 
+import com.d208.mr_patent_backend.domain.s3.service.S3Service;
 import com.d208.mr_patent_backend.domain.user.dto.ExpertResponseDTO;
 import com.d208.mr_patent_backend.domain.user.dto.ExpertDetailResponseDTO;
 import com.d208.mr_patent_backend.domain.user.dto.ExpertCategoryDTO;
@@ -18,14 +19,16 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ExpertService {
     private final ExpertRepository expertRepository;
+    private final S3Service s3Service;
 
+
+    // 변리사 목록 조회하기
     public List<ExpertResponseDTO> getApprovedExperts() {
         List<Expert> experts = expertRepository.findByExpertStatus(1);
         return experts.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-
     private ExpertResponseDTO convertToDTO(Expert expert) {
         // 카테고리 이름 리스트 추출
         List<ExpertCategoryDTO> categories = expert.getExpertCategory().stream()
@@ -36,6 +39,10 @@ public class ExpertService {
                 })
                 .collect(Collectors.toList());
 
+        String userImage = expert.getUser().getUserImage();
+        String imageUrl = (userImage != null && !userImage.isBlank()) ? s3Service.generatePresignedDownloadUrl(userImage) : null;
+
+
         return ExpertResponseDTO.builder()
                 .expertId(expert.getExpertId())
                 .userName(expert.getUser().getUserName())
@@ -45,9 +52,11 @@ public class ExpertService {
                 .expertPhone(expert.getExpertPhone())
                 .expertGetDate(expert.getExpertGetDate())
                 .expertCategories(categories)
+                .userImage(imageUrl)
                 .build();
     }
 
+    // expert 상세 정보 불러오기
     public ExpertDetailResponseDTO getExpertDetail(Integer expertId) {
         Expert expert = expertRepository.findByIdWithDetails(expertId)
                 .orElseThrow(() -> new RuntimeException("존재하지 않는 변리사입니다."));
@@ -57,6 +66,10 @@ public class ExpertService {
         }
 
         User user = expert.getUser();
+
+        // image 다운로드 url 추출
+        String presignedUrl = s3Service.generatePresignedDownloadUrl(user.getUserImage());
+
 
         // 카테고리 이름 리스트 추출
         List<ExpertCategoryDTO> categories = expert.getExpertCategory().stream()
@@ -77,7 +90,7 @@ public class ExpertService {
                 .expertGetDate(expert.getExpertGetDate())
                 .expertCreatedAt(expert.getExpertCreatedAt())
                 .userEmail(user.getUserEmail())
-                .userImage(user.getUserImage())
+                .userImage(presignedUrl)
                 .expertCategories(categories)
                 .build();
     }

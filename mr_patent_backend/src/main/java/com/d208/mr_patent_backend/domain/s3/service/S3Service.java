@@ -46,6 +46,10 @@ public class S3Service {
 
     //파일 다운로드용 Presigned URL 생성
     public String generatePresignedDownloadUrl(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return null;
+        }
+
         S3Presigner presigner = awsS3Config.s3Presigner();
 
         // 다운로드할 파일 정보

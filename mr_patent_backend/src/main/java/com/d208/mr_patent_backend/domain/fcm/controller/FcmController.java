@@ -42,23 +42,6 @@ public class FcmController {
         return ResponseEntity.ok("FCM 토큰 발송 완료");
     }
 
-//    @PostMapping("/send")
-//    public ResponseEntity<?> sendNotification(@RequestBody NotificationRequest request) {
-//        try {
-//            String messageId = fcmService.sendMessage(
-//                    request.getUserId(),
-//                    request.getTitle(),
-//                    request.getBody(),
-//                    request.getData()
-//            );
-//
-//            return ResponseEntity.ok(new NotificationResponse(true, messageId, "알림이 성공적으로 전송되었습니다."));
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(new NotificationResponse(false, null, "알림 전송 실패: " + e.getMessage()));
-//        }
-//    }
-
 
     @Operation(summary = "FCM 토큰 삭제")
     @DeleteMapping("/token/delete/{userId}")
