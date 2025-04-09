@@ -28,9 +28,11 @@ public class FcmController {
     @Operation(summary = "파이썬 에서 FCM 요청")
     @PostMapping("/token/python")
     public ResponseEntity<String> sendFcmFromPython(@RequestBody FcmFromPythonDto request) {
-        String userId = request.getUserId();
-        FcmToken fcmToken = fcmTokenRepository.findByUserId(userId);
-        String targetToken = fcmToken.getToken();
+        Integer userId = request.getUserId();
+        String targetToken = fcmTokenRepository.findByUserId(userId)
+                .map(FcmToken::getToken)
+                .orElseThrow(() -> new RuntimeException("해당 유저의 FCM 토큰이 존재하지 않습니다."));
+
         fcmService.sendMessageToToken(
                 targetToken,
                 request.getTitle(),

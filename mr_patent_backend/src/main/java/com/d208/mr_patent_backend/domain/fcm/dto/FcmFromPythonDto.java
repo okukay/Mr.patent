@@ -8,7 +8,7 @@ import java.util.Map;
 @Getter
 @Setter
 public class FcmFromPythonDto {
-        private String userId;
+        private Integer userId;
         private String title;
         private String body;
         private Map<String, String> data;
