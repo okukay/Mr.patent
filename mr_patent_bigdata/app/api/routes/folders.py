@@ -39,7 +39,7 @@ async def get_user_folders(user_id: int):
         result.append({
             "user_patent_folder_id": folder["user_patent_folder_id"],
             "user_patent_folder_title": folder["user_patent_folder_title"],
-            "created_at": get_current_timestamp()
+            "created_at": folder["user_patent_folder_created_at"].isoformat().replace('+00:00', 'Z') if folder["user_patent_folder_created_at"] else None
         })
     
     return {
@@ -80,7 +80,7 @@ async def create_folder(folder: FolderCreate):
             "data": {
                 "user_patent_folder_id": folder_id,
                 "user_patent_folder_title": folder.user_patent_folder_title,
-                "created_at": get_current_timestamp()
+                "created_at": now.isoformat().replace('+00:00', 'Z')  # 수정된 부분
             }
         }
     except Exception as e:
@@ -192,9 +192,9 @@ async def get_folder_patents(folder_id: int):
             patents_data.append({
                 "patent_draft_id": patent_draft_id,
                 "patent_draft_title": draft_dict["patent_draft_title"] or "",
-                "fitness_is_corrected": is_corrected,  # 불리언 값 사용
-                "detailed_comparison_total_score": total_score,  # 소수점 형태 사용
-                "created_at": created_at
+                "fitness_is_corrected": is_corrected,
+                "detailed_comparison_total_score": total_score,
+                "created_at": draft_dict["patent_draft_created_at"].isoformat().replace('+00:00', 'Z') if draft_dict["patent_draft_created_at"] else None
             })
         
         return {
@@ -327,8 +327,9 @@ async def update_folder_name(
         
         # 결과 포맷팅
         result = dict(updated_folder)
-        result["created_at"] = get_current_timestamp()
-        result["updated_at"] = get_current_timestamp()
+        # 실제 DB에 저장된 시간 사용
+        result["created_at"] = updated_folder["user_patent_folder_created_at"].isoformat().replace('+00:00', 'Z') if updated_folder["user_patent_folder_created_at"] else None
+        result["updated_at"] = updated_folder["user_patent_folder_updated_at"].isoformat().replace('+00:00', 'Z') if updated_folder["user_patent_folder_updated_at"] else None
         
         return {
             "data": result

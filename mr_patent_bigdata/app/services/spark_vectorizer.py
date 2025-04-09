@@ -19,7 +19,7 @@ from transformers import AutoTokenizer, AutoModel
 
 from app.core.logging import logger
 from app.core.database import database, patent
-from app.services.vectorizer import get_tfidf_vector, load_vectorizer
+from app.services.vectorizer import get_tfidf_vector, load_vectorizer, safe_vector
 
 # 전역 변수
 _VECTORIZER_LOADED = False
@@ -49,9 +49,9 @@ def create_tfidf_udf():
         if not _VECTORIZER_LOADED:
             _VECTORIZER_INSTANCE = load_vectorizer()
             _VECTORIZER_LOADED = True
-            logger.info(f"벡터라이저 로드 완료")
+            logger.info(f"벡터라이저 로드 완료 (어휘 크기: {len(_VECTORIZER_INSTANCE.vocabulary_)})")
     
-    # 내부 함수 (최적화)
+    # 내부 함수 (수정된 버전)
     def _tfidf_vectorize(text):
         ensure_vectorizer_loaded()
         if text is None or text == "":
@@ -59,10 +59,20 @@ def create_tfidf_udf():
             return default_vector.tobytes()
         
         try:
-            vector = get_tfidf_vector(text)
-            return vector.tobytes() if np.any(vector != 0) and len(vector) > 0 else np.zeros(1000, dtype=np.float32).tobytes()
-        except:
-            return np.zeros(1000, dtype=np.float32).tobytes()
+            # 수정: update_vocab=True 옵션 추가
+            vector = get_tfidf_vector(text, update_vocab=True)
+            
+            # 벡터 확인
+            if np.all(vector == 0):
+                logger.warning(f"UDF에서 0 벡터 생성됨: {text[:30]}...")
+                # 안전 벡터 사용
+                vector = safe_vector(None, 1000)
+                
+            return vector.tobytes()
+        except Exception as e:
+            logger.error(f"TF-IDF 벡터 생성 중 오류: {str(e)}")
+            # 안전 벡터 반환
+            return safe_vector(None, 1000).tobytes()
     
     # 데코레이터 적용 후 반환
     return F.udf(_tfidf_vectorize, BinaryType())
@@ -331,37 +341,42 @@ def save_checkpoint(checkpoint_file, batch_idx):
     with open(checkpoint_file, 'w') as f:
         f.write(str(batch_idx + 1))
 
-# 3. 배치 데이터 변환 함수 (변경 없음)
+# 안전한 키 접근 함수 추가
+def safe_get(obj, key, default=None):
+    """Spark Row 객체와 딕셔너리를 모두 지원하는 안전한 속성 접근 함수"""
+    if hasattr(obj, "asDict") and callable(getattr(obj, "asDict")):
+        # Spark Row 객체
+        return obj.asDict().get(key, default)
+    elif hasattr(obj, "__getitem__"):
+        try:
+            # 딕셔너리 접근 시도
+            return obj[key] if key in obj else default
+        except:
+            pass
+    # 속성으로 접근 시도
+    return getattr(obj, key, default)
+
+# 3. prepare_batch_data 함수 수정
 def prepare_batch_data(batch_patents, schema):
     """특허 배치 데이터를 Spark DataFrame으로 변환할 수 있는 형식으로 준비합니다."""
     import re  # 정규식 모듈 추가
     batch_data = []
     for p in batch_patents:
         try:
-            # 안전한 키 접근으로 수정
-            # 'patent_id' 키가 없으면 'patent_application_number'를 ID로 사용
-            patent_id = None
-            
-            # 'patent_id' 직접 시도
-            if 'patent_id' in p:
-                patent_id = p['patent_id']
-            # 대체 키 시도
-            elif 'id' in p:
-                patent_id = p['id']
-            elif 'patent_application_number' in p:
-                # 고유한 ID로 사용하기 위해 해시값 사용 (실제로는 DB에서 ID 생성)
-                patent_id = abs(hash(p['patent_application_number'])) % (10 ** 10)
-            else:
-                # 고유 ID 생성
+            # 안전한 접근 사용
+            patent_id = safe_get(p, "patent_id")
+            if not patent_id:
                 patent_id = abs(hash(str(p))) % (10 ** 10)
-                logger.warning(f"임시 ID 생성됨: {patent_id}")
+                
+            patent_title = safe_get(p, "patent_title", "")
+            patent_summary = safe_get(p, "patent_summary", "")
+            patent_claim = safe_get(p, "patent_claim", "")
+            patent_application_number = safe_get(p, "patent_application_number", "")
+            patent_ipc = safe_get(p, "patent_ipc", "")
             
             # 출원번호 정리 (숫자와 하이픈만 유지)
-            patent_application_number = p.get("patent_application_number", "")
             if patent_application_number:
-                # 발명의명칭 및 기타 문자 제거, 숫자와 하이픈만 유지
                 patent_application_number = re.sub(r'[^0-9\-]', '', patent_application_number)
-                
                 # 길이 제한 적용
                 if len(patent_application_number) > 20:
                     patent_application_number = patent_application_number[:20]
@@ -369,20 +384,15 @@ def prepare_batch_data(batch_patents, schema):
             # 필드 안전하게 추출
             batch_data.append((
                 patent_id,
-                p.get("patent_title", ""),
-                p.get("patent_summary", ""),
-                p.get("patent_claim", ""),
-                patent_application_number,  # 정리된 출원번호 사용
-                p.get("patent_ipc", "")
+                patent_title,
+                patent_summary,
+                patent_claim,
+                patent_application_number,
+                patent_ipc
             ))
         except Exception as e:
             logger.error(f"특허 데이터 변환 오류: {str(e)}")
     
-    if not batch_data:
-        logger.warning("변환된 특허 데이터가 없습니다.")
-    else:
-        logger.info(f"총 {len(batch_data)}개 특허 데이터 변환 완료")
-        
     return batch_data
 
 # 4. 벡터화 함수 (변경 없음)
@@ -403,7 +413,7 @@ def vectorize_patents(df, tfidf_vectorize, bert_vectorize=None):
 
 # 5. 최적화된 일괄 데이터베이스 저장 함수 (INSERT 사용으로 수정)
 async def save_to_database_bulk(patent_rows, with_bert=False, db_batch_size=100):
-    """최적화: 벡터화된 특허 데이터의 전체 필드 일괄 삽입 (cluster_id 제외)"""
+    """최적화: 벡터화된 특허 데이터의 전체 필드 일괄 삽입"""
     total_processed = 0
     insert_values = []
     
@@ -411,60 +421,42 @@ async def save_to_database_bulk(patent_rows, with_bert=False, db_batch_size=100)
     for row in patent_rows:
         try:
             # 벡터 유효성 검사 확인
-            has_vectors = (
-                hasattr(row, "title_tfidf_vector") and 
-                hasattr(row, "summary_tfidf_vector") and 
-                hasattr(row, "claim_tfidf_vector")
-            )
+            has_vectors = all([
+                safe_get(row, "title_tfidf_vector") is not None,
+                safe_get(row, "summary_tfidf_vector") is not None,
+                safe_get(row, "claim_tfidf_vector") is not None
+            ])
             
-            valid_vectors = False
-            if has_vectors:
-                valid_vectors = (
-                    row.title_tfidf_vector is not None and
-                    row.summary_tfidf_vector is not None and
-                    row.claim_tfidf_vector is not None
-                )
+            patent_id = safe_get(row, "patent_id")
             
-            if valid_vectors and hasattr(row, "patent_id") and row.patent_id:
+            if has_vectors and patent_id:
                 now = datetime.utcnow()
                 
-                # 텍스트 필드 길이 제한 적용
-                patent_title = getattr(row, "patent_title", "")
-                if not patent_title:
-                    patent_title = "제목 없음"
-                elif len(patent_title) > 500:
+                # 텍스트 필드 안전하게 추출
+                patent_title = safe_get(row, "patent_title", "제목 없음")
+                if len(patent_title) > 500:
                     patent_title = patent_title[:500]
                     
-                patent_summary = getattr(row, "patent_summary", "")
-                if not patent_summary:
-                    patent_summary = "요약 없음"
+                patent_summary = safe_get(row, "patent_summary", "요약 없음")
+                patent_claim = safe_get(row, "patent_claim", "청구항 없음")
+                patent_application_number = safe_get(row, "patent_application_number", f"APP-{patent_id}")
+                patent_ipc = safe_get(row, "patent_ipc", "미분류")
                 
-                patent_claim = getattr(row, "patent_claim", "")
-                if not patent_claim:
-                    patent_claim = "청구항 없음"
-                    
-                patent_application_number = getattr(row, "patent_application_number", "")
-                if not patent_application_number:
-                    patent_application_number = f"APP-{row.patent_id}"
-                elif len(patent_application_number) > 20:
-                    patent_application_number = patent_application_number[:20]
-                    
-                patent_ipc = getattr(row, "patent_ipc", "")
-                if not patent_ipc:
-                    patent_ipc = "미분류"
-                elif len(patent_ipc) > 100:
-                    patent_ipc = patent_ipc[:100]
+                # 벡터 안전하게 추출
+                title_vector = safe_get(row, "title_tfidf_vector")
+                summary_vector = safe_get(row, "summary_tfidf_vector")
+                claim_vector = safe_get(row, "claim_tfidf_vector")
                 
                 insert_values.append({
-                    "patent_id": row.patent_id,
+                    "patent_id": patent_id,
                     "patent_title": patent_title,
                     "patent_summary": patent_summary,
                     "patent_claim": patent_claim,
                     "patent_application_number": patent_application_number,
                     "patent_ipc": patent_ipc,
-                    "patent_title_tfidf_vector": row.title_tfidf_vector,
-                    "patent_summary_tfidf_vector": row.summary_tfidf_vector,
-                    "patent_claim_tfidf_vector": row.claim_tfidf_vector,
+                    "patent_title_tfidf_vector": title_vector,
+                    "patent_summary_tfidf_vector": summary_vector,
+                    "patent_claim_tfidf_vector": claim_vector,
                     "patent_created_at": now,
                     "patent_updated_at": now
                 })

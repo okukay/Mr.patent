@@ -8,6 +8,7 @@ import re
 import traceback
 import logging
 import httpx
+import asyncio
 
 from app.core.database import database
 from app.services.vectorizer import get_tfidf_vector, get_bert_vector
@@ -20,6 +21,44 @@ logger = logging.getLogger(__name__)
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""
     return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+
+# 섹션 처리 도우미 함수
+async def process_section(section_key, section_text, patent_text):
+    if not section_text or len(section_text.strip()) < 10:
+        return None
+        
+    # KLUE-BERT 모델을 활용한 문맥 비교
+    section_vector = get_bert_vector(section_text)
+    
+    # 공고전문을 600자 단위로 분할하여 비교
+    best_match = {
+        "text": "",
+        "similarity": 0.0
+    }
+    
+    # 청크 크기 최적화: 300자→600자, 이동 간격: 150자→300자
+    for i in range(0, len(patent_text), 300):
+        chunk = patent_text[i:i+600]
+        if len(chunk) < 50:  # 너무 짧은 청크는 건너뛰기
+            continue
+            
+        chunk_vector = get_bert_vector(chunk)
+        similarity = safe_cosine_similarity(section_vector, chunk_vector)
+        
+        if similarity > best_match["similarity"]:
+            best_match["text"] = chunk
+            best_match["similarity"] = similarity
+    
+    # 유사도가 0.6 이상인 경우만 반환
+    if best_match["similarity"] >= 0.6:
+        return {
+            "user_section": section_key,
+            "patent_section": "CONTENT",
+            "user_text": section_text[:200],
+            "patent_text": best_match["text"][:200],
+            "similarity_score": best_match["similarity"]
+        }
+    return None
 
 # 벡터 차원 불일치 문제와 NaN 문제를 해결하는 안전한 변환 함수
 def safe_frombuffer(buffer, target_dim=1000, dtype=np.float32):
@@ -71,7 +110,7 @@ async def send_fcm_notification(user_id: str, title: str, body: str, data: Dict 
     """FCM을 통해 알림을 전송합니다."""
     try:
         # FCM 서버 URL (Spring 서버 API)
-        fcm_url = "http://localhost:8080/api/fcm/token/python"
+        fcm_url = "http://backend:8080/api/fcm/token/python"
         
         # FCM 메시지 구성
         fcm_message = {
@@ -100,16 +139,19 @@ async def send_fcm_notification(user_id: str, title: str, body: str, data: Dict 
 async def get_draft_owner(patent_draft_id: int) -> str:
     """특허 초안 소유자의 사용자 ID를 조회합니다."""
     query = """
-    SELECT user_id FROM patent_draft 
-    WHERE patent_draft_id = :draft_id
+    SELECT pd.user_patent_folder_id, upf.user_id 
+    FROM patent_draft pd
+    JOIN user_patent_folder upf ON pd.user_patent_folder_id = upf.user_patent_folder_id
+    WHERE pd.patent_draft_id = :patent_draft_id
     """
     
     result = await database.fetch_one(
         query=query,
-        values={"draft_id": patent_draft_id}
+        values={"patent_draft_id": patent_draft_id}
     )
     
-    return result["user_id"] if result else None
+    # return result["user_id"] if result else None
+    return 1 # 테스트 목적으로 기본값 사용
 
 # 특허 초안 제목 조회 함수
 async def get_draft_title(patent_draft_id: int) -> str:
@@ -121,7 +163,7 @@ async def get_draft_title(patent_draft_id: int) -> str:
     
     result = await database.fetch_one(
         query=query,
-        values={"draft_id": patent_draft_id}
+        values={"draft_id": patent_draft_id}  # 이 부분 수정: patent_draft_id → draft_id
     )
     
     return result["patent_draft_title"] if result else "특허 초안"
@@ -513,7 +555,7 @@ async def get_similarity_result(patent_draft_id: int):
                 context_data = {}
         
         comparisons_data.append({
-            "patent_id": comp_dict["patent_id"],
+            "patent_id": comp_dict.get("patent_id"),  # patent_id 필드가 없을 수 있으므로 get 사용
             "total_score": comp_dict["detailed_comparison_total_score"],
             "context": context_data
         })
@@ -661,66 +703,28 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
             patent_text = public_info["patent_public_content"]
             
             # 2. KLUE-BERT 모델을 활용한 특허 초안과 공고전문의 N:1 문맥 비교
-            # 특허 초안의 각 섹션
-            draft_sections = {
-                "TITLE": draft_dict["patent_draft_title"],
-                "SUMMARY": draft_dict["patent_draft_summary"],
-                "CLAIM": draft_dict["patent_draft_claim"],
-                "TECHNICAL_FIELD": draft_dict.get("patent_draft_technical_field", ""),
-                "BACKGROUND": draft_dict.get("patent_draft_background", ""),
-                "PROBLEM": draft_dict.get("patent_draft_problem", ""),
+            # 2. 요청대로 solution, detailed, claim 3가지 영역만 처리
+            important_sections = {
                 "SOLUTION": draft_dict.get("patent_draft_solution", ""),
-                "EFFECT": draft_dict.get("patent_draft_effect", "")
+                "DETAILED": draft_dict.get("patent_draft_detailed", ""),
+                "CLAIM": draft_dict["patent_draft_claim"]
             }
             
-            # 유사 구간 찾기 (N:1 비교)
-            highlights = []
-            overall_similarity = 0.0
-            section_count = 0
-            
-            # 각 섹션별로 원본 텍스트와 비교
-            for section_key, section_text in draft_sections.items():
-                if not section_text or len(section_text.strip()) < 10:
-                    continue
-                    
-                # KLUE-BERT 모델을 활용한 문맥 비교
-                section_vector = get_bert_vector(section_text)
-                
-                # 공고전문을 300자 단위로 분할하여 각 섹션과 비교
-                best_match = {
-                    "text": "",
-                    "similarity": 0.0
-                }
-                
-                # 300자 단위로 슬라이딩 윈도우 적용
-                for i in range(0, len(patent_text), 150):
-                    chunk = patent_text[i:i+300]
-                    if len(chunk) < 50:  # 너무 짧은 청크는 건너뛰기
-                        continue
-                        
-                    chunk_vector = get_bert_vector(chunk)
-                    similarity = safe_cosine_similarity(section_vector, chunk_vector)
-                    
-                    if similarity > best_match["similarity"]:
-                        best_match["text"] = chunk
-                        best_match["similarity"] = similarity
-                
-                # 유사도가 0.6 이상인 경우만 하이라이트로 추가
-                if best_match["similarity"] >= 0.6:
-                    highlights.append({
-                        "user_section": section_key,
-                        "patent_section": "CONTENT",
-                        "user_text": section_text[:200],
-                        "patent_text": best_match["text"][:200],
-                        "similarity_score": best_match["similarity"]
-                    })
-                    
-                    overall_similarity += best_match["similarity"]
-                    section_count += 1
+            # 병렬 처리 코드
+            section_tasks = []
+            for section_key, section_text in important_sections.items():
+                if section_text and len(section_text.strip()) >= 10:
+                    task = process_section(section_key, section_text, patent_text)
+                    section_tasks.append(task)
+
+            # 모든 섹션 병렬 처리 실행
+            results = await asyncio.gather(*section_tasks)
+            highlights = [r for r in results if r is not None]
             
             # 전체 유사도 계산
-            if section_count > 0:
-                overall_similarity = overall_similarity / section_count
+            overall_similarity = 0.0
+            if highlights:
+                overall_similarity = sum(h["similarity_score"] for h in highlights) / len(highlights)
             
             # 3. 상세 비교 결과 저장
             context = {
@@ -730,7 +734,6 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
             detailed_comparison_query = """
             INSERT INTO detailed_comparison (
                 patent_draft_id,
-                patent_id,
                 similarity_patent_id,
                 patent_public_id,
                 detailed_comparison_total_score,
@@ -740,7 +743,6 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                 detailed_comparison_updated_at
             ) VALUES (
                 :draft_id,
-                :patent_id,
                 :similarity_patent_id,
                 :public_id,
                 :total_score,
@@ -750,13 +752,12 @@ async def perform_detailed_comparison(patent_draft_id: int, draft, top_results: 
                 :updated_at
             )
             """
-            
+
             print(f"상세 비교 결과 저장 시작: {patent_app_number}")
             await database.execute(
                 query=detailed_comparison_query,
                 values={
                     "draft_id": patent_draft_id,
-                    "patent_id": patent["patent_id"],
                     "similarity_patent_id": patent.get("similarity_patent_id", None),
                     "public_id": patent_public_id,
                     "total_score": overall_similarity,
