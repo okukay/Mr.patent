@@ -203,10 +203,11 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
         logger.info(f"쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
         logger.info(f"쿼리 벡터 샘플 (처음 5개 값): {query_vector[:5]}")
 
-        # 벡터가 모두 0인지 확인
-        if np.all(query_vector == 0):
-            logger.warning("쿼리 벡터가 모두 0입니다. 안전한 벡터로 대체합니다.")
-            query_vector = safe_vector(query_vector)
+        # 결합 벡터가 모두 0인지 확인
+        if np.all(query_vector == 0) or np.any(np.isnan(query_vector)):
+            logger.warning("쿼리 벡터가 모두 0이거나 NaN 값이 포함되어 있습니다. 안전한 벡터로 대체합니다.")
+            query_vector = safe_vector(None, 1000)  # 랜덤 벡터 생성
+            logger.info(f"대체 벡터 생성 후 L2 노름: {np.linalg.norm(query_vector):.6f}")
         
         # 벡터 정규화 (FAISS 인덱스와 일치)
         # 벡터 정규화 (L2 norm = 1)
