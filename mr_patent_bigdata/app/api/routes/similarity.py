@@ -110,7 +110,7 @@ async def send_fcm_notification(user_id: str, title: str, body: str, data: Dict 
     """FCM을 통해 알림을 전송합니다."""
     try:
         # FCM 서버 URL (Spring 서버 API)
-        fcm_url = "http://localhost:8080/api/fcm/token/python"
+        fcm_url = "http://backend:8080/api/fcm/token/python"
         
         # FCM 메시지 구성
         fcm_message = {

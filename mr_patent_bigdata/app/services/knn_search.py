@@ -184,17 +184,25 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
     
     # 2. 특허 초안 벡터 가져오기 (저장된 벡터 사용)
     try:
+        # 벡터라이저 어휘 확장을 위해 텍스트 결합
+        combined_text = f"{draft['patent_draft_title']} {draft['patent_draft_summary']} {draft['patent_draft_claim']}"
+        from app.services.vectorizer import update_vectorizer_vocabulary
+        update_vectorizer_vocabulary(combined_text)
+        
         title_vector = safe_frombuffer(draft["patent_draft_title_tfidf_vector"], target_dim=1000)
         summary_vector = safe_frombuffer(draft["patent_draft_summary_tfidf_vector"], target_dim=1000)
         claim_vector = safe_frombuffer(draft["patent_draft_claim_tfidf_vector"], target_dim=1000)
         
         # 벡터가 없으면 텍스트에서 생성 (fallback)
         if np.all(title_vector == 0) and draft["patent_draft_title"]:
-            title_vector = get_tfidf_vector(draft["patent_draft_title"])
+            from app.services.vectorizer import get_tfidf_vector
+            title_vector = get_tfidf_vector(draft["patent_draft_title"], update_vocab=True)
         if np.all(summary_vector == 0) and draft["patent_draft_summary"]:
-            summary_vector = get_tfidf_vector(draft["patent_draft_summary"])
+            from app.services.vectorizer import get_tfidf_vector
+            summary_vector = get_tfidf_vector(draft["patent_draft_summary"], update_vocab=True)
         if np.all(claim_vector == 0) and draft["patent_draft_claim"]:
-            claim_vector = get_tfidf_vector(draft["patent_draft_claim"])
+            from app.services.vectorizer import get_tfidf_vector
+            claim_vector = get_tfidf_vector(draft["patent_draft_claim"], update_vocab=True)
         
         # 결합 벡터 생성
         query_vector = title_vector * 0.3 + summary_vector * 0.3 + claim_vector * 0.4
@@ -206,20 +214,22 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
         # 결합 벡터가 모두 0인지 확인
         if np.all(query_vector == 0) or np.any(np.isnan(query_vector)):
             logger.warning("쿼리 벡터가 모두 0이거나 NaN 값이 포함되어 있습니다. 안전한 벡터로 대체합니다.")
+            from app.services.vectorizer import safe_vector
             query_vector = safe_vector(None, 1000)  # 랜덤 벡터 생성
             logger.info(f"대체 벡터 생성 후 L2 노름: {np.linalg.norm(query_vector):.6f}")
         
-        # 벡터 정규화 (FAISS 인덱스와 일치)
-        # 벡터 정규화 (L2 norm = 1)
+        # 벡터 정규화
         query_vector = query_vector.astype(np.float32)
         query_vector = query_vector.reshape(1, -1)  # 2D 배열로 변환
         faiss.normalize_L2(query_vector)
-
+        
         # 정규화 후 다시 확인
         logger.info(f"정규화 후 쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
         
     except Exception as e:
         logger.error(f"특허 초안 벡터 처리 중 오류: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
         return None
     
     # 3. FAISS 인덱스 로드 또는 생성
