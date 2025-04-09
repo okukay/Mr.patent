@@ -2,11 +2,13 @@ package com.ssafy.mr_patent_android.ui.chat
 
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.RoundedCorner
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPreferences
 import com.ssafy.mr_patent_android.data.model.dto.ChatMessageDto
@@ -89,7 +91,7 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
     }
 
     interface ItemClickListener {
-        fun onItemClick()
+        fun onItemClick(url: String)
         fun onFileClick(url: String)
         fun onPhotoClick(url: String)
     }
@@ -113,7 +115,7 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                     binding.tvOtherMessageText.text = it.message
                     binding.tvOtherMessageTime.text = formattedDateTime
                     binding.profileImageOtherText.setOnClickListener {
-                        itemClickListener.onItemClick()
+                        itemClickListener.onItemClick(user.userImage)
                     }
                     binding.otherNameText.text = user.userName
                     Glide.with(binding.root)
@@ -165,7 +167,7 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                     }
 
                     binding.profileImageOther.setOnClickListener {
-                        itemClickListener.onItemClick()
+                        itemClickListener.onItemClick(user.userImage)
                     }
                     binding.otherName.text = user.userName
                     Glide.with(binding.root)
@@ -212,6 +214,7 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                     binding.tvOtherMessageTimePhoto.text = formattedDateTime
                     Glide.with(binding.root)
                         .load(messageList[position].fileUrl)
+                        .transform(RoundedCorners(20))
                         .fallback(R.drawable.user_profile)
                         .error(R.drawable.user_profile)
                         .into(binding.ivOtherMessagePhoto)
@@ -219,7 +222,7 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                         messageList[position].fileUrl?.let { it1 -> itemClickListener.onPhotoClick(it1) }
                     }
                     binding.profileImageOther.setOnClickListener {
-                        itemClickListener.onItemClick()
+                        itemClickListener.onItemClick(user.userImage)
                     }
                     binding.otherName.text = user.userName
                     Glide.with(binding.root)
@@ -237,10 +240,6 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
 
     inner class DividerViewHolder(private val binding: ListItemChatDividerBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
-//            val date = TimeUtil().parseUtcWithJavaTime(messageList[position].timestamp?:"2025-04-02T23:30:52.123Z")
-//            val formatter = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")
-//            val formattedDateTime = messageList[position].timestamp?.format(formatter)
-
             binding.tvChatDividerTime.text = messageList[position].timestamp
         }
     }
