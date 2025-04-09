@@ -10,6 +10,7 @@ import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import com.d208.mr_patent_backend.global.config.firebase.FirebaseConfig;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
@@ -29,6 +30,9 @@ public class ChatController {
     private final UserRepository userRepository;
     private final S3Service s3Service;
 
+
+    @Value("${spring.firebase.key-path}") //application.yml에 정의된 값을 주입 받을 수 있게함
+    String fcmKeyPath;
 
     // 클라이언트가 "/pub/chat/message"로 메시지를 보내면 이 메서드가 처리(브로드 캐스트)
     @MessageMapping("/chat/message")
@@ -77,7 +81,8 @@ public class ChatController {
                             data
                     );
                 } else {
-                    System.err.println("FCM이 초기화되지 않았습니다. 메시지를 전송할 수 없습니다.");
+                    System.err.println("‼️‼️‼️‼️‼️FCM이 초기화되지 않았습니다. 메시지를 전송할 수 없습니다.");
+                    System.out.println(fcmKeyPath);
                 }
             }
         }
