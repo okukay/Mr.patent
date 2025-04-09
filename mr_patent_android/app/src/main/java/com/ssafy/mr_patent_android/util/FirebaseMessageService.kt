@@ -90,7 +90,7 @@ class FirebaseMessageService : FirebaseMessagingService() {
         }
 
         notificationBuilder
-            .setSmallIcon(R.mipmap.ic_launcher) // 아이콘 설정
+            .setSmallIcon(R.mipmap.ic_patent_round) // 아이콘 설정
             .setContentTitle(remoteMessage.notification?.title) // 제목
             .setContentText(remoteMessage.notification?.body) // 메시지 내용
             .setAutoCancel(true)

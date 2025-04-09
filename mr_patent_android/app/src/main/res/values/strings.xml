@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">mr_patent_android</string>
+    <string name="app_name">특허씨</string>
 
     <!-- 밑줄 긋기 -->
     <string name="tv_profile_register"><u>프로필 이미지 등록</u></string>
