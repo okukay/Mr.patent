@@ -7,6 +7,7 @@ import json
 import re
 import traceback
 import logging
+import httpx
 
 from app.core.database import database
 from app.services.vectorizer import get_tfidf_vector, get_bert_vector
@@ -65,9 +66,119 @@ def safe_cosine_similarity(a, b):
         # 기타 오류 발생 시 0 반환
         return 0.0
 
+# FCM 알림 전송 함수 추가
+async def send_fcm_notification(user_id: str, title: str, body: str, data: Dict = None):
+    """FCM을 통해 알림을 전송합니다."""
+    try:
+        # FCM 서버 URL (Spring 서버 API)
+        fcm_url = "http://localhost:8080/api/fcm/token/python"
+        
+        # FCM 메시지 구성
+        fcm_message = {
+            "userId": user_id,
+            "title": title,
+            "body": body,
+            "data": data or {}
+        }
+        
+        # Spring 백엔드로 FCM 요청 전송
+        async with httpx.AsyncClient() as client:
+            response = await client.post(fcm_url, json=fcm_message, timeout=10.0)
+            
+            if response.status_code == 200:
+                logger.info(f"FCM 알림 전송 성공: {user_id}")
+                return True
+            else:
+                logger.error(f"FCM 알림 전송 실패: 상태 코드 {response.status_code}")
+                return False
+                
+    except Exception as e:
+        logger.error(f"FCM 알림 전송 중 오류: {str(e)}")
+        return False
+
+# 사용자 ID 조회 함수
+async def get_draft_owner(patent_draft_id: int) -> str:
+    """특허 초안 소유자의 사용자 ID를 조회합니다."""
+    query = """
+    SELECT user_id FROM patent_draft 
+    WHERE patent_draft_id = :draft_id
+    """
+    
+    result = await database.fetch_one(
+        query=query,
+        values={"draft_id": patent_draft_id}
+    )
+    
+    return result["user_id"] if result else None
+
+# 특허 초안 제목 조회 함수
+async def get_draft_title(patent_draft_id: int) -> str:
+    """특허 초안의 제목을 조회합니다."""
+    query = """
+    SELECT patent_draft_title FROM patent_draft 
+    WHERE patent_draft_id = :draft_id
+    """
+    
+    result = await database.fetch_one(
+        query=query,
+        values={"draft_id": patent_draft_id}
+    )
+    
+    return result["patent_draft_title"] if result else "특허 초안"
+
+# 비동기 처리를 위한 작업 상태 관리 함수들
+async def create_similarity_task(patent_draft_id: int) -> str:
+    """유사도 검사 작업 상태 레코드를 생성합니다."""
+    now = datetime.now(timezone.utc)
+    task_id = f"task_{patent_draft_id}_{int(now.timestamp())}"
+    
+    query = """
+    INSERT INTO task_status (
+        task_id, patent_draft_id, task_type, task_status, 
+        task_created_at, task_updated_at
+    ) VALUES (
+        :task_id, :patent_draft_id, 'similarity_check', 'started',
+        :created_at, :updated_at
+    )
+    """
+    
+    await database.execute(
+        query=query,
+        values={
+            "task_id": task_id,
+            "patent_draft_id": patent_draft_id,
+            "created_at": now,
+            "updated_at": now
+        }
+    )
+    
+    return task_id
+
+async def update_task_status(task_id: str, status: str, error_message: str = None):
+    """작업 상태를 업데이트합니다."""
+    now = datetime.now(timezone.utc)
+    
+    query = """
+    UPDATE task_status 
+    SET task_status = :status, 
+        task_error_message = :error_message,
+        task_updated_at = :updated_at
+    WHERE task_id = :task_id
+    """
+    
+    await database.execute(
+        query=query,
+        values={
+            "task_id": task_id,
+            "status": status,
+            "error_message": error_message,
+            "updated_at": now
+        }
+    )
+
 @router.post("/draft/{patent_draft_id}/similarity-check", response_model=Dict[str, Any])
 async def run_similarity_check(patent_draft_id: int, background_tasks: BackgroundTasks):
-    """특허 초안의 적합도 검사, 유사도 분석, 상세 비교를 모두 수행 (비동기)"""
+    """특허 초안의 적합도 검사, 유사도 분석, 상세 비교를 비동기적으로 수행합니다."""
     try:
         # 특허 초안 존재 확인
         draft_query = """
@@ -88,32 +199,21 @@ async def run_similarity_check(patent_draft_id: int, background_tasks: Backgroun
                 }
             )
         
-        # KNN 검색 함수 호출
-        from app.services.knn_search import perform_knn_search
-        result = await perform_knn_search(patent_draft_id)
+        # 작업 상태 생성
+        task_id = await create_similarity_task(patent_draft_id)
         
-        if not result:
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "code": "SEARCH_FAILED",
-                    "message": "유사도 검색에 실패했습니다."
-                }
-            )
-        
-        # 적합도 검사 및 상세 비교 수행
-        now = datetime.now(timezone.utc)
-        fitness_results = await perform_fitness_check(patent_draft_id, draft, now)
-        
-        # 상세 비교는 상위 특허 1개에 대해 수행
-        top_results = result["results"][:1]
-        await perform_detailed_comparison(patent_draft_id, draft, top_results, now)
+        # 백그라운드 작업으로 유사도 검사 수행
+        background_tasks.add_task(
+            process_similarity_check,
+            patent_draft_id=patent_draft_id,
+            task_id=task_id
+        )
         
         return {
             "data": {
-                "similarity_id": result["similarity_id"],
-                "status": "COMPLETED",
-                "search_method": "knn"
+                "task_id": task_id,
+                "status": "processing",
+                "message": "유사도 검사가 시작되었습니다. 완료 시 알림이 전송됩니다."
             }
         }
     
@@ -121,16 +221,146 @@ async def run_similarity_check(patent_draft_id: int, background_tasks: Backgroun
         raise
     
     except Exception as e:
-        logger.error(f"유사도 검사 중 오류 발생: {str(e)}")
+        logger.error(f"유사도 검사 시작 중 오류 발생: {str(e)}")
         logger.error(traceback.format_exc())
         
         raise HTTPException(
             status_code=500,
             detail={
                 "code": "SIMILARITY_ERROR",
-                "message": f"유사도 검사 중 오류 발생: {str(e)}"
+                "message": f"유사도 검사 시작 중 오류 발생: {str(e)}"
             }
         )
+
+# 백그라운드 작업 처리 함수 추가
+async def process_similarity_check(patent_draft_id: int, task_id: str):
+    """백그라운드에서 유사도 검사 전체 프로세스를 수행합니다."""
+    try:
+        # 특허 초안 정보 조회
+        draft_query = """
+        SELECT * FROM patent_draft 
+        WHERE patent_draft_id = :draft_id
+        """
+        draft = await database.fetch_one(
+            query=draft_query,
+            values={"draft_id": patent_draft_id}
+        )
+        
+        if not draft:
+            await update_task_status(task_id, "failed", "특허 초안을 찾을 수 없습니다.")
+            return
+        
+        # 1. 적합도 검사 수행
+        logger.info(f"적합도 검사 시작: 특허 초안 ID {patent_draft_id}")
+        await update_task_status(task_id, "fitness_check")
+        now = datetime.now(timezone.utc)
+        fitness_results = await perform_fitness_check(patent_draft_id, draft, now)
+        await update_task_status(task_id, "fitness_completed")
+        
+        # 2. KNN 기반 유사도 검색 수행
+        logger.info(f"유사도 검색 시작: 특허 초안 ID {patent_draft_id}")
+        await update_task_status(task_id, "similarity_search")
+        from app.services.knn_search import perform_knn_search
+        similarity_result = await perform_knn_search(patent_draft_id, k=20)
+        
+        if not similarity_result:
+            await update_task_status(task_id, "failed", "유사도 검색에 실패했습니다.")
+            
+            # 실패 알림 전송
+            user_id = await get_draft_owner(patent_draft_id)
+            if user_id:
+                await send_fcm_notification(
+                    user_id=user_id,
+                    title="유사도 검사 실패",
+                    body="특허 초안의 유사도 검사 중 오류가 발생했습니다.",
+                    data={
+                        "patent_draft_id": patent_draft_id,
+                        "error": "similarity_search_failed"
+                    }
+                )
+            return
+        
+        await update_task_status(task_id, "similarity_completed")
+        
+        # 3. 상세 비교 수행 (상위 1개 특허만)
+        logger.info(f"상세 비교 시작: 특허 초안 ID {patent_draft_id}")
+        await update_task_status(task_id, "detailed_comparison")
+        top_results = similarity_result["results"][:1]
+        
+        if top_results:
+            await perform_detailed_comparison(patent_draft_id, draft, top_results, now)
+        await update_task_status(task_id, "completed")
+        
+        # 4. FCM 알림 전송
+        user_id = await get_draft_owner(patent_draft_id)
+        draft_title = await get_draft_title(patent_draft_id)
+        
+        if user_id:
+            await send_fcm_notification(
+                user_id=user_id,
+                title="유사도 검사 완료",
+                body=f"'{draft_title}' 특허 초안의 유사도 검사가 완료되었습니다.",
+                data={
+                    "patent_draft_id": patent_draft_id,
+                    "similarity_id": similarity_result["similarity_id"],
+                    "notification_type": "similarity_completed"
+                }
+            )
+        
+        logger.info(f"유사도 검사 전체 프로세스 완료: 특허 초안 ID {patent_draft_id}")
+        
+    except Exception as e:
+        logger.error(f"유사도 검사 처리 중 오류: {str(e)}")
+        logger.error(traceback.format_exc())
+        await update_task_status(task_id, "failed", str(e))
+        
+        # 오류 발생 시에도 FCM 알림
+        user_id = await get_draft_owner(patent_draft_id)
+        if user_id:
+            await send_fcm_notification(
+                user_id=user_id,
+                title="유사도 검사 실패",
+                body="특허 초안 검사 중 오류가 발생했습니다.",
+                data={
+                    "patent_draft_id": patent_draft_id,
+                    "error": "process_failed"
+                }
+            )
+
+# 작업 상태 조회 API 추가
+@router.get("/task/{task_id}/status", response_model=Dict[str, Any])
+async def get_task_status(task_id: str):
+    """작업 상태를 조회합니다."""
+    query = """
+    SELECT * FROM task_status
+    WHERE task_id = :task_id
+    """
+    
+    result = await database.fetch_one(
+        query=query,
+        values={"task_id": task_id}
+    )
+    
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "TASK_NOT_FOUND",
+                "message": "해당 작업을 찾을 수 없습니다."
+            }
+        )
+    
+    return {
+        "data": {
+            "task_id": result["task_id"],
+            "patent_draft_id": result["patent_draft_id"],
+            "task_type": result["task_type"],
+            "task_status": result["task_status"],
+            "error_message": result["task_error_message"],
+            "created_at": result["task_created_at"],
+            "updated_at": result["task_updated_at"]
+        }
+    }
 
 # 새로 추가: 적합도 결과 조회 API
 @router.get("/patent/fitness/{patent_draft_id}", response_model=Dict[str, Any])

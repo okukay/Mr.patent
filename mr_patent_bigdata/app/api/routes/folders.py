@@ -39,7 +39,7 @@ async def get_user_folders(user_id: int):
         result.append({
             "user_patent_folder_id": folder["user_patent_folder_id"],
             "user_patent_folder_title": folder["user_patent_folder_title"],
-            "created_at": folder["user_patent_folder_created_at"].isoformat() + 'Z'
+            "created_at": get_current_timestamp()
         })
     
     return {
@@ -80,7 +80,7 @@ async def create_folder(folder: FolderCreate):
             "data": {
                 "user_patent_folder_id": folder_id,
                 "user_patent_folder_title": folder.user_patent_folder_title,
-                "created_at": now.isoformat().replace('+00:00', 'Z')
+                "created_at": get_current_timestamp()
             }
         }
     except Exception as e:
@@ -185,12 +185,8 @@ async def get_folder_patents(folder_id: int):
                 logger.error(f"상세 점수 조회 중 오류: {str(e)}")
                 # 오류 발생 시 기본값 사용
             
-            # 날짜 형식 안전하게 처리
-            created_at = draft_dict["patent_draft_created_at"]
-            if isinstance(created_at, datetime):
-                created_at = created_at.isoformat().replace('+00:00', 'Z')
-            else:
-                created_at = str(created_at) if created_at is not None else ""
+            # created_at 형식을 get_current_timestamp() 함수로 대체
+            created_at = get_current_timestamp()
             
             # 특허 초안 정보에 ERD 컬럼명과 동일한 필드명 사용
             patents_data.append({
@@ -331,8 +327,8 @@ async def update_folder_name(
         
         # 결과 포맷팅
         result = dict(updated_folder)
-        result["created_at"] = result.pop("user_patent_folder_created_at").isoformat() + 'Z'
-        result["updated_at"] = result.pop("user_patent_folder_updated_at").isoformat() + 'Z'
+        result["created_at"] = get_current_timestamp()
+        result["updated_at"] = get_current_timestamp()
         
         return {
             "data": result
