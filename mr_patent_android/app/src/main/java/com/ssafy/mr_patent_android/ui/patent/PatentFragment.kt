@@ -49,8 +49,9 @@ class PatentFragment : BaseFragment<FragmentPatentBinding>(
         patentViewModel.patentsRecent.observe(viewLifecycleOwner) {
             binding.rvRecentDrafts.layoutManager = LinearLayoutManager(requireContext())
             binding.rvRecentDrafts.adapter = PatentRecentAdapter(it) { position ->
+                Log.d(TAG, "initObserver: patentsRecent ${it[position].patentDraftId}")
                 patentViewModel.setDraftType("update")
-                patentViewModel.setPatentDraftId(it[position].id)
+                patentViewModel.setPatentDraftId(it[position].patentDraftId)
                 findNavController().navigate(R.id.patentFolderChoiceFragment)
             }
         }

@@ -62,7 +62,12 @@ class ExpertFragment :
             binding.tvIntro.text = it.expertDescription
             binding.tvInfo.text = it.expertGetDate
             binding.tvPhone.text = it.expertPhone
-            binding.tvAddress.text = it.expertAddress
+            val address = it.expertAddress
+            if (address.contains("\\")) {
+                binding.tvAddress.text = address.substringBefore("\\").plus(" ").plus(address.substringAfter("\\"))
+            } else {
+                binding.tvAddress.text = address
+            }
 
 
             if (it.category.isNotEmpty()) {

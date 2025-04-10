@@ -28,10 +28,10 @@ class PatentRecentAdapter(var patents: List<PatentRecentResponse.PatentDraft>, v
 
     inner class PatentRecentViewHolder(private val binding: ListItemPatentRecentBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
-            binding.tvPatentTitle.text = patents[position].title
             val date = TimeUtil().formatLocalDateTimeToString(TimeUtil().parseUtcWithJavaTime(patents[position].createdAt))
+            binding.tvPatentTitle.text = patents[position].patentDraftTitle
             binding.tvDateTest.text = itemView.context.getString(R.string.tv_date_test, date)
-            binding.tvPatentContent.text = patents[position].summary
+            binding.tvPatentContent.text = patents[position].patentDraftSummary
             binding.btnEdit.setOnClickListener {
                 itemClickListener.onItemClick(position)
             }

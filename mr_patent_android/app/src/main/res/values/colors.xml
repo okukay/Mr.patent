@@ -6,6 +6,7 @@
     <color name="mr_black">#FF222222</color>
     <color name="mr_blue">#FF6D9AF0</color>
     <color name="mr_blue_light">#FFEDF3FF</color>
+    <color name="mr_blue_dark">#FF163E9F</color>
     <color name="mr_gray_dark">#FF565656</color>
     <color name="mr_gray">#FF8F8F8F</color>
     <color name="mr_gray_light">#FFCBCBCB</color>

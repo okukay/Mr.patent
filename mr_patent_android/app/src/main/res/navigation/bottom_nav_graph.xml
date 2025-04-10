@@ -317,7 +317,11 @@
         android:id="@+id/patentFolderDetailFragment"
         android:name="com.ssafy.mr_patent_android.ui.mypage.PatentFolderDetailFragment"
         android:label="fragment_patent_folder_detail"
-        tools:layout="@layout/fragment_patent_folder_detail" >
+        tools:layout="@layout/fragment_patent_folder_detail">
+        <argument
+            android:name="folderName"
+            android:defaultValue=""
+            app:argType="string" />
         <action
             android:id="@+id/action_patentFolderDetailFragment_to_patentContentFragment"
             app:destination="@id/patentContentFragment" />

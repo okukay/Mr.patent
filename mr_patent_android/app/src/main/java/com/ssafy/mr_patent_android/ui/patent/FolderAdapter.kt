@@ -31,7 +31,7 @@ class FolderAdapter(var editFlag: Boolean = false, var deleteFlag: Boolean = fal
         fun bind(position: Int) {
             binding.tvFolderName.text = folders[position].uerPatentFolderTitle
 
-            val date = TimeUtil().formatLocalDateTimeToString(TimeUtil().parseUtcWithJavaTime(folders[position].createdAt))
+            val date = TimeUtil().formatLocalDateTimeToString(TimeUtil().parseUtcWithJavaTime(folders[position].createdAt.plus("Z")))
             binding.tvFolderRecent.text = itemView.context.getString(R.string.tv_date_create, date)
             binding.clListItemPatentFolder.setOnClickListener {
                 itemClickListener.onItemClick(position)

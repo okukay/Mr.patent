@@ -31,6 +31,7 @@ import com.ssafy.mr_patent_android.util.ImageCompressor
 import com.ssafy.mr_patent_android.util.ImagePicker
 import com.ssafy.mr_patent_android.util.ImageUtil
 import com.ssafy.mr_patent_android.util.LoadingDialog
+import gun0912.tedimagepicker.builder.TedImagePicker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -68,57 +69,60 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
 
     private fun initView() {
         loadingDialog = LoadingDialog(requireContext())
-        imagePickerUtil = ImagePicker(this) { uri ->
-            if (FileUtil().isFileSizeValid(requireContext(), uri) == false) {
-                setDialogSizeOver()
-                return@ImagePicker
-            }
-
-            val extension = FileUtil().getFileExtension(requireContext(), uri)
-            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver,  uri)
-            when (extension) {
-                "jpg", "jpeg" -> {
-                    loadingDialog.show()
-                    val rotatedBitmap = ImageUtil().rotateBitmapIfNeeded(requireContext(), bitmap, uri)
-                    val rotatedUri = ImageUtil().bitmapToUri(requireContext(), rotatedBitmap, extension)
-                    handleImageJpgSelected(rotatedUri, extension)
-                }
-                "png" -> {
-                    handleImagePngSelected(bitmap, extension)
-                }
-            }
-        }
+//        imagePickerUtil = ImagePicker(this) { uri ->
+//            if (FileUtil().isFileSizeValid(requireContext(), uri) == false) {
+//                setDialogSizeOver()
+//                return@ImagePicker
+//            }
+//
+//            val extension = FileUtil().getFileExtension(requireContext(), uri)
+//            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver,  uri)
+//            when (extension) {
+//                "jpg", "jpeg" -> {
+//                    loadingDialog.show()
+//                    val rotatedBitmap = ImageUtil().rotateBitmapIfNeeded(requireContext(), bitmap, uri)
+//                    val rotatedUri = ImageUtil().bitmapToUri(requireContext(), rotatedBitmap, extension)
+//                    handleImageJpgSelected(rotatedUri, extension)
+//                }
+//                "png" -> {
+//                    handleImagePngSelected(bitmap, extension)
+//                }
+//            }
+//        }
 
         binding.tvBefore.setOnClickListener {
-            profileEditViewModel.setCurrentImage(null)
             findNavController().popBackStack()
         }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                profileEditViewModel.setCurrentImage(null)
                 findNavController().popBackStack()
             }
         })
 
-        if (!flag) {
-            when (args.role) {
-                "member" -> {
-                    profileEditViewModel.getMemberInfo()
-                    binding.clProfileEditItemsMember.visibility = View.VISIBLE
-                    binding.clProfileEditItemsExpert.visibility = View.GONE
+        binding.tvEditProfile.setOnClickListener {
+//            imagePickerUtil.checkPermissionAndOpenGallery()
+            TedImagePicker.with(requireContext()).start { uri ->
+                if (FileUtil().isFileSizeValid(requireContext(), uri) == false) {
+                    setDialogSizeOver()
+                    return@start
                 }
-                "expert" -> {
-                    profileEditViewModel.getExpertInfo(args.id)
-                    binding.clProfileEditItemsMember.visibility = View.GONE
-                    binding.clProfileEditItemsExpert.visibility = View.VISIBLE
+
+                val extension = FileUtil().getFileExtension(requireContext(), uri)
+                val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver,  uri)
+                when (extension) {
+                    "jpg", "jpeg" -> {
+                        loadingDialog.show()
+                        val rotatedBitmap = ImageUtil().rotateBitmapIfNeeded(requireContext(), bitmap, uri)
+                        val rotatedUri = ImageUtil().bitmapToUri(requireContext(), rotatedBitmap, extension)
+                        handleImageJpgSelected(rotatedUri, extension)
+                        handleImageJpgSelected(uri, extension)
+                    }
+                    "png" -> {
+                        handleImagePngSelected(bitmap, extension)
+                    }
                 }
             }
-            flag = true
-        }
-
-        binding.tvEditProfile.setOnClickListener {
-            imagePickerUtil.checkPermissionAndOpenGallery()
         }
 
         binding.clProfileEditCategoryExpert.setOnClickListener {
@@ -165,6 +169,7 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
         }
 
         binding.btnEdit.setOnClickListener {
+            loadingDialog.show()
             profileEditRequest = ProfileEditRequest(null, null, null, null, null, null)
 
             when (args.role) {
@@ -197,10 +202,15 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
 
                     val addressChanged1 = binding.etAddress1.text.toString() != profileEditViewModel.expertInfo.value?.expertAddress?.substringBefore("\\")
                     val addressChanged2 = binding.etAddress2.text.toString() != profileEditViewModel.expertInfo.value?.expertAddress?.substringAfter("\\")
-
+                    Log.d(TAG, "initView: et1: ${binding.etAddress1.text}")
+                    Log.d(TAG, "initView: et2: ${binding.etAddress2.text}")
                     if (addressChanged1 || addressChanged2) {
-                        val address = binding.etAddress1.text.toString() + "\\" + binding.etAddress2.text.toString()
-                        profileEditRequest.expertAddress = address
+                        if (binding.etAddress2.text.isBlank()) {
+                            profileEditRequest.expertAddress = binding.etAddress1.text.toString()
+                        } else {
+                            val address = binding.etAddress1.text.toString() + "\\" + binding.etAddress2.text.toString()
+                            profileEditRequest.expertAddress = address
+                        }
                     }
 
                     val newCategories = mutableListOf<ProfileEditRequest.Category>()
@@ -218,29 +228,33 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
                 }
             }
 
-            if (profileEditViewModel.profileImage.value != profileEditViewModel.currentImage.value
-                && profileEditViewModel.currentImage.value != null) {
-                val fileUri = Uri.parse(profileEditViewModel.currentImage.value)
-                val fileName = FileUtil().getFileName(requireContext(), fileUri)
-                val extension = FileUtil().getFileExtension(requireContext(), Uri.parse(profileEditViewModel.currentImage.value))
-                if (extension == "jpg" || extension == "jpeg") {
-                    contentType = "image/jpeg"
-                } else {
-                    contentType = "image/png"
-                }
-                profileEditRequest.userImage = fileName
-
-                lifecycleScope.launch {
-                    profileEditViewModel.uploadFile(requireContext(), Uri.parse(profileEditViewModel.currentImage.value!!), fileName!!, extension!!, contentType)
-                    val isEdited = profileEditRequest.userName != null
-                            || profileEditRequest.userImage != null
-                            || profileEditRequest.expertDescription != null
-                            || profileEditRequest.expertAddress != null
-                            || profileEditRequest.expertPhone != null
-                            || profileEditRequest.expertCategories != null
-                    if (isEdited) {
-                        profileEditViewModel.editUserInfo(profileEditRequest)
+            lifecycleScope.launch {
+                if (profileEditViewModel.profileImage.value != profileEditViewModel.currentImage.value
+                    && profileEditViewModel.currentImage.value != null) {
+                    val fileUri = Uri.parse(profileEditViewModel.currentImage.value)
+                    val fileName = FileUtil().getFileName(requireContext(), fileUri)
+                    val extension = FileUtil().getFileExtension(requireContext(), Uri.parse(profileEditViewModel.currentImage.value))
+                    if (extension == "jpg" || extension == "jpeg") {
+                        contentType = "image/jpeg"
+                    } else {
+                        contentType = "image/png"
                     }
+                    profileEditRequest.userImage = fileName
+                    profileEditViewModel.uploadFile(requireContext(), Uri.parse(profileEditViewModel.currentImage.value!!), fileName!!, extension!!, contentType)
+                }
+
+                val isEdited = profileEditRequest.userName != null
+                        || profileEditRequest.userImage != null
+                        || profileEditRequest.expertDescription != null
+                        || profileEditRequest.expertAddress != null
+                        || profileEditRequest.expertPhone != null
+                        || profileEditRequest.expertCategories != null
+                if (isEdited) {
+                    Log.d(TAG, "initView: address: ${profileEditRequest.expertAddress}")
+                    profileEditViewModel.editUserInfo(profileEditRequest)
+                } else {
+                    loadingDialog.dismiss()
+                    showCustomToast("변경 사항이 없습니다.")
                 }
             }
         }
@@ -259,21 +273,10 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
     private fun initObserver() {
         profileEditViewModel.toastMsg.observe(viewLifecycleOwner) {
             if (it == "회원정보가 성공적으로 수정되었습니다.") {
+                loadingDialog.dismiss()
                 showCustomToast(it)
                 profileEditViewModel.clearToastMsg()
-            }
-        }
-
-        profileEditViewModel.expertInfo.observe(viewLifecycleOwner) {
-            binding.clProfileEditItemsMember.visibility = View.GONE
-            binding.clProfileEditItemsExpert.visibility = View.VISIBLE
-            for (categories in it.expertCategory) {
-                when (categories.categoryName) {
-                    "화학공학" -> binding.chipChemi.isChecked = true
-                    "기계공학" -> binding.chipMecha.isChecked = true
-                    "생명공학" -> binding.chipLife.isChecked = true
-                    "전기/전자" -> binding.chipElec.isChecked = true
-                }
+                findNavController().popBackStack()
             }
         }
 
@@ -294,10 +297,25 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
         })
 
         profileEditViewModel.memberInfo.observe(viewLifecycleOwner) {
-            binding.clProfileEditItemsMember.visibility = View.VISIBLE
-            binding.clProfileEditItemsExpert.visibility = View.GONE
-            binding.etName.setText(it.userName)
-            profileEditViewModel.getImage(it.userImage)
+            when (args.role) {
+                "member" -> {
+                    binding.etName.setText(it.userName)
+                    binding.clProfileEditItemsMember.visibility = View.VISIBLE
+                    binding.clProfileEditItemsExpert.visibility = View.GONE
+                }
+                "expert" -> {
+                    binding.clProfileEditItemsMember.visibility = View.GONE
+                    binding.clProfileEditItemsExpert.visibility = View.VISIBLE
+                    for (categories in it.expertCategory) {
+                        when (categories.categoryName) {
+                            "화학공학" -> binding.chipChemi.isChecked = true
+                            "기계공학" -> binding.chipMecha.isChecked = true
+                            "생명공학" -> binding.chipLife.isChecked = true
+                            "전기/전자" -> binding.chipElec.isChecked = true
+                        }
+                    }
+                }
+            }
         }
 
         profileEditViewModel.profileImage.observe(viewLifecycleOwner, {
@@ -320,9 +338,10 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
         }
 
         profileEditViewModel.currentImage.observe(viewLifecycleOwner, {
+            Log.d(TAG, "initObserver: currentImage: ${profileEditViewModel.currentImage.value}")
             Glide.with(requireContext())
                 .load(it)
-                .fallback(R.drawable.user_profile)
+                .fallback(R.drawable.user_profile) // null
                 .error(R.drawable.image_load_error_icon)
                 .circleCrop()
                 .into(binding.ivProfile)

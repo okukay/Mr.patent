@@ -39,7 +39,9 @@ class SimiliarityTestFragment : BaseFragment<FragmentSimiliarityTestBinding>(
 
     private fun initView() {
         similiarityTestViewModel.setAddState(null)
-        similiarityTestViewModel.setTestState(false)
+        if (similiarityTestViewModel.testState.value == "processing") {
+            similiarityTestViewModel.setTestState("waiting")
+        }
 
         if (args.status == "finished") {
             binding.ivStatusOngoing.visibility = View.GONE
@@ -72,7 +74,7 @@ class SimiliarityTestFragment : BaseFragment<FragmentSimiliarityTestBinding>(
                 PatentFolderDetailFragmentDirections.actionPatentFolderDetailFragmentToPatentContentFragment(similiarityTestViewModel.patentId.value!!, "select")
             )
         }
-        if (args.status == "ongoing") {
+        if (args.status == "processing") {
             findNavController().popBackStack(R.id.nav_fragment_patent, false)
         }
     }

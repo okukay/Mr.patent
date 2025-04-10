@@ -132,32 +132,6 @@ class ProfileEditViewModel : ViewModel() {
         _isExpanded.value = isExpanded.toMutableList()
     }
 
-    fun getExpertInfo(id: Int) {
-        viewModelScope.launch {
-            runCatching {
-                userService.getExpert(id)
-            }.onSuccess {
-                if (it.isSuccessful) {
-                    it.body()?.data?.let { response ->
-                        _expertInfo.value = response
-                        _editCategory.value = response.expertCategory
-                        _editDescription.value = response.expertDescription
-                        _editAddress1.value = response.expertAddress.substringBefore("\\")
-                        _editAddress2.value = response.expertAddress.substringAfter("\\")
-                        _editPhone.value = response.expertPhone
-                        _profileImage.value = response.userImage
-                    }
-                } else {
-                    it.errorBody()?.let {
-                        it1 -> networkUtil.getErrorResponse(it1)
-                    }
-                }
-            }.onFailure {
-                it.printStackTrace()
-            }
-        }
-    }
-
     fun getImage(fileName: String) {
         viewModelScope.launch {
             runCatching {
@@ -190,6 +164,17 @@ class ProfileEditViewModel : ViewModel() {
                         Log.d(TAG, "getMemberInfo: ${response}")
                         _memberInfo.value = response
                         _expertId.value = response.expertId
+                        if (response.userRole == 1) {
+                            _editCategory.value = response.expertCategory
+                            _editDescription.value = response.expertDescription
+                            if (response.expertAddress.contains("\\")) {
+                                _editAddress1.value = response.expertAddress.substringBefore("\\")
+                                _editAddress2.value = response.expertAddress.substringAfter("\\")
+                            } else {
+                                _editAddress1.value = response.expertAddress
+                            }
+                            _editPhone.value = response.expertPhone
+                        }
                     }
                 } else {
                     it.errorBody()?.let {
@@ -216,6 +201,9 @@ class ProfileEditViewModel : ViewModel() {
                                 user.userId, profileEditRequest.userName ?: user.userName , user.userRole
                             )
                         )
+                        if (response.message == "회원정보가 성공적으로 수정되었습니다.") {
+                            getMemberInfo()
+                        }
                     }
                 } else {
                     it.errorBody()?.let {
@@ -232,7 +220,6 @@ class ProfileEditViewModel : ViewModel() {
         runCatching {
             var response = false
             var preSignedUrl = ""
-//            var rExtension = if (extension == "jpg") "jpeg" else extension
 
             preSignedUrl = getPreSignedUrl(fileName, contentType)
             response = uploadFileS3(context, fileUri, preSignedUrl, fileName, extension, contentType)

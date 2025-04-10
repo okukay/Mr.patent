@@ -78,8 +78,14 @@ class PatentFolderChoiceFragment : BaseFragment<FragmentPatentFolderChoiceBindin
         val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
 
         btnFolderAdd.setOnClickListener {
-            patentViewModel.addFolder(etFolderName.text.toString())
-            dialogBuilder.dismiss()
+            when (etFolderName.length()) {
+                0 -> { showCustomToast("폴더명을 입력해주세요.") }
+                in 1..30 -> {
+                    patentViewModel.addFolder(etFolderName.text.toString())
+                    dialogBuilder.dismiss()
+                }
+                else -> { showCustomToast("폴더 이름은 30자 까지 가능합니다.") }
+            }
         }
     }
 

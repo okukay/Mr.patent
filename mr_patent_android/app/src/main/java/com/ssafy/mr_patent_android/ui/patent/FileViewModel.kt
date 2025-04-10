@@ -5,8 +5,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.networkUtil
+import com.ssafy.mr_patent_android.base.ErrorResponse
 import com.ssafy.mr_patent_android.data.model.response.PatentContentResponse
+import com.ssafy.mr_patent_android.data.model.response.PatentRecentResponse
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.patentService
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -32,8 +35,8 @@ class FileViewModel : ViewModel() {
     val uploadState: LiveData<Boolean>
         get() = _uploadState
 
-    private val _patentContent = MutableLiveData<PatentContentResponse?>()
-    val patentContent: LiveData<PatentContentResponse?>
+    private val _patentContent = MutableLiveData<PatentRecentResponse.PatentDraft?>()
+    val patentContent: LiveData<PatentRecentResponse.PatentDraft?>
         get() = _patentContent
 
     fun setExtractionType(type: String) {
@@ -44,8 +47,8 @@ class FileViewModel : ViewModel() {
         _fileUri.value = uri
     }
 
-    fun setPatentContent(patentContent: PatentContentResponse?) {
-        _patentContent.value = patentContent
+    fun setPatentContent(patentDraft: PatentRecentResponse.PatentDraft?) {
+        _patentContent.value = patentDraft
     }
 
     fun getOcrContent(file: File) {
@@ -58,8 +61,13 @@ class FileViewModel : ViewModel() {
                         _patentContent.value = response!!
                     }
                 } else {
-                    it.errorBody()?.let {
-                        it1 -> networkUtil.getErrorResponse(it1)
+                    it.errorBody()?.let { error ->
+                        Log.d(TAG, "getOcrContent: error: ${error}")
+                        val code = Gson().fromJson(error.string(), ErrorResponse::class.java).error?.code
+                        Log.d(TAG, "getOcrContent: code: ${code}")
+                        networkUtil.getErrorResponse(error)?.let { errorResponse ->
+                            Log.d(TAG, "getOcrContent: errorResponse: ${errorResponse}")
+                        }
                     }
                 }
             }.onFailure {

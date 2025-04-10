@@ -88,6 +88,13 @@ class FileUploadFragment : BaseFragment<FragmentFileUploadBinding>(
     }
 
     private fun initObserver() {
+        fileViewModel.toastMsg.observe(viewLifecycleOwner, {
+            if (it == "PDF_PARSE_ERROR") {
+                showCustomToast("명세서 내용을 확인하지 못했습니다.")
+                loadingDialog.dismiss()
+            }
+        })
+
         fileViewModel.patentContent.observe(viewLifecycleOwner, {
             it?.let {
                 loadingDialog.dismiss()
@@ -124,16 +131,7 @@ class FileUploadFragment : BaseFragment<FragmentFileUploadBinding>(
     private fun setInfo(uri: Uri) {
         val fileName = FileUtil().getFileName(requireContext(), uri)
         val fileSize = FileUtil().getFileSize(requireContext(), uri)
-        val mode = FileUtil().getFileExtension(requireContext(), uri)
-
-        when (mode) {
-            "pdf" -> {
-                binding.ivPdf.visibility = View.VISIBLE
-            }
-            "word" -> {
-                binding.ivWord.visibility = View.VISIBLE
-            }
-        }
+        binding.ivPdf.visibility = View.VISIBLE
         binding.ivFileUpload.visibility = View.INVISIBLE
         binding.tvFileName.visibility = View.VISIBLE
         binding.tvFileSize.visibility = View.VISIBLE

@@ -27,7 +27,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@drawable/rounded_background_stroke"
-        android:hint="폴더 이름은 12자 까지 가능합니다."
+        android:hint="폴더 이름은 30자 까지 가능합니다."
         android:padding="12dp"
         android:paddingStart="10dp"
         android:textSize="14sp"

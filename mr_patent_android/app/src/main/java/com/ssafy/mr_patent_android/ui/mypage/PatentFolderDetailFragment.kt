@@ -10,6 +10,7 @@ import android.widget.Button
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.BaseFragment
@@ -23,6 +24,8 @@ class PatentFolderDetailFragment : BaseFragment<FragmentPatentFolderDetailBindin
 ) {
     private val patentFolderDetailViewModel : PatentFolderDetailViewModel by activityViewModels()
 
+    private val args : PatentFolderDetailFragmentArgs by navArgs()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
@@ -35,6 +38,7 @@ class PatentFolderDetailFragment : BaseFragment<FragmentPatentFolderDetailBindin
     }
 
     private fun initView() {
+        binding.tvFolderName.text = args.folderName
         patentFolderDetailViewModel.getPatentList(patentFolderDetailViewModel.folderId.value!!)
 
         binding.tvBefore.setOnClickListener {

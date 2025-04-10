@@ -1,5 +1,7 @@
 package com.ssafy.mr_patent_android.ui.mypage
 
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -8,18 +10,20 @@ import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.networkUtil
 import com.ssafy.mr_patent_android.data.model.dto.PatentFrameDto
 import com.ssafy.mr_patent_android.data.model.response.FitnessResultResponse
 import com.ssafy.mr_patent_android.data.model.response.PatentContentResponse
+import com.ssafy.mr_patent_android.data.model.response.PatentRecentResponse
 import com.ssafy.mr_patent_android.data.model.response.SimiliarityResultResponse
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.patentService
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.similiarityTestService
 import kotlinx.coroutines.launch
+import java.io.File
 
 class ReportResultViewModel : ViewModel() {
     private val _toastMsg = MutableLiveData<String>()
     val toastMsg: LiveData<String>
         get() = _toastMsg
 
-    private val _patentContent = MutableLiveData<PatentContentResponse>()
-    val patentContent: LiveData<PatentContentResponse>
+    private val _patentContent = MutableLiveData<PatentRecentResponse.PatentDraft>()
+    val patentContent: LiveData<PatentRecentResponse.PatentDraft>
         get() = _patentContent
 
     private val _similiarityResult = MutableLiveData<List<SimiliarityResultResponse.Comparison>>()
@@ -56,7 +60,7 @@ class ReportResultViewModel : ViewModel() {
         _mode.value = mode
     }
 
-    fun setPatentContent(patentContent: PatentContentResponse) {
+    fun setPatentContent(patentContent: PatentRecentResponse.PatentDraft) {
         _patentContent.value = patentContent
     }
 
@@ -111,6 +115,30 @@ class ReportResultViewModel : ViewModel() {
                 } else {
                     it.errorBody()?.let {
                         it1 -> networkUtil.getErrorResponse(it1)
+                    }
+                }
+            }.onFailure {
+                it.printStackTrace()
+            }
+        }
+    }
+
+    fun getPdfFile(context: Context, patentDraftId: Int, patentDraftTitle: String) {
+        viewModelScope.launch {
+            runCatching {
+                similiarityTestService.getPdfFile(patentDraftId)
+            }.onSuccess {
+                if (it.isSuccessful) {
+                    it.body()?.let { response ->
+                        val inputStream = response.byteStream()
+                        val file = File(context.filesDir, "${patentDraftTitle}.pdf")
+                        file.outputStream().use { output ->
+                            inputStream.copyTo(output)
+                        }
+                    }
+                } else {
+                    it.errorBody()?.let {
+                            it1 -> networkUtil.getErrorResponse(it1)
                     }
                 }
             }.onFailure {

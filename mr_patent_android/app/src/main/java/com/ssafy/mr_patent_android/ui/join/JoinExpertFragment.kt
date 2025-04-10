@@ -136,6 +136,7 @@ class JoinExpertFragment : BaseFragment<FragmentJoinExpertBinding>(
                         categories.add(category)
                     }
                 }
+
                 if (joinViewModel.userImage.value != null && joinViewModel.userImage.value != "") {
                     lifecycleScope.launch {
                         val fileUri = Uri.parse(joinViewModel.userImage.value)
@@ -154,32 +155,8 @@ class JoinExpertFragment : BaseFragment<FragmentJoinExpertBinding>(
                             contentType
                         )
                     }
-                }
-
-                lifecycleScope.launch {
-                    val fileUri = Uri.parse(joinViewModel.file.value)
-                    val fileName = FileUtil().getFileName(requireContext(), fileUri)
-                    val extension = FileUtil().getFileExtension(requireContext(), fileUri)
-                    joinViewModel.uploadFile(
-                        requireContext(),
-                        fileUri,
-                        fileName!!,
-                        extension!!,
-                        "application/pdf"
-                    )
-                    joinViewModel.joinExpert(
-                        binding.etEmail.text.toString(),
-                        binding.etPw.text.toString(),
-                        binding.etName.text.toString(),
-                        joinViewModel.userImage.value!!,
-                        identification,
-                        binding.etDescription.text.toString(),
-                        address,
-                        binding.etPhone.text.toString(),
-                        binding.tvDateChoice.text.toString(),
-                        joinViewModel.file.value!!,
-                        categories
-                    )
+                } else {
+                    joinViewModel.setUploadImageState(true)
                 }
             }
         }
@@ -276,6 +253,41 @@ class JoinExpertFragment : BaseFragment<FragmentJoinExpertBinding>(
         addressViewModel.address.observe(viewLifecycleOwner) {
             binding.etAddress1.setText(it)
         }
+
+        joinViewModel.uploadImageState.observe(viewLifecycleOwner, {
+            Log.d(TAG, "initObserver: 업로드 오나료")
+            if (it == true) {
+                lifecycleScope.launch {
+                    val fileUri = Uri.parse(joinViewModel.file.value)
+                    val fileName = FileUtil().getFileName(requireContext(), fileUri)
+                    val extension = FileUtil().getFileExtension(requireContext(), fileUri)
+                    Log.d(TAG, "initObserver: fileUri: ${fileUri}")
+                    Log.d(TAG, "initObserver: fileName: ${fileName}")
+                    Log.d(TAG, "initObserver: extension: ${extension}")
+                    joinViewModel.uploadFile(
+                        requireContext(),
+                        fileUri,
+                        fileName!!,
+                        extension!!,
+                        "application/pdf"
+                    )
+                    joinViewModel.joinExpert(
+                        binding.etEmail.text.toString(),
+                        binding.etPw.text.toString(),
+                        binding.etName.text.toString(),
+                        joinViewModel.userImage.value!!,
+                        identification,
+                        binding.etDescription.text.toString(),
+                        address,
+                        binding.etPhone.text.toString(),
+                        binding.tvDateChoice.text.toString(),
+                        joinViewModel.file.value!!,
+                        categories
+                    )
+                }
+
+            }
+        })
 
         joinViewModel.joinState.observe(viewLifecycleOwner, {
             it?.let {

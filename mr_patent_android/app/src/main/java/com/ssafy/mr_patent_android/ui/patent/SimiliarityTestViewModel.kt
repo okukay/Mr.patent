@@ -19,8 +19,8 @@ class SimiliarityTestViewModel : ViewModel() {
     val addState: LiveData<Boolean?>
         get() = _addState
 
-    private val _testState = MutableLiveData<Boolean?>()
-    val testState: LiveData<Boolean?>
+    private val _testState = MutableLiveData<String?>()
+    val testState: LiveData<String?>
         get() = _testState
 
     private val _patentId = MutableLiveData<Int>()
@@ -31,7 +31,7 @@ class SimiliarityTestViewModel : ViewModel() {
         _addState.value = addState
     }
 
-    fun setTestState(testState: Boolean?) {
+    fun setTestState(testState: String?) {
         _testState.value = testState
     }
 
@@ -62,7 +62,7 @@ class SimiliarityTestViewModel : ViewModel() {
             }.onSuccess {
                 if (it.isSuccessful) {
                     it.body()?.data.let { response ->
-                        _testState.value = true
+                        _testState.value = "processing"
                     }
                 } else {
                     it.errorBody()?.let {

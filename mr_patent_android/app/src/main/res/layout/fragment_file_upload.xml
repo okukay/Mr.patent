@@ -8,6 +8,15 @@
     android:id="@+id/fragment_file_upload"
     tools:context=".ui.patent.FileUploadFragment">
 
+    <View
+        android:id="@+id/v_title"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.08"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.09"/>
+
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/h1_guideline"
         android:layout_width="wrap_content"
@@ -55,22 +64,20 @@
         style="@style/customBeforeFontStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@+id/tv_file_title_upload"
+        app:layout_constraintStart_toStartOf="@+id/tv_file_title_upload"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintHorizontal_bias="0.07"
-        app:layout_constraintVertical_bias="0.05" />
+        app:layout_constraintVertical_bias="0.6" />
 
     <TextView
-        style="@style/customTitleFontStyle"
         android:id="@+id/tv_file_title_upload"
+        style="@style/customTitleFontStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="명세서 올리기"
         android:textColor="@color/black"
-        app:layout_constraintTop_toTopOf="@id/h1_guideline"
-        app:layout_constraintStart_toStartOf="@id/v1_guideline" />
+        app:layout_constraintStart_toEndOf="@+id/v_title"
+        app:layout_constraintTop_toBottomOf="@+id/v_title" />
 
     <TextView
         android:id="@+id/tv_file_upload"
@@ -88,19 +95,19 @@
         android:id="@+id/tv_file_exp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="파일 형식은 .pdf, .doc, .docx 만 가능합니다."
+        android:text="파일 형식은 .pdf만 가능합니다."
         android:textColor="@color/mr_gray"
         android:textSize="12sp"
-        android:layout_marginBottom="4dp"
         app:layout_constraintBottom_toBottomOf="@id/h2_guideline"
         app:layout_constraintEnd_toEndOf="@id/v2_guideline"
-        app:layout_constraintStart_toStartOf="@id/v1_guideline" />
+        app:layout_constraintStart_toStartOf="@id/v1_guideline"
+        app:layout_constraintTop_toBottomOf="@+id/tv_file_title_upload"
+        app:layout_constraintVertical_bias="0.9"/>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_license_upload"
         android:layout_width="0dp"
         android:layout_height="200dp"
-        android:padding="16dp"
         android:backgroundTint="@color/mr_blue"
         app:layout_constraintTop_toTopOf="@id/h2_guideline"
         app:layout_constraintEnd_toEndOf="@id/v2_guideline"
@@ -111,42 +118,30 @@
             android:id="@+id/iv_file_upload"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:padding="72dp"
             android:background="@drawable/rounded_background"
+            android:padding="72dp"
             android:src="@drawable/upload"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintVertical_bias="0.0" />
 
         <ImageView
             android:visibility="invisible"
             android:id="@+id/iv_pdf"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:src="@drawable/pdf_icon"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/iv_file_upload"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_file_upload"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="0.24"
-            app:layout_constraintHorizontal_bias="0.12" />
-
-        <ImageView
-            android:visibility="invisible"
-            android:id="@+id/iv_word"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:src="@drawable/word_icon"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@id/iv_pdf"
-            app:layout_constraintHorizontal_bias="0.32"
-            app:layout_constraintStart_toStartOf="@id/iv_pdf"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="0.2" />
+            app:layout_constraintVertical_bias="0.3" />
 
         <TextView
-            android:visibility="gone"
+            android:visibility="invisible"
             android:id="@+id/tv_file_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -154,25 +149,25 @@
             android:maxLines="1"
             android:text="파일명"
             android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@id/iv_pdf"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_file_upload"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/iv_pdf"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.7"
-            app:layout_constraintHorizontal_bias="0.3"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_file_size"
+            app:layout_constraintVertical_bias="0.1"/>
 
         <TextView
-            android:visibility="gone"
+            android:visibility="invisible"
             android:id="@+id/tv_file_size"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="15sp"
             android:text="용량.mb"
             android:textColor="@color/mr_gray_light"
-            app:layout_constraintTop_toBottomOf="@id/tv_file_name"
+            android:textSize="15sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="@id/tv_file_name"
-            app:layout_constraintVertical_bias="0.1"/>
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/iv_file_upload"
+            app:layout_constraintTop_toBottomOf="@+id/iv_pdf"
+            app:layout_constraintVertical_bias="0.3" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

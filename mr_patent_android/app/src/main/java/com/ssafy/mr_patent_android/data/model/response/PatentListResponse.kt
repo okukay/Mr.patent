@@ -9,7 +9,7 @@ data class PatentListResponse (
         @SerializedName("patent_draft_id") val patentDraftId: Int,
         @SerializedName("patent_draft_title") val patentDraftTitle: String,
         @SerializedName("fitness_is_corrected") val fitnessIsCorrected: Boolean,
-        @SerializedName("detailed_comparison_total_score") val detailedComparisonTotalScore: Int,
+        @SerializedName("detailed_comparison_total_score") val detailedComparisonTotalScore: Double,
         @SerializedName("created_at") val createdAt: String
     )
 }

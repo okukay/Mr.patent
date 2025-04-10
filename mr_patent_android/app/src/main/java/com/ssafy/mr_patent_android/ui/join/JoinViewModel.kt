@@ -103,14 +103,6 @@ class JoinViewModel: ViewModel() {
         _joinState.value = joinState
     }
 
-    fun setUserImagePath(userImagePath: String) {
-        _userImagePath.value = userImagePath
-    }
-
-    fun setUserFilePath(userFilePath: String) {
-        _userFilePath.value = userFilePath
-    }
-
     fun reset() {
         _userRole.value = -1
         _userImage.value = ""
@@ -122,8 +114,6 @@ class JoinViewModel: ViewModel() {
         _uploadFileState.value = null
         _joinState.value = null
         _toastMsg.value = ""
-        _userImagePath.value = ""
-        _userFilePath.value = ""
     }
 
     fun joinMember(userEmail: String, userName: String, userPw: String, userImage: String) {
@@ -225,12 +215,15 @@ class JoinViewModel: ViewModel() {
             var response = false
             var preSignedUrl = ""
 
-            if (file != null) {
-                preSignedUrl = getPreSignedUrl(fileName, contentType)
-                response = uploadFileS3(context, fileUri, preSignedUrl, fileName, extension, contentType)
-            }
+            preSignedUrl = getPreSignedUrl(fileName, contentType)
+            Log.d(TAG, "uploadFile: 발급 완료")
+            response = uploadFileS3(context, fileUri, preSignedUrl, fileName, extension, contentType)
             if (response) {
-
+                if (contentType == "application/pdf") {
+                    _uploadFileState.value = true
+                } else {
+                    _uploadImageState.value = true
+                }
             } else {
                 throw Exception("업로드 실패")
             }

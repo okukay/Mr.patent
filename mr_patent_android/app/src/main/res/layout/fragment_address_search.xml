@@ -74,7 +74,7 @@
         app:layout_constraintStart_toStartOf="@+id/et_address_search"
         app:layout_constraintTop_toTopOf="@id/et_address_search"
         app:layout_constraintWidth_percent="0.72"
-        app:layout_constraintVertical_bias="0.16">
+        app:layout_constraintVertical_bias="0.2">
 
         <TextView
             android:id="@+id/tv_input_ex"

@@ -4,6 +4,7 @@ import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -78,10 +79,19 @@ class PatentFolderFragment : BaseFragment<FragmentPatentFolderBinding>(
 
     private fun initObserver() {
         patentViewModel.folders.observe(viewLifecycleOwner) {
-            binding.rvPatentFolders.layoutManager = LinearLayoutManager(requireContext())
-            binding.rvPatentFolders.adapter = FolderAdapter(false, false, it) { position ->
-                patentFolderDetailViewModel.setFolderId(it[position].userPatentFolderId)
-                findNavController().navigate(R.id.patentFolderDetailFragment)
+            if (it.isNotEmpty()) {
+                binding.ivFolderAdd.visibility = View.GONE
+                binding.clFolderState.visibility = View.VISIBLE
+                binding.rvPatentFolders.layoutManager = LinearLayoutManager(requireContext())
+                binding.rvPatentFolders.adapter = FolderAdapter(false, false, it) { position ->
+                    patentFolderDetailViewModel.setFolderId(it[position].userPatentFolderId)
+                    findNavController().navigate(PatentFolderFragmentDirections.actionPatentFolderFragmentToPatentFolderDetailFragment(it[position].uerPatentFolderTitle))
+                }
+            } else {
+                binding.ivFolderAdd.visibility = View.VISIBLE
+                binding.clFolderState.visibility = View.GONE
+                binding.rvPatentFolders.layoutManager = LinearLayoutManager(requireContext())
+                binding.rvPatentFolders.adapter = FolderAdapter(false, false, it)  {}
             }
         }
     }
@@ -104,8 +114,14 @@ class PatentFolderFragment : BaseFragment<FragmentPatentFolderBinding>(
         val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
 
         btnFolderAdd.setOnClickListener {
-            patentViewModel.addFolder(etFolderName.text.toString())
-            dialogBuilder.dismiss()
+            when (etFolderName.length()) {
+                0 -> { showCustomToast("폴더명을 입력해주세요.") }
+                in 1..30 -> {
+                    patentViewModel.addFolder(etFolderName.text.toString())
+                    dialogBuilder.dismiss()
+                }
+                else -> { showCustomToast("폴더 이름은 30자 까지 가능합니다.") }
+            }
         }
     }
 
@@ -127,8 +143,14 @@ class PatentFolderFragment : BaseFragment<FragmentPatentFolderBinding>(
         val btnFolderEdit = dialogView.findViewById<Button>(R.id.btn_folder_edit)
 
         btnFolderEdit.setOnClickListener {
-            patentViewModel.editFolder(patentViewModel.folders.value!![position].userPatentFolderId, etFolderName.text.toString())
-            dialogBuilder.dismiss()
+            when (btnFolderEdit.length()) {
+                0 -> { showCustomToast("변경할 폴더명을 입력해주세요.") }
+                in 1..30 -> {
+                    patentViewModel.editFolder(patentViewModel.folders.value!![position].userPatentFolderId, etFolderName.text.toString())
+                    dialogBuilder.dismiss()
+                }
+                else -> { showCustomToast("폴더 이름은 30자 까지 가능합니다.") }
+            }
         }
     }
 

@@ -48,6 +48,6 @@ class FilePicker(
     }
 
     private fun openStorage() {
-        pickFileLauncher.launch(arrayOf("application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+        pickFileLauncher.launch(arrayOf("application/pdf"))
     }
 }

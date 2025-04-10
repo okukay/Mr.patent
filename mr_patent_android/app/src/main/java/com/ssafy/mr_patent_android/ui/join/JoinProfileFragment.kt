@@ -26,6 +26,7 @@ import com.ssafy.mr_patent_android.util.ImageCompressor
 import com.ssafy.mr_patent_android.util.ImagePicker
 import com.ssafy.mr_patent_android.util.ImageUtil
 import com.ssafy.mr_patent_android.util.LoadingDialog
+import gun0912.tedimagepicker.builder.TedImagePicker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,27 +55,27 @@ class JoinProfileFragment : BaseFragment<FragmentJoinProfileBinding>(
 
     private fun initView() {
         loadingDialog = LoadingDialog(requireContext())
-        imagePickerUtil = ImagePicker(this) { uri ->
-            if (FileUtil().isFileSizeValid(requireContext(), uri) == false) {
-                setDialogSizeOver()
-                return@ImagePicker
-            }
-
-            val extension = FileUtil().getFileExtension(requireContext(), uri)
-            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver,  uri)
-
-            when (extension) {
-                "jpg", "jpeg" -> {
-                    loadingDialog.show()
-                    val rotatedBitmap = ImageUtil().rotateBitmapIfNeeded(requireContext(), bitmap, uri)
-                    val rotatedUri = ImageUtil().bitmapToUri(requireContext(), rotatedBitmap, extension)
-                    handleImageJpgSelected(rotatedUri, extension)
-                }
-                "png" -> {
-                    handleImagePngSelected(bitmap, extension)
-                }
-            }
-        }
+//        imagePickerUtil = ImagePicker(this) { uri ->
+//            if (FileUtil().isFileSizeValid(requireContext(), uri) == false) {
+//                setDialogSizeOver()
+//                return@ImagePicker
+//            }
+//
+//            val extension = FileUtil().getFileExtension(requireContext(), uri)
+//            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver,  uri)
+//
+//            when (extension) {
+//                "jpg", "jpeg" -> {
+//                    loadingDialog.show()
+//                    val rotatedBitmap = ImageUtil().rotateBitmapIfNeeded(requireContext(), bitmap, uri)
+//                    val rotatedUri = ImageUtil().bitmapToUri(requireContext(), rotatedBitmap, extension)
+//                    handleImageJpgSelected(rotatedUri, extension)
+//                }
+//                "png" -> {
+//                    handleImagePngSelected(bitmap, extension)
+//                }
+//            }
+//        }
 
         binding.tvBefore.setOnClickListener {
             findNavController().popBackStack()
@@ -102,11 +103,13 @@ class JoinProfileFragment : BaseFragment<FragmentJoinProfileBinding>(
         }
 
         binding.ivProfile.setOnClickListener {
-            imagePickerUtil.checkPermissionAndOpenGallery()
+//            imagePickerUtil.checkPermissionAndOpenGallery()
+            setTedImagePicker()
         }
 
         binding.tvProfileRegister.setOnClickListener {
-            imagePickerUtil.checkPermissionAndOpenGallery()
+//            imagePickerUtil.checkPermissionAndOpenGallery()
+            setTedImagePicker()
         }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
@@ -124,6 +127,30 @@ class JoinProfileFragment : BaseFragment<FragmentJoinProfileBinding>(
                 .circleCrop()
                 .into(binding.ivProfile)
         })
+    }
+
+    fun setTedImagePicker() {
+        TedImagePicker.with(requireContext()).start { uri ->
+            if (FileUtil().isFileSizeValid(requireContext(), uri) == false) {
+                setDialogSizeOver()
+                return@start
+            }
+
+            val extension = FileUtil().getFileExtension(requireContext(), uri)
+            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver,  uri)
+            when (extension) {
+                "jpg", "jpeg" -> {
+                    loadingDialog.show()
+                    val rotatedBitmap = ImageUtil().rotateBitmapIfNeeded(requireContext(), bitmap, uri)
+                    val rotatedUri = ImageUtil().bitmapToUri(requireContext(), rotatedBitmap, extension)
+                    handleImageJpgSelected(rotatedUri, extension)
+                    handleImageJpgSelected(uri, extension)
+                }
+                "png" -> {
+                    handleImagePngSelected(bitmap, extension)
+                }
+            }
+        }
     }
 
     private fun handleImageJpgSelected(uri: Uri, extension: String) {

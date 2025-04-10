@@ -41,7 +41,7 @@ interface PatentService {
     @DELETE("folder/{folder_id}")
     suspend fun deleteFolder(
         @Path("folder_id") folderId: Int
-    ): Response<BaseResponse<MessageResponse>>
+    ): Response<MessageResponse>
 
     @PATCH("folder/{folder_id}")
     suspend fun editFolder(
@@ -55,7 +55,7 @@ interface PatentService {
         @Body patentDraftDto: PatentDraftDto
     ): Response<BaseResponse<AddDraftResponse>>
 
-    @POST("folder/{folder_id}/patents")
+    @GET("folder/{folder_id}/patents")
     suspend fun getPatentList(
         @Path("folder_id") folderId: Int
     ): Response<BaseResponse<PatentListResponse>>
@@ -63,11 +63,11 @@ interface PatentService {
     @GET("draft/{patent_draft_id}")
     suspend fun getPatentContent(
         @Path("patent_draft_id") patentDraftId: Int
-    ): Response<BaseResponse<PatentContentResponse>>
+    ): Response<BaseResponse<PatentRecentResponse.PatentDraft>>
 
     @Multipart
     @POST("pdf/parse-patent")
     suspend fun getOcrContent(
         @Part file: MultipartBody.Part
-    ): Response<BaseResponse<PatentContentResponse>>
+    ): Response<BaseResponse<PatentRecentResponse.PatentDraft>>
 }
