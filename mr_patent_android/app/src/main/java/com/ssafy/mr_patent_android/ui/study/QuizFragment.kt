@@ -1,6 +1,8 @@
 package com.ssafy.mr_patent_android.ui.study
 
 import android.app.Dialog
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -40,6 +42,7 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
         val dialogBinding = DialogQuizOutBinding.inflate(layoutInflater)
         val dialog = Dialog(requireContext())
         dialog.setContentView(dialogBinding.root)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         dialog.setCancelable(false)
 
         dialogBinding.dlBtnOut.setOnClickListener {
@@ -109,7 +112,7 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
         binding.rvQuizOptions.adapter = optionAdapter
 
         binding.tvSequence.text = "${currentQuestionIndex + 1}/${quizData.questions.size}"
-        binding.linearProgressIndicator.progress = (currentQuestionIndex + 1)
+        binding.linearProgressIndicator.progress = (currentQuestionIndex )
 
         binding.button.text = if (currentQuestionIndex == quizData.questions.size - 1) "퀴즈 완료" else "다음 문제"
     }

@@ -69,6 +69,7 @@ private const val TAG = "ChatFragment"
 class ChatFragment :
     BaseFragment<FragmentChatBinding>(FragmentChatBinding::bind, R.layout.fragment_chat) {
     private lateinit var messageListAdapter: MessageListAdapter
+    private lateinit var photoAdapter: PhotoAdapter
     val viewModel: ChatViewModel by viewModels()
     var pendingUrl: String? = null
     val activityViewModel: MainViewModel by activityViewModels()
@@ -94,10 +95,7 @@ class ChatFragment :
     lateinit var sizeOverdialog: Dialog
 
 
-//    val url = "wss://j12d208.p.ssafy.io/ws/chat"
-    val url = "ws://192.168.100.130:8080/ws/chat"
-//    val url = "ws://192.168.100.130:8080/ws/chat"
-//    val url = "ws://172.20.10.3:8080/ws/chat"
+    val url = "wss://j12d208.p.ssafy.io/ws/chat"
 
     var headerList: MutableList<StompHeader> = mutableListOf()
     var modalBottomSheet: BottomSheetDialog? = null
@@ -247,9 +245,9 @@ class ChatFragment :
             UserDto(userName, userImage),
             emptyList(),
             object : MessageListAdapter.ItemClickListener {
-                override fun onItemClick() {
+                override fun onItemClick(url: String) {
                     if (expertId != -1) {
-                        initUserDialog(expertId)
+                        initUserDialog(expertId, url)
                     }
                 }
 
@@ -271,6 +269,10 @@ class ChatFragment :
                 }
             })
 
+//        messageListAdapter.setHasStableIds(true)
+
+
+
         binding.rvChat.adapter = messageListAdapter
 
 
@@ -279,9 +281,13 @@ class ChatFragment :
                 if (it.size == 2) {
                     messageListAdapter.addMessage(it[1], 1)
                     messageListAdapter.addMessage(it[0],1)
+                    binding.rvChat.post {
+                        binding.rvChat.invalidate()
+                    }
                 }
                 else{
                     messageListAdapter.addMessage(it[0],0)
+
                 }
                 viewModel.setIsSend(false)
                 if (it!=null){
@@ -382,7 +388,7 @@ class ChatFragment :
 
     }
 
-    fun initUserDialog(expertId: Int) {
+    fun initUserDialog(expertId: Int, urls: String) {
         val dialog = Dialog(requireContext())
 
         val dialogBinding = DialogChatProfileBinding.inflate(layoutInflater)
@@ -394,7 +400,7 @@ class ChatFragment :
             dialogBinding.tvPhone.text = it.expertPhone
 
             Glide.with(requireContext())
-                .load(it.userImage)
+                .load(urls)
                 .into(dialogBinding.ivProfile)
 
 
@@ -546,19 +552,20 @@ class ChatFragment :
             modalBottomSheet!!.dismiss()
         }
 
+        photoAdapter = PhotoAdapter(1, listOf()) {
+            viewModel.removeImage(it)
+            bottomBinding.rvImage.adapter?.notifyItemRemoved(it)
+        }
 
+        bottomBinding.rvImage.adapter = photoAdapter
 
         viewModel.image.observe(viewLifecycleOwner) {
             if (!it.isNullOrEmpty()) {
                 bottomBinding.btnSend.isEnabled = true
                 bottomBinding.chatBottomSheetMenu.visibility = View.GONE
                 bottomBinding.rvImage.visibility = View.VISIBLE
-                bottomBinding.rvImage.adapter = it?.let { it1 ->
-                    Log.d(TAG, "initBottomSheet: $it1")
-                    PhotoAdapter(1, it1) {
-                        viewModel.removeImage(it)
-                    }
-                }
+                photoAdapter.updateItem(it)
+
             } else {
                 bottomBinding.btnSend.isEnabled = false
                 bottomBinding.chatBottomSheetMenu.visibility = View.VISIBLE

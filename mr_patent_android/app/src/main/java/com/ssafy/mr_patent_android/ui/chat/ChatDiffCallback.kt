@@ -15,18 +15,11 @@ class ChatDiffCallback(
         return oldList[oldItemPosition].chatId == newList[newItemPosition].chatId
     }
 
-//    override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-//        val old = oldList[oldItemPosition]
-//        val new = newList[newItemPosition]
-//        return old.timestamp == new.timestamp && old.userId == new.userId && old.message == new.message
-//    }
-
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
         val old = oldList[oldItemPosition]
         val new = newList[newItemPosition]
         val result = old.chatId == new.chatId &&
                 old.isRead == new.isRead
-//        Log.d("ChatDiffCallback", "areContentsTheSame($oldItemPosition, $newItemPosition): $result")
 
         return result
     }

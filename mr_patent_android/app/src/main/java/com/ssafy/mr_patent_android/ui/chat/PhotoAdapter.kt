@@ -14,7 +14,7 @@ import com.ssafy.mr_patent_android.data.model.dto.ChatRoomDto
 import com.ssafy.mr_patent_android.databinding.ItemPhotoPreviewBinding
 import com.ssafy.mr_patent_android.databinding.ListItemChatRoomBinding
 
-class PhotoAdapter(val flag : Int=0, val photoList: List<ChatMessageDto.Files>, val itemClickListener:ItemClickListener) : RecyclerView.Adapter<PhotoAdapter.PhotoAdapter>() {
+class PhotoAdapter(val flag : Int=0, var photoList: List<ChatMessageDto.Files>, val itemClickListener:ItemClickListener) : RecyclerView.Adapter<PhotoAdapter.PhotoAdapter>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoAdapter {
         val binding =
@@ -50,5 +50,14 @@ class PhotoAdapter(val flag : Int=0, val photoList: List<ChatMessageDto.Files>, 
 
 
         }
+    }
+    fun removeItem(position: Int) {
+        (photoList as ArrayList).removeAt(position)
+        notifyItemRemoved(position)
+    }
+
+    fun updateItem(item: List<ChatMessageDto.Files>) {
+            photoList = item
+        notifyDataSetChanged()
     }
 }

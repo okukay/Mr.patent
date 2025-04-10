@@ -22,6 +22,8 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
     private val userLeaveViewModel : UserLeaveViewModel by activityViewModels()
     private val profileEditViewModel : ProfileEditViewModel by activityViewModels()
 
+    private lateinit var imageUri: Uri
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
@@ -42,7 +44,10 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
             binding.tvProfileUpdate.text = "> 프로필 보기"
         }
 
-        profileEditViewModel.getMemberInfo()
+        Glide.with(requireContext())
+            .load(sharedPreferences.getUser().userImage)
+            .circleCrop()
+            .into(binding.ivProfile)
 
         binding.tvProfileUpdate.setOnClickListener {
             when (sharedPreferences.getUser().userRole) {
@@ -97,12 +102,13 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
         }
 
         profileEditViewModel.profileImage.observe(viewLifecycleOwner, {
+            Log.d(TAG, "initObserver: profileImage: ${it}")
             if (it != null) {
                 Glide.with(requireContext())
                     .load(it)
                     .circleCrop()
                     .into(binding.ivProfile)
-            } else if (it == "") {
+            } else {
                 Glide.with(requireContext())
                     .load(R.drawable.user_profile)
                     .circleCrop()
@@ -111,6 +117,7 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
         })
 
         profileEditViewModel.memberInfo.observe(viewLifecycleOwner, {
+            Log.d(TAG, "initObserver: userImage: ${it.userImage}")
             profileEditViewModel.getImage(it.userImage)
         })
     }

@@ -47,14 +47,14 @@ class WordAllAdapter(
             binding.expandableLayout.isVisible = word.checked?:false
             binding.tBtnExpand.isChecked = word.checked?:false
 
-            binding.tBtnExpand.setOnClickListener {
+            binding.expandItem.setOnClickListener {
                 binding.tBtnExpand.isChecked = !binding.expandableLayout.isVisible
                 binding.expandableLayout.isVisible = !binding.expandableLayout.isVisible
             }
 
             setBookmarkIcon(word.is_bookmarked)
 
-            binding.tBtnBookmark.setThrottleClickListener {
+            binding.bookmarkItem.setThrottleClickListener {
                 val toggled = !word.is_bookmarked
 
                 setBookmarkIcon(toggled)
@@ -65,7 +65,7 @@ class WordAllAdapter(
                 }
             }
 
-            binding.tBtnBookmark.setThrottleClickListener {
+            binding.bookmarkItem.setThrottleClickListener {
                 itemClickListener.onItemClick(position, binding.expandableLayout.isVisible)
             }
         }

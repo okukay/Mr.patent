@@ -38,12 +38,14 @@ class FirebaseMessageService : FirebaseMessagingService() {
             val userName = message.data["userName"]
             val userImage = message.data["userImage"]
             val type = message.data["type"]
+            val userImageName = message.data["userImageName"]
             Log.i("바디: ", body.toString())
             Log.i("타이틀: ", title.toString())
             Log.i("roomId: ", roomId.toString())
             Log.i("userId: ", userId.toString())
             Log.i("userName: ", userName.toString())
             Log.i("userImage: ", userImage.toString())
+            Log.i("userImageName: ", userImageName.toString())
             Log.i("타입: ", type.toString())
             sendNotification(message)
         }
@@ -90,7 +92,7 @@ class FirebaseMessageService : FirebaseMessagingService() {
         }
 
         notificationBuilder
-            .setSmallIcon(R.mipmap.ic_launcher) // 아이콘 설정
+            .setSmallIcon(R.mipmap.ic_patent_round) // 아이콘 설정
             .setContentTitle(remoteMessage.notification?.title) // 제목
             .setContentText(remoteMessage.notification?.body) // 메시지 내용
             .setAutoCancel(true)

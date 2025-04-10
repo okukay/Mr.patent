@@ -44,6 +44,7 @@ class SharedPreferencesUtil(context: Context) {
         editor.putInt("user_id", userDto.userId)
         editor.putString("user_nickname", userDto.userName)
         editor.putInt("user_role", userDto.userRole)
+        editor.putString("user_image", userDto.userImage)
         editor.apply()
     }
 
@@ -51,11 +52,29 @@ class SharedPreferencesUtil(context: Context) {
         val user_id = preferences.getInt("user_id", -1)
         val user_nickname = preferences.getString("user_nickname", "")
         val user_role = preferences.getInt("user_role", -1)
-        return UserDto(user_id, user_nickname!!, user_role)
+        val user_image = preferences.getString("user_image", "")?:""
+        return UserDto(user_id,"" ,user_nickname!!, user_image, user_role )
     }
 
     fun getString(key:String): String? {
         return preferences.getString(key, null)
+    }
+
+    fun clearUser() {
+        val editor = preferences.edit()
+        editor.apply {
+            remove("user_id")
+            remove("user_nickname")
+            remove("user_role")
+            remove("user_image")
+            apply()
+        }
+    }
+
+    fun addUserImage(url:String){
+        val editor = preferences.edit()
+        editor.putString("user_image", url)
+        editor.apply()
     }
 
 }
