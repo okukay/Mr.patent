@@ -17,6 +17,10 @@ class StudyCardViewModel : ViewModel() {
     val wordList: LiveData<List<WordDto.Word>>
         get() = _wordList
 
+    private val _loading = MutableLiveData<Boolean>()
+    val loading: LiveData<Boolean>
+        get() = _loading
+
 
     private val _resultData = MutableLiveData<WordDto>()
     val resultData: LiveData<WordDto> get() = _resultData
@@ -39,6 +43,7 @@ class StudyCardViewModel : ViewModel() {
 
 
     fun getWordList(levelId:Int){
+        _loading.value = true
         viewModelScope.launch {
             runCatching {
                 studyService.getWords(levelId)
@@ -52,8 +57,10 @@ class StudyCardViewModel : ViewModel() {
                     {WordDto.Word(true, 1,"뜻", "단어")}
                     Log.d("StudyCardViewModel", "getWordList: ${response.errorBody()}")
                 }
+                _loading.value = false
             }.onFailure {
                 Log.d("StudyCardViewModel", "getWordList: ${it.message}")
+                _loading.value = true
             }
         }
     }

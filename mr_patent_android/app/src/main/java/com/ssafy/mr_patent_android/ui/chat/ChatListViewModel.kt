@@ -13,6 +13,7 @@ import com.ssafy.mr_patent_android.data.model.dto.UserDto
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.authService
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.chatService
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.userService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val TAG = "ChatListViewModel"
@@ -21,10 +22,16 @@ class ChatListViewModel : ViewModel() {
     val chatRoomList: LiveData<List<ChatRoomDto>>
         get() = _chatRoomList
 
+    private val _loading = MutableLiveData<Boolean>(false)
+    val loading: LiveData<Boolean>
+        get() = _loading
+
+
     fun setChatRoomList(chatRoomList: List<ChatRoomDto>) {
         _chatRoomList.value = chatRoomList
     }
     fun getChatRoomList(){
+        _loading.value = true
         viewModelScope.launch {
             runCatching {
                 chatService.getChatRoomList(sharedPreferences.getUser().userId)
@@ -39,9 +46,12 @@ class ChatListViewModel : ViewModel() {
                         }
                     }
                 }
+                delay(400)
+                _loading.value = false
             }.onFailure {
                 it.printStackTrace()
                 Log.d(TAG, "getChatRoomList: ${_chatRoomList.value}")
+                _loading.value = false
             }
         }
     }

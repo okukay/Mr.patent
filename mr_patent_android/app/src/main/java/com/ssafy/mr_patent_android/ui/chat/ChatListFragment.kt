@@ -18,6 +18,7 @@ import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPrefere
 import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.data.model.dto.ChatRoomDto
 import com.ssafy.mr_patent_android.databinding.FragmentChatListBinding
+import com.ssafy.mr_patent_android.util.LoadingDialogSkeleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,6 +33,10 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
     val activityViewModel: MainViewModel by activityViewModels()
     private var eventSource: BackgroundEventSource? = null
     lateinit var mainActivity : MainActivity
+
+    val loadingDialog by lazy {
+        LoadingDialogSkeleton(requireContext())
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -65,7 +70,6 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
     override fun onPause() {
         super.onPause()
         Log.d(TAG, "onPause: SSE 연결 종료 시도")
-
         lifecycleScope.launch(Dispatchers.IO) {
             eventSource?.close()
             eventSource = null
@@ -73,11 +77,17 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
     }
     private fun initView() {
         eventSource?.start()
-
-        viewModel.getChatRoomList()
     }
 
     private fun initObserver() {
+        viewModel.loading.observe(viewLifecycleOwner) {
+            if (it) {
+                loadingDialog.show()
+            } else {
+                loadingDialog.dismiss()
+            }
+        }
+
         var cnt=0
         activityViewModel.networkState.observe(requireActivity()){
             if (isAdded) {
@@ -85,7 +95,7 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
                     cnt+=1
                     requireActivity().findViewById<AppBarLayout>(R.id.appbar).visibility = View.VISIBLE
                 } else {
-                    if (cnt>=1) {
+                    if (cnt>=0) {
                         eventSource?.start()
 
                         viewModel.getChatRoomList()

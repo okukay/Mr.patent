@@ -17,6 +17,10 @@ class QuizViewModel : ViewModel() {
     private val _wrongAnswers = MutableLiveData<ArrayList<Int>>()
     val wrongAnswers: LiveData<ArrayList<Int>> get() = _wrongAnswers
 
+    private val _loading = MutableLiveData<Boolean>()
+    val loading: LiveData<Boolean>
+        get() = _loading
+
     fun addWrongQuiz(wordId: Int) {
         _wrongAnswers.value = (_wrongAnswers.value ?: ArrayList()).apply {
             add(wordId)
@@ -26,6 +30,7 @@ class QuizViewModel : ViewModel() {
 
 
     fun getQuiz(levelId: Int) {
+        _loading.value = true
         viewModelScope.launch {
             runCatching {
                 studyService.getQuiz(levelId)
@@ -35,41 +40,12 @@ class QuizViewModel : ViewModel() {
                         _quizData.value = it1
                     }
                 }else{
-                    _quizData.value = QuizDto( listOf(
-                        Question(1,  listOf(
-                            Question.Option(1, "답1"),
-                            Question.Option(2, "답2"),
-                            Question.Option(3, "답3"),
-                            Question.Option(4, "답4")
-                        ), 1,"문제1"),
-                        Question(2, listOf(
-                            Question.Option(1, "답1"),
-                            Question.Option(2, "답2"),
-                            Question.Option(3, "답3"),
-                            Question.Option(4, "답4")
-                        ), 2, "문제2"),
-                        Question(3, listOf(
-                            Question.Option(1, "답1"),
-                            Question.Option(2, "답2"),
-                            Question.Option(3, "답3"),
-                            Question.Option(4, "답4")
-                        ), 3, "문제3"),
-                        Question(4, listOf(
-                            Question.Option(1, "답1"),
-                            Question.Option(2, "답2"),
-                            Question.Option(3, "답3"),
-                            Question.Option(4, "답4")
-                        ), 4, "문제4"),
-                        Question(5, listOf(
-                            Question.Option(1, "답1"),
-                            Question.Option(2, "답2"),
-                            Question.Option(3, "답3"),
-                            Question.Option(4, "답4")
-                        ), 1, "문제5")
-                    ))
-                }
+                    _quizData.value = QuizDto() }
+
+                _loading.value = false
             }.onFailure {
                 // mock data
+                _loading.value = false
 
             }
         }

@@ -4,4 +4,8 @@ import com.google.gson.annotations.SerializedName
 
 data class QuizDto(
     @SerializedName("questions")val questions: List<Question>
-)
+){
+    constructor() : this(
+        questions = listOf()
+    )
+}

@@ -14,6 +14,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewpager2.widget.ViewPager2
 import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.databinding.FragmentStudyCardBinding
@@ -99,6 +100,14 @@ class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(FragmentStudyCa
     }
 
     fun initObserver(){
+        viewModel.loading.observe(viewLifecycleOwner) {
+            if (it) {
+                showLoadingDialog()
+            } else {
+                dismissLoadingDialog()
+            }
+        }
+
         viewModel.wordList.observe(viewLifecycleOwner) {
             if (it.isEmpty()) {
                 binding.tvSequence.text = "0/0"
@@ -125,6 +134,39 @@ class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(FragmentStudyCa
                 }
             }
         }
+        binding.vpStudyCard.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+                updateExternalBookmarkState()
+            }
+        })
+        binding.tBtnBookmark.setOnClickListener {
+            val current = binding.vpStudyCard.currentItem
+            if (viewModel.isLoading.value == true) return@setOnClickListener
+
+            val result = viewModel.createBookmark(current)
+            val updatedWord = viewModel.wordList.value?.getOrNull(current)
+            if (result && updatedWord != null) {
+                wordCardAdapter.updateBookmarkState(current, updatedWord)
+                updateExternalBookmarkState()
+            }
+        }
 
     }
+
+
+
+    private fun updateExternalBookmarkState() {
+        val current = binding.vpStudyCard.currentItem
+        val word = viewModel.wordList.value?.getOrNull(current)
+        word?.let {
+            val resId = if (it.is_bookmarked) {
+                R.drawable.bookmark_fill
+            } else {
+                R.drawable.bookmark_border
+            }
+            binding.tBtnBookmark.setBackgroundResource(resId)
+        }
+    }
+
 }

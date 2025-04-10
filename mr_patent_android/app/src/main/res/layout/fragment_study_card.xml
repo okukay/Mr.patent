@@ -57,6 +57,18 @@
             app:layout_constraintTop_toBottomOf="@+id/tv_sequence"
  />
 
+    <ToggleButton
+        android:id="@+id/t_btn_bookmark"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/selector_bookmark"
+        android:backgroundTint="@color/mr_red"
+        android:text=""
+        android:textOff=""
+        android:textOn=""
+        app:layout_constraintStart_toStartOf="@+id/tv_sequence"
+        app:layout_constraintTop_toBottomOf="@+id/tv_sequence" />
+
     <ImageButton
         android:id="@+id/btn_back"
         android:layout_width="50dp"

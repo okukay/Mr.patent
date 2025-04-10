@@ -54,7 +54,7 @@ class WordAllAdapter(
 
             setBookmarkIcon(word.is_bookmarked)
 
-            binding.bookmarkItem.setThrottleClickListener {
+            binding.bookmarkItem.setOnClickListener() {
                 val toggled = !word.is_bookmarked
 
                 setBookmarkIcon(toggled)
@@ -65,7 +65,7 @@ class WordAllAdapter(
                 }
             }
 
-            binding.bookmarkItem.setThrottleClickListener {
+            binding.bookmarkItem.setOnClickListener() {
                 itemClickListener.onItemClick(position, binding.expandableLayout.isVisible)
             }
         }
@@ -87,13 +87,5 @@ class WordAllAdapter(
         notifyItemChanged(position)
     }
 
-    fun View.setThrottleClickListener(interval: Long = 500L, onClick: (View) -> Unit) {
-        setOnClickListener {
-            val currentTime = System.currentTimeMillis()
-            if (currentTime - lastClickTime >= interval) {
-                lastClickTime = currentTime
-                onClick(it)
-            }
-        }
-    }
+
 }

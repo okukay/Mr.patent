@@ -44,17 +44,4 @@
         app:layout_constraintHeight_percent="0.07"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ToggleButton
-        android:id="@+id/t_btn_bookmark"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_margin="30dp"
-        android:background="@drawable/selector_bookmark"
-        android:backgroundTint="@color/mr_red"
-        android:text=""
-        android:textOff=""
-        android:textOn=""
-        app:layout_constraintEnd_toEndOf="@+id/flash_card"
-        app:layout_constraintHeight_percent="0.2"
-        app:layout_constraintTop_toBottomOf="@+id/view" />
 </androidx.constraintlayout.widget.ConstraintLayout>
