@@ -426,10 +426,22 @@ async def get_folder_reports(user_patent_folder_id: int):
     # 결과 포맷팅
     result_reports = []
     for report in reports:
+        # 더 안전한 시간 형식 처리
+        if report["similarity_created_at"]:
+            timestamp = report["similarity_created_at"].isoformat()
+            # 이미 타임존 정보가 있으면 Z로 대체, 없으면 Z 추가
+            if '+' in timestamp:
+                timestamp = timestamp.split('+')[0] + 'Z'
+            elif 'Z' not in timestamp:
+                timestamp += 'Z'
+            created_at = timestamp
+        else:
+            created_at = None
+            
         result_reports.append({
             "similarity_id": report["similarity_id"],
             "patent_draft_id": report["patent_draft_id"],
-            "created_at": report["similarity_created_at"].isoformat() + 'Z',
+            "created_at": created_at,
             "similar_patents_count": report["similar_patents_count"]
         })
     
