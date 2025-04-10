@@ -151,16 +151,33 @@
         app:layout_constraintStart_toEndOf="@id/btn_go_level_list"
         app:layout_constraintTop_toTopOf="@+id/btn_go_level_list" />
 
-            <TextView
-        android:id="@+id/tv_wrong_list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:text="^\n틀린 문제 다시보기"
-        android:gravity="center"
-        android:textColor="@color/mr_gray"
-        />
+            <LinearLayout
+                android:id="@+id/tv_wrong_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent">
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/lottieLoadingView"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:rotation="180"
+            android:scaleType="fitCenter"
+            android:layout_gravity="center"
+            app:lottie_autoPlay="true"
+            app:lottie_loop="true"
+            app:lottie_rawRes="@raw/arrow_lottie" />
 
+            <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="틀린 단어 모아보기"
+                android:layout_marginBottom="10dp"
+            android:gravity="center"
+            android:textColor="@color/mr_gray"
+            />
+            </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 

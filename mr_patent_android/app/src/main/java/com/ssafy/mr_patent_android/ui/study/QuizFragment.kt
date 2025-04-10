@@ -88,7 +88,19 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        dismissLoadingDialog()
+    }
+
     fun initObserver(){
+        quizViewModel.loading.observe(viewLifecycleOwner) {
+            if (it) {
+                showLoadingDialog()
+            } else {
+                dismissLoadingDialog()
+            }
+        }
         quizViewModel.quizData.observe(viewLifecycleOwner) { quizData ->
             Log.d(TAG, "onViewCreated: $quizData")
             currentQuestionIndex = 0

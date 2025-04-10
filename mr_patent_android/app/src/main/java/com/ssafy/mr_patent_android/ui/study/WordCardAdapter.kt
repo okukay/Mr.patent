@@ -45,42 +45,15 @@ class WordCardAdapter(
             binding.flashCardWord.cardStudyText.text = word.word_name
             binding.flashCardMean.cardStudyText.text = word.word_mean
 
-            setBookmarkIcon(word.is_bookmarked)
 
-            binding.tBtnBookmark.setThrottleClickListener {
-                val toggled = !word.is_bookmarked
 
-                setBookmarkIcon(toggled)
-
-                val success = itemClickListener.onItemClick(position)
-                if (!success) {
-                    setBookmarkIcon(word.is_bookmarked)
-                }
-            }
         }
 
-        private fun setBookmarkIcon(isBookmarked: Boolean) {
-            val resId = if (isBookmarked) {
-                R.drawable.bookmark_fill
-            } else {
-                R.drawable.bookmark_border
-            }
-            binding.tBtnBookmark.setBackgroundResource(resId)
-        }
     }
     fun updateBookmarkState(position: Int, updatedWord: WordDto.Word) {
         (word_list as MutableList)[position] = updatedWord
         notifyItemChanged(position)
     }
 
-    fun View.setThrottleClickListener(interval: Long = 500L, onClick: (View) -> Unit) {
-        setOnClickListener {
-            val currentTime = System.currentTimeMillis()
-            if (currentTime - lastClickTime >= interval) {
-                lastClickTime = currentTime
-                onClick(it)
-            }
-        }
-    }
 
 }

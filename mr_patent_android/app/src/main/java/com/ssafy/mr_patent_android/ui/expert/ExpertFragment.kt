@@ -54,6 +54,10 @@ class ExpertFragment :
                 initDialog()
             }
         }
+
+        binding.tvBack.setOnClickListener {
+            findNavController().popBackStack()
+        }
     }
 
     fun initObserver() {

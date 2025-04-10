@@ -49,6 +49,14 @@ class StudyAllFragment : BaseFragment<FragmentStudyAllBinding>(FragmentStudyAllB
     }
 
     fun initObserver() {
+        viewModel.loading.observe(viewLifecycleOwner) {
+            if (it) {
+                showLoadingDialog()
+            } else {
+                dismissLoadingDialog()
+            }
+        }
+
         viewModel.wordList.observe(viewLifecycleOwner) { list ->
             if (!::wordAllAdapter.isInitialized) {
                 wordAllAdapter = WordAllAdapter(list.toMutableList()) { position, checked ->
