@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime, timezone
 import faiss  # FAISS 라이브러리 추가
 from app.core.database import database
-from app.services.vectorizer import get_tfidf_vector
+from app.services.vectorizer import get_tfidf_vector, get_bert_vector
 from app.api.routes.similarity import safe_frombuffer, safe_cosine_similarity
 from app.services.vectorizer import safe_vector
 
@@ -182,41 +182,39 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
         logger.error(f"특허 초안을 찾을 수 없음: {patent_draft_id}")
         return None
     
-    # 2. 특허 초안 벡터 가져오기 (저장된 벡터 사용)
+    # 2. 특허 초안 벡터 가져오기 (BERT 벡터 사용으로 수정)
     try:
         # 벡터라이저 어휘 확장을 위해 텍스트 결합
         combined_text = f"{draft['patent_draft_title']} {draft['patent_draft_summary']} {draft['patent_draft_claim']}"
-        from app.services.vectorizer import update_vectorizer_vocabulary
-        update_vectorizer_vocabulary(combined_text)
         
-        title_vector = safe_frombuffer(draft["patent_draft_title_tfidf_vector"], target_dim=1000)
-        summary_vector = safe_frombuffer(draft["patent_draft_summary_tfidf_vector"], target_dim=1000)
-        claim_vector = safe_frombuffer(draft["patent_draft_claim_tfidf_vector"], target_dim=1000)
+        # BERT 벡터 사용으로 변경
+        from app.services.vectorizer import get_bert_vector
         
-        # 벡터가 없으면 텍스트에서 생성 (fallback)
-        if np.all(title_vector == 0) and draft["patent_draft_title"]:
-            from app.services.vectorizer import get_tfidf_vector
-            title_vector = get_tfidf_vector(draft["patent_draft_title"], update_vocab=True)
-        if np.all(summary_vector == 0) and draft["patent_draft_summary"]:
-            from app.services.vectorizer import get_tfidf_vector
-            summary_vector = get_tfidf_vector(draft["patent_draft_summary"], update_vocab=True)
-        if np.all(claim_vector == 0) and draft["patent_draft_claim"]:
-            from app.services.vectorizer import get_tfidf_vector
-            claim_vector = get_tfidf_vector(draft["patent_draft_claim"], update_vocab=True)
+        # 각 필드의 BERT 벡터 계산
+        title_vector = get_bert_vector(draft["patent_draft_title"] or "")
+        summary_vector = get_bert_vector(draft["patent_draft_summary"] or "")
+        claim_vector = get_bert_vector(draft["patent_draft_claim"] or "")
         
-        # 결합 벡터 생성
-        query_vector = title_vector * 0.3 + summary_vector * 0.3 + claim_vector * 0.4
+        # BERT 벡터는 768차원이지만 FAISS 인덱스는 1000차원으로 구축되어 있음
+        # 간단한 해결책: 768차원을 1000차원으로 패딩
+        title_padded = np.pad(title_vector, (0, 1000-len(title_vector)), 'constant')
+        summary_padded = np.pad(summary_vector, (0, 1000-len(summary_vector)), 'constant')
+        claim_padded = np.pad(claim_vector, (0, 1000-len(claim_vector)), 'constant')
+        
+        # 결합 벡터 생성 (가중합)
+        query_vector = title_padded * 0.3 + summary_padded * 0.3 + claim_padded * 0.4
 
         # 벡터 확인 및 로깅
-        logger.info(f"쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
-        logger.info(f"쿼리 벡터 샘플 (처음 5개 값): {query_vector[:5]}")
+        logger.info(f"BERT 쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
+        logger.info(f"BERT 쿼리 벡터 샘플 (처음 5개 값): {query_vector[:5]}")
 
         # 결합 벡터가 모두 0인지 확인
-        if np.all(query_vector == 0) or np.any(np.isnan(query_vector)):
-            logger.warning("쿼리 벡터가 모두 0이거나 NaN 값이 포함되어 있습니다. 안전한 벡터로 대체합니다.")
-            from app.services.vectorizer import safe_vector
-            query_vector = safe_vector(None, 1000)  # 랜덤 벡터 생성
-            logger.info(f"대체 벡터 생성 후 L2 노름: {np.linalg.norm(query_vector):.6f}")
+        if np.all(query_vector == 0):
+            logger.warning("BERT 쿼리 벡터가 모두 0입니다. 랜덤 벡터로 대체합니다.")
+            np.random.seed(42)  # 고정 시드값
+            query_vector = np.random.normal(0, 0.1, 1000)
+            query_vector = query_vector / np.linalg.norm(query_vector)  # 단위 벡터로 정규화
+            logger.info(f"랜덤 벡터로 대체됨: {query_vector[:5]}")
         
         # 벡터 정규화
         query_vector = query_vector.astype(np.float32)
@@ -224,13 +222,61 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
         faiss.normalize_L2(query_vector)
         
         # 정규화 후 다시 확인
-        logger.info(f"정규화 후 쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
+        logger.info(f"정규화 후 BERT 쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
         
     except Exception as e:
-        logger.error(f"특허 초안 벡터 처리 중 오류: {str(e)}")
+        logger.error(f"BERT 벡터 처리 중 오류: {str(e)}")
+        logger.error(f"TF-IDF 벡터로 폴백합니다.")
         import traceback
         logger.error(traceback.format_exc())
-        return None
+        
+        # 오류 발생 시 기존 TF-IDF 방식으로 폴백
+        try:
+            # 벡터라이저 어휘 확장
+            from app.services.vectorizer import update_vectorizer_vocabulary
+            update_vectorizer_vocabulary(combined_text)
+            
+            title_vector = safe_frombuffer(draft["patent_draft_title_tfidf_vector"], target_dim=1000)
+            summary_vector = safe_frombuffer(draft["patent_draft_summary_tfidf_vector"], target_dim=1000)
+            claim_vector = safe_frombuffer(draft["patent_draft_claim_tfidf_vector"], target_dim=1000)
+            
+            # 벡터가 없으면 텍스트에서 생성 (fallback)
+            if np.all(title_vector == 0) and draft["patent_draft_title"]:
+                from app.services.vectorizer import get_tfidf_vector
+                title_vector = get_tfidf_vector(draft["patent_draft_title"], update_vocab=True)
+            if np.all(summary_vector == 0) and draft["patent_draft_summary"]:
+                from app.services.vectorizer import get_tfidf_vector
+                summary_vector = get_tfidf_vector(draft["patent_draft_summary"], update_vocab=True)
+            if np.all(claim_vector == 0) and draft["patent_draft_claim"]:
+                from app.services.vectorizer import get_tfidf_vector
+                claim_vector = get_tfidf_vector(draft["patent_draft_claim"], update_vocab=True)
+            
+            # 결합 벡터 생성
+            query_vector = title_vector * 0.3 + summary_vector * 0.3 + claim_vector * 0.4
+
+            # 벡터 확인 및 로깅
+            logger.info(f"TF-IDF 쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
+            logger.info(f"TF-IDF 쿼리 벡터 샘플 (처음 5개 값): {query_vector[:5]}")
+
+            # 결합 벡터가 모두 0인지 확인
+            if np.all(query_vector == 0):
+                logger.warning("쿼리 벡터가 모두 0입니다. 랜덤 벡터로 대체합니다.")
+                np.random.seed(42)  # 고정 시드값
+                query_vector = np.random.normal(0, 0.1, 1000)
+                query_vector = query_vector / np.linalg.norm(query_vector)  # 단위 벡터로 정규화
+                logger.info(f"랜덤 벡터로 대체됨: {query_vector[:5]}")
+            
+            # 벡터 정규화
+            query_vector = query_vector.astype(np.float32)
+            query_vector = query_vector.reshape(1, -1)  # 2D 배열로 변환
+            faiss.normalize_L2(query_vector)
+            
+            # 정규화 후 다시 확인
+            logger.info(f"정규화 후 TF-IDF 쿼리 벡터 L2 노름: {np.linalg.norm(query_vector):.6f}")
+            
+        except Exception as e2:
+            logger.error(f"TF-IDF 폴백 처리 중 오류: {str(e2)}")
+            return None
     
     # 3. FAISS 인덱스 로드 또는 생성
     index, patent_ids, patent_details = await build_faiss_index()
@@ -353,7 +399,7 @@ async def perform_knn_search(patent_draft_id: int, k: int = 20):
     for i, (similarity, patent) in enumerate(top_results):
         # 저장할 유사도 점수 로깅
         logger.info(f"저장할 유사도 점수: 특허 ID {patent['patent_id']} - 점수: {similarity:.4f}")
-
+        
         similarity_patent_query = """
         INSERT INTO similarity_patent (
             similarity_id, patent_id, similarity_patent_score,

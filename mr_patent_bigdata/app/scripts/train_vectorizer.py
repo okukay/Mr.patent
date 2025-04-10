@@ -29,6 +29,8 @@ async def train_vectorizer_from_patents():
     query = """
     SELECT patent_id, patent_title, patent_summary, patent_claim
     FROM patent
+    ORDER BY RAND()  -- 무작위 샘플링
+    LIMIT 10000      -- 10,000개만 선택
     """
     
     patents = await database.fetch_all(query=query)

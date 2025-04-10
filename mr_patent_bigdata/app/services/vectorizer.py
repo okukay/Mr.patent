@@ -11,6 +11,7 @@ from app.core.logging import logger
 
 # 벡터라이저 저장 경로
 VECTORIZER_PATH = "models/tfidf_vectorizer.pkl"
+# VECTORIZER_PATH = "models/tfidf_vectorizer_test.pkl"
 os.makedirs(os.path.dirname(VECTORIZER_PATH), exist_ok=True)
 
 # TF-IDF 벡터라이저 초기화
