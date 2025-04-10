@@ -24,7 +24,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.08"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.09" />
+        app:layout_constraintWidth_percent="0.06" />
 
     <TextView
         android:id="@+id/tv_before"
@@ -66,10 +66,7 @@
         android:textColor="@color/black"
         android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_draft_write"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/v_title_end"
-        app:layout_constraintHorizontal_bias="0.94"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_before"
         app:layout_constraintVertical_bias="0.11" />
 

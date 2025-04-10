@@ -5,7 +5,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.networkUtil
+import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPreferences
 import com.ssafy.mr_patent_android.data.model.dto.PatentDraftDto
+import com.ssafy.mr_patent_android.data.model.dto.SimiliarityTestRequest
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.patentService
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.similiarityTestService
 import kotlinx.coroutines.launch
@@ -58,7 +60,9 @@ class SimiliarityTestViewModel : ViewModel() {
     fun similiaritytest(patentDraftId: Int) {
         viewModelScope.launch {
             runCatching {
-                similiarityTestService.similiarityTest(patentDraftId)
+                similiarityTestService.similiarityTest(patentDraftId,
+                    SimiliarityTestRequest(sharedPreferences.getAToken()!!)
+                )
             }.onSuccess {
                 if (it.isSuccessful) {
                     it.body()?.data.let { response ->

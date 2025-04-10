@@ -15,11 +15,13 @@ import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.databinding.FragmentSimiliarityTestBinding
 import com.ssafy.mr_patent_android.ui.mypage.PatentFolderDetailFragmentDirections
 import com.ssafy.mr_patent_android.ui.mypage.PatentFolderDetailViewModel
+import com.ssafy.mr_patent_android.util.LoadingDialog
 
 private const val TAG = "SimiliarityTestFragment_Mr_Patent"
 class SimiliarityTestFragment : BaseFragment<FragmentSimiliarityTestBinding>(
     FragmentSimiliarityTestBinding::bind, R.layout.fragment_similiarity_test
 ) {
+    private lateinit var loadingDialog: LoadingDialog
 
     private val args: SimiliarityTestFragmentArgs by navArgs()
 
@@ -38,6 +40,8 @@ class SimiliarityTestFragment : BaseFragment<FragmentSimiliarityTestBinding>(
     }
 
     private fun initView() {
+        loadingDialog = LoadingDialog(requireContext())
+        loadingDialog.hide()
         similiarityTestViewModel.setAddState(null)
         if (similiarityTestViewModel.testState.value == "processing") {
             similiarityTestViewModel.setTestState("waiting")

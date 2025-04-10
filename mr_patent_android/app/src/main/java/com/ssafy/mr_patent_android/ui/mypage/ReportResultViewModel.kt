@@ -1,6 +1,7 @@
 package com.ssafy.mr_patent_android.ui.mypage
 
 import android.content.Context
+import android.os.Environment
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,6 +18,7 @@ import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.similiarit
 import kotlinx.coroutines.launch
 import java.io.File
 
+private const val TAG = "ReportResultViewModel_Mr_Patent"
 class ReportResultViewModel : ViewModel() {
     private val _toastMsg = MutableLiveData<String>()
     val toastMsg: LiveData<String>
@@ -26,8 +28,8 @@ class ReportResultViewModel : ViewModel() {
     val patentContent: LiveData<PatentRecentResponse.PatentDraft>
         get() = _patentContent
 
-    private val _similiarityResult = MutableLiveData<List<SimiliarityResultResponse.Comparison>>()
-    val similiarityResult: LiveData<List<SimiliarityResultResponse.Comparison>>
+    private val _similiarityResult = MutableLiveData<List<SimiliarityResultResponse.SimiliarPatent>>()
+    val similiarityResult: LiveData<List<SimiliarityResultResponse.SimiliarPatent>>
         get() = _similiarityResult
 
     private val _mode = MutableLiveData<String>()
@@ -101,15 +103,15 @@ class ReportResultViewModel : ViewModel() {
         }
     }
 
-    fun getSimiliarityResult(userPatentId: Int) {
+    fun getSimiliarityResult(patentDraftId: Int) {
         viewModelScope.launch {
             runCatching {
-                similiarityTestService.getSimiliarityResult(userPatentId)
+                similiarityTestService.getSimiliarityResult(patentDraftId)
             }.onSuccess {
                 if (it.isSuccessful) {
                     it.body().let { response ->
-                        if (response?.data?.comparisons?.isNotEmpty() == true) {
-                            _similiarityResult.value = response.data.comparisons
+                        if (response?.data?.similiarPatents?.isNotEmpty() == true) {
+                            _similiarityResult.value = response.data.similiarPatents
                         }
                     }
                 } else {
@@ -131,7 +133,9 @@ class ReportResultViewModel : ViewModel() {
                 if (it.isSuccessful) {
                     it.body()?.let { response ->
                         val inputStream = response.byteStream()
-                        val file = File(context.filesDir, "${patentDraftTitle}.pdf")
+                        val fileName = "${patentDraftTitle}.pdf"
+                        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                        val file = File(downloadDir, fileName)
                         file.outputStream().use { output ->
                             inputStream.copyTo(output)
                         }
