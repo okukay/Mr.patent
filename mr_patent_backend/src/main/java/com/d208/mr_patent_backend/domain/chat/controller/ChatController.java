@@ -31,8 +31,6 @@ public class ChatController {
     private final S3Service s3Service;
 
 
-    @Value("${spring.firebase.key-path}") //application.yml에 정의된 값을 주입 받을 수 있게함
-    String fcmKeyPath;
 
     // 클라이언트가 "/pub/chat/message"로 메시지를 보내면 이 메서드가 처리(브로드 캐스트)
     @MessageMapping("/chat/message")
@@ -59,12 +57,15 @@ public class ChatController {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("유저 없음"));
 
+            // 유저 이미지 url
+            String imageUrl= s3Service.generatePresignedDownloadUrl(user.getUserImage());
+
             if (token != null) {
                 Map<String, String> data = new HashMap<>();
                 data.put("roomId", message.getRoomId());
                 data.put("userId", userId.toString());
                 data.put("userName", user.getUserName());
-                data.put("userImage", user.getUserImage());
+                data.put("userImage", imageUrl);
                 data.put("type", "CHAT");
 
                 if (user.getUserRole() == 1) {
@@ -81,8 +82,7 @@ public class ChatController {
                             data
                     );
                 } else {
-                    System.err.println("‼️‼️‼️‼️‼️FCM이 초기화되지 않았습니다. 메시지를 전송할 수 없습니다.");
-                    System.out.println(fcmKeyPath);
+                    System.err.println("‼️FCM이 초기화되지 않았습니다. 메시지를 전송할 수 없습니다.");
                 }
             }
         }
