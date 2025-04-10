@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -113,6 +114,14 @@ class PatentFolderFragment : BaseFragment<FragmentPatentFolderBinding>(
         val btnFolderAdd = dialogView.findViewById<Button>(R.id.btn_folder_add)
         val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
 
+        etFolderName.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
+        }
+
         btnFolderAdd.setOnClickListener {
             when (etFolderName.length()) {
                 0 -> { showCustomToast("폴더명을 입력해주세요.") }
@@ -141,6 +150,14 @@ class PatentFolderFragment : BaseFragment<FragmentPatentFolderBinding>(
 
         val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
         val btnFolderEdit = dialogView.findViewById<Button>(R.id.btn_folder_edit)
+
+        etFolderName.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
+        }
 
         btnFolderEdit.setOnClickListener {
             when (btnFolderEdit.length()) {

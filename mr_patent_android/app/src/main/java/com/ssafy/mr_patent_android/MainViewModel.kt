@@ -53,7 +53,7 @@ class MainViewModel: ViewModel() {
             }.onSuccess {
                 if (it.isSuccessful) {
                     it.body()?.data?.let { response ->
-                        sharedPreferences.addUserImage(response.url)
+                        sharedPreferences.addUserImage(response.url ?: "")
                     }
                 } else {
                     it.errorBody()?.let {

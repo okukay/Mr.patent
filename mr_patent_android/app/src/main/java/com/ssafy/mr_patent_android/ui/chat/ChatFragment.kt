@@ -133,7 +133,7 @@ class ChatFragment :
             override fun run() {
                 if (isConnected) {
                     viewModel.sendStompHeartBeat(stompClient, roomId)
-                    heartBeatHandler.postDelayed(this, 5000)
+                    heartBeatHandler.postDelayed(this, 1000)
                 }
             }
         }
@@ -265,7 +265,7 @@ class ChatFragment :
                 }
 
                 override fun onPhotoClick(url: String) {
-                    initDialog(url)
+//                    initDialog(url)
                 }
             })
 

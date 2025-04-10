@@ -22,6 +22,7 @@ import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
 import com.ssafy.mr_patent_android.R
+import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPreferences
 import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.data.model.dto.ProfileEditRequest
 import com.ssafy.mr_patent_android.databinding.FragmentProfileEditBinding
@@ -297,6 +298,12 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
         })
 
         profileEditViewModel.memberInfo.observe(viewLifecycleOwner) {
+
+            Glide.with(requireContext())
+                .load(sharedPreferences.getUser().userImage)
+                .circleCrop()
+                .into(binding.ivProfile)
+
             when (args.role) {
                 "member" -> {
                     binding.etName.setText(it.userName)

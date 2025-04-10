@@ -55,10 +55,18 @@ class PatentFolderDetailFragment : BaseFragment<FragmentPatentFolderDetailBindin
     private fun initObserver() {
         patentFolderDetailViewModel.patents.observe(viewLifecycleOwner) {
             binding.rvFolderItems.layoutManager = LinearLayoutManager(requireContext())
-            binding.rvFolderItems.adapter = PatentFolderDetailAdapter(it) { position ->
-                findNavController().navigate(
-                    PatentFolderDetailFragmentDirections.actionPatentFolderDetailFragmentToPatentContentFragment(it[position].patentDraftId, "select")
-                )
+            val previewList: MutableList<PatentListResponse.PatentSummaryInfo> = mutableListOf()
+            for (i in 0..it.size-1) {
+//                if (it[i].detailedComparisonTotalScore != 0.0) {
+                    previewList.add(it[i])
+//                }
+            }
+            if (previewList.isNotEmpty()) {
+                binding.rvFolderItems.adapter = PatentFolderDetailAdapter(previewList) { position ->
+                    findNavController().navigate(
+                        PatentFolderDetailFragmentDirections.actionPatentFolderDetailFragmentToPatentContentFragment(it[position].patentDraftId, "select")
+                    )
+                }
             }
         }
     }

@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -76,6 +77,14 @@ class PatentFolderChoiceFragment : BaseFragment<FragmentPatentFolderChoiceBindin
 
         val btnFolderAdd = dialogView.findViewById<Button>(R.id.btn_folder_add)
         val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
+
+        etFolderName.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
+        }
 
         btnFolderAdd.setOnClickListener {
             when (etFolderName.length()) {

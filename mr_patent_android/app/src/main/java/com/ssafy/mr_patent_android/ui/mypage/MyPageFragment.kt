@@ -50,6 +50,7 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
             .into(binding.ivProfile)
 
         binding.tvProfileUpdate.setOnClickListener {
+            profileEditViewModel.getMemberInfo()
             when (sharedPreferences.getUser().userRole) {
                 0 -> {
                     findNavController().navigate(MyPageFragmentDirections.actionNavFragmentMypageToProfileEditFragment(
@@ -57,11 +58,8 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
                     ))
                 }
                 1-> {
-                    if (profileEditViewModel.expertId.value != null) {
-                        findNavController().navigate(MyPageFragmentDirections.actionNavFragmentMypageToPatentAttorneyFragment2(profileEditViewModel.expertId.value!!))
-                    } else {
-                        showCustomToast("잠시 후에 다시 시도해주세요.")
-                    }
+                    findNavController().navigate(MyPageFragmentDirections.actionNavFragmentMypageToPatentAttorneyFragment2(
+                    -1))
                 }
             }
         }
@@ -100,26 +98,6 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
                 requireActivity().finish()
             }
         }
-
-        profileEditViewModel.profileImage.observe(viewLifecycleOwner, {
-            Log.d(TAG, "initObserver: profileImage: ${it}")
-            if (it != null) {
-                Glide.with(requireContext())
-                    .load(it)
-                    .circleCrop()
-                    .into(binding.ivProfile)
-            } else {
-                Glide.with(requireContext())
-                    .load(R.drawable.user_profile)
-                    .circleCrop()
-                    .into(binding.ivProfile)
-            }
-        })
-
-        profileEditViewModel.memberInfo.observe(viewLifecycleOwner, {
-            Log.d(TAG, "initObserver: userImage: ${it.userImage}")
-            profileEditViewModel.getImage(it.userImage)
-        })
     }
 
     companion object {

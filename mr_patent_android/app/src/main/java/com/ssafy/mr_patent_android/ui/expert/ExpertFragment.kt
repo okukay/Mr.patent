@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.Window
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -14,14 +15,17 @@ import com.bumptech.glide.Glide
 import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPreferences
 import com.ssafy.mr_patent_android.base.BaseFragment
+import com.ssafy.mr_patent_android.data.model.dto.UserDto
 import com.ssafy.mr_patent_android.databinding.DialogChatBinding
 import com.ssafy.mr_patent_android.databinding.FragmentExpertBinding
 import com.ssafy.mr_patent_android.ui.chat.ChatFragmentArgs
+import com.ssafy.mr_patent_android.ui.mypage.ProfileEditViewModel
 
 private const val TAG = "ExpertFragment_Mr_Patent"
 class ExpertFragment :
     BaseFragment<FragmentExpertBinding>(FragmentExpertBinding::bind, R.layout.fragment_expert) {
     val viewModel: ExpertViewModel by viewModels()
+    val profileEditViewModel : ProfileEditViewModel by activityViewModels()
     val expert_id by lazy {
         navArgs<ExpertFragmentArgs>().value.expertId
     }
@@ -41,6 +45,7 @@ class ExpertFragment :
 
     fun initView() {
         viewModel.getExpert(expert_id)
+        
         if (sharedPreferences.getUser().userRole == 1) {
             binding.btnEditProfile.visibility = View.VISIBLE
             binding.btnEditProfile.setOnClickListener {
@@ -62,37 +67,44 @@ class ExpertFragment :
 
     fun initObserver() {
         viewModel.expert.observe(viewLifecycleOwner) {
-            binding.tvName.text = it.userName
-            binding.tvIntro.text = it.expertDescription
-            binding.tvInfo.text = it.expertGetDate
-            binding.tvPhone.text = it.expertPhone
-            val address = it.expertAddress
-            if (address.contains("\\")) {
-                binding.tvAddress.text = address.substringBefore("\\").plus(" ").plus(address.substringAfter("\\"))
-            } else {
-                binding.tvAddress.text = address
-            }
+            setInfo(it)
+        }
+
+        profileEditViewModel.memberInfo.observe(viewLifecycleOwner, {
+            setInfo(it)
+        })
+    }
+
+    private fun setInfo(it: UserDto) {
+        binding.tvName.text = it.userName
+        binding.tvIntro.text = it.expertDescription
+        binding.tvInfo.text = it.expertGetDate
+        binding.tvPhone.text = it.expertPhone
+        val address = it.expertAddress
+        if (address.contains("\\")) {
+            binding.tvAddress.text = address.substringBefore("\\").plus(" ").plus(address.substringAfter("\\"))
+        } else {
+            binding.tvAddress.text = address
+        }
 
 
-            if (it.category.isNotEmpty()) {
-                it.category.forEach { category ->
-                    when (category) {
-                        "기계공학" -> binding.tvFieldMecha.visibility = View.VISIBLE
-                        "전기/전자" -> binding.tvFieldElec.visibility = View.VISIBLE
-                        "화학공학" -> binding.tvFieldChemi.visibility = View.VISIBLE
-                        "생명공학" -> binding.tvFieldLife.visibility = View.VISIBLE
-                    }
+        if (it.category.isNotEmpty()) {
+            it.category.forEach { category ->
+                when (category) {
+                    "기계공학" -> binding.tvFieldMecha.visibility = View.VISIBLE
+                    "전기/전자" -> binding.tvFieldElec.visibility = View.VISIBLE
+                    "화학공학" -> binding.tvFieldChemi.visibility = View.VISIBLE
+                    "생명공학" -> binding.tvFieldLife.visibility = View.VISIBLE
                 }
             }
-
-            Glide
-                .with(binding.root)
-                .load(it.userImage)
-                .circleCrop()
-                .placeholder(R.drawable.user_profile)
-                .into(binding.ivProfile);
-
         }
+
+        Glide
+            .with(binding.root)
+            .load(sharedPreferences.getUser().userImage)
+            .circleCrop()
+            .placeholder(R.drawable.user_profile)
+            .into(binding.ivProfile)
     }
 
     fun initDialog() {
@@ -128,7 +140,5 @@ class ExpertFragment :
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         dialog.show()
-
-
     }
 }

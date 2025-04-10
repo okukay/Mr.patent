@@ -36,6 +36,10 @@ data class UserDto(
         "","","",
         -1,"","",  mutableListOf(),"", "")
 
+    constructor(userId: Int, userName: String, userRole: Int, userImage: String):this(userId, "", userName, userRole,
+        "","","",
+        -1,"","",  mutableListOf(),userImage, "")
+
     constructor(userId: Int, userName: String, userRole: Int, expertId: Int):this(userId, "", userName, userRole,
         "","","",
         expertId,"","",  mutableListOf(),"", "")
