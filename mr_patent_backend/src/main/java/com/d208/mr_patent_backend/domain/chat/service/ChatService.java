@@ -120,11 +120,10 @@ public class ChatService {
                         "unreadCount", receiverRoom.getUnreadCount(),
                         "lastMessage", dto.getMessage(),
                         "userName" ,user.getUserName(),
-                        "userImage", user.getUserImage(),
-                        "userImageUrl", imageUrl,
+                        "userImage", imageUrl,
+                        "userImageName",user.getUserImage(),
                         "receiverId", dto.getReceiverId(),
                         "timestamp", now
-
                 ));
                 System.out.println("sse 메세지 전송 완료");
             }

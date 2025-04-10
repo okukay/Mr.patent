@@ -59,6 +59,7 @@ public class ChatController {
 
             // 유저 이미지 url
             String imageUrl= s3Service.generatePresignedDownloadUrl(user.getUserImage());
+            System.out.println(imageUrl);
 
             if (token != null) {
                 Map<String, String> data = new HashMap<>();
