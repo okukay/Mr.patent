@@ -7,14 +7,11 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.get
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.google.android.material.tabs.TabLayoutMediator
@@ -63,26 +60,25 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
         when (args.mode) {
             "select" -> {
                 binding.btnSimiliarityTest.visibility = View.GONE
-                binding.clReportItems.visibility = View.VISIBLE
+                binding.btnReportConfirm.visibility = View.VISIBLE
                 reportResultViewModel.getPatentContent(args.id)
             }
             "update" -> {
                 binding.btnSimiliarityTest.visibility = View.VISIBLE
-                binding.clReportItems.visibility = View.GONE
+                binding.btnReportConfirm.visibility = View.GONE
                 reportResultViewModel.getPatentContent(patentViewModel.patentDraftId.value!!)
             }
             "write" -> {
                 binding.btnSimiliarityTest.visibility = View.VISIBLE
-                binding.clReportItems.visibility = View.GONE
+                binding.btnReportConfirm.visibility = View.GONE
                 splitContent(null)
                 initViewPager()
             }
             "upload" -> {
                 binding.btnSimiliarityTest.visibility = View.VISIBLE
-                binding.clReportItems.visibility = View.GONE
+                binding.btnReportConfirm.visibility = View.GONE
             }
         }
-
 
         binding.tvBefore.setOnClickListener {
             when (args.mode) {
@@ -97,20 +93,18 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
         }
 
         binding.btnReportConfirm.setOnClickListener {
-            findNavController().navigate(PatentContentFragmentDirections.actionPatentContentFragmentToReportResultFragment(args.id))
+            findNavController().navigate(PatentContentFragmentDirections.actionPatentContentFragmentToReportResultFragment(args.id, reportResultViewModel.patentContent.value!!.patentDraftTitle))
         }
 
-        binding.btnFileExtraction.setOnClickListener {
-            setDialogFileExtraction()
-        }
+//        binding.btnFileExtraction.setOnClickListener {
+//            setDialogFileExtraction()
+//        }
 
         binding.btnSimiliarityTest.setOnClickListener {
             if (isFillInput()) {
-                if (similiarityTestViewModel.testState.value == "waiting") {
+                if (similiarityTestViewModel.testState.value == "waiting" || similiarityTestViewModel.testState.value == "processing") {
                     showCustomToast("현재 유사도 검사가 진행 중입니다.")
-                    findNavController().navigate(PatentContentFragmentDirections.actionPatentContentFragmentToSimiliarityTestFragment("processing"))
                 } else {
-                    loadingDialog.show()
                     setDialogSimiliarityTest()
                 }
             } else {
@@ -147,7 +141,7 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
 
         reportResultViewModel.patentContent.observe(viewLifecycleOwner, { // select, update
             if (args.mode == "select") {
-                binding.tvDraftWrite.text =  it.patentDraftTitle
+                binding.tvDraftWrite.text =  "작성한 명세서"
             }
             splitContent(it)
             initViewPager()
@@ -159,6 +153,7 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
         })
 
         similiarityTestViewModel.testState.observe(viewLifecycleOwner, {
+            Log.d(TAG, "initObserver: testState: ${it}")
             it?.let {
                 if (it == "processing" && args.mode != "select") {
                     splitContent(null)
@@ -171,32 +166,32 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
     private fun splitContent(patentDraft: PatentRecentResponse.PatentDraft?) {
         val patentTitleExp = PatentTitleDto.PatentTitleExpDto()
         reportResultViewModel.setPatentExpContents(listOf(
-//            PatentFrameDto(patentTitleExp.patentDraftTitleExp, patentDraft?.patentDraftTitle ?: getString(R.string.patentDraftTitleExp))
-//            , PatentFrameDto(patentTitleExp.patentDraftTechnicalFieldExp, patentDraft?.patentDraftTechnicalField ?: getString(R.string.patentDraftTechnicalFieldExp))
-//            , PatentFrameDto(patentTitleExp.patentDraftBackgroundExp, patentDraft?.patentDraftBackground ?: getString(R.string.patentDraftBackgroundExp))
-//            , PatentFrameDto(patentTitleExp.patentDraftProblemExp, patentDraft?.patentDraftProblem ?: getString(R.string.patentDraftProblemExp))
-//            , PatentFrameDto(patentTitleExp.patentDraftSolutionExp, patentDraft?.patentDraftSolution ?: getString(R.string.patentDraftSolutionExp))
-//            , PatentFrameDto(patentTitleExp.patentDraftEffectExp, patentDraft?.patentDraftEffect ?: getString(R.string.patentDraftEffectExp))
-//            , PatentFrameDto(patentTitleExp.patentDraftDetailedExp, patentDraft?.patentDraftDetailed ?: getString(R.string.patentDraftDetailedExp))
-            PatentFrameDto(patentTitleExp.patentDraftTitleExp, patentDraft?.patentDraftTitle ?: "")
-            , PatentFrameDto(patentTitleExp.patentDraftTechnicalFieldExp, patentDraft?.patentDraftTechnicalField ?: "")
-            , PatentFrameDto(patentTitleExp.patentDraftBackgroundExp, patentDraft?.patentDraftBackground ?: "")
-            , PatentFrameDto(patentTitleExp.patentDraftProblemExp, patentDraft?.patentDraftProblem ?: "")
-            , PatentFrameDto(patentTitleExp.patentDraftSolutionExp, patentDraft?.patentDraftSolution ?: "")
-            , PatentFrameDto(patentTitleExp.patentDraftEffectExp, patentDraft?.patentDraftEffect ?: "")
-            , PatentFrameDto(patentTitleExp.patentDraftDetailedExp, patentDraft?.patentDraftDetailed ?: "")
+            PatentFrameDto(patentTitleExp.patentDraftTitleExp, patentDraft?.patentDraftTitle ?: getString(R.string.patentDraftTitleExp))
+            , PatentFrameDto(patentTitleExp.patentDraftTechnicalFieldExp, patentDraft?.patentDraftTechnicalField ?: getString(R.string.patentDraftTechnicalFieldExp))
+            , PatentFrameDto(patentTitleExp.patentDraftBackgroundExp, patentDraft?.patentDraftBackground ?: getString(R.string.patentDraftBackgroundExp))
+            , PatentFrameDto(patentTitleExp.patentDraftProblemExp, patentDraft?.patentDraftProblem ?: getString(R.string.patentDraftProblemExp))
+            , PatentFrameDto(patentTitleExp.patentDraftSolutionExp, patentDraft?.patentDraftSolution ?: getString(R.string.patentDraftSolutionExp))
+            , PatentFrameDto(patentTitleExp.patentDraftEffectExp, patentDraft?.patentDraftEffect ?: getString(R.string.patentDraftEffectExp))
+            , PatentFrameDto(patentTitleExp.patentDraftDetailedExp, patentDraft?.patentDraftDetailed ?: getString(R.string.patentDraftDetailedExp))
+//            PatentFrameDto(patentTitleExp.patentDraftTitleExp, patentDraft?.patentDraftTitle ?: "")
+//            , PatentFrameDto(patentTitleExp.patentDraftTechnicalFieldExp, patentDraft?.patentDraftTechnicalField ?: "")
+//            , PatentFrameDto(patentTitleExp.patentDraftBackgroundExp, patentDraft?.patentDraftBackground ?: "")
+//            , PatentFrameDto(patentTitleExp.patentDraftProblemExp, patentDraft?.patentDraftProblem ?: "")
+//            , PatentFrameDto(patentTitleExp.patentDraftSolutionExp, patentDraft?.patentDraftSolution ?: "")
+//            , PatentFrameDto(patentTitleExp.patentDraftEffectExp, patentDraft?.patentDraftEffect ?: "")
+//            , PatentFrameDto(patentTitleExp.patentDraftDetailedExp, patentDraft?.patentDraftDetailed ?: "")
         ))
 
         val patentTitleClaim = PatentTitleDto.PatentTitleClaimDto()
         reportResultViewModel.setPatentClaimContents(listOf(
-            PatentFrameDto(patentTitleClaim.patentDraftClaim, patentDraft?.patentDraftClaim ?: "")
-//            PatentFrameDto(patentTitleClaim.patentDraftClaim, patentDraft?.patentDraftClaim ?: getString(R.string.patentDraftClaim))
+//            PatentFrameDto(patentTitleClaim.patentDraftClaim, patentDraft?.patentDraftClaim ?: "")
+            PatentFrameDto(patentTitleClaim.patentDraftClaim, patentDraft?.patentDraftClaim ?: getString(R.string.patentDraftClaim))
         ))
 
         val patentTitleSummary = PatentTitleDto.PatentTitleSummaryDto()
         reportResultViewModel.setPatentSummaryContents(listOf(
-            PatentFrameDto(patentTitleSummary.patentDraftSummary, patentDraft?.patentDraftSummary ?: "")
-//            PatentFrameDto(patentTitleSummary.patentDraftSummary, patentDraft?.patentDraftSummary ?: getString(R.string.patentDraftSummary))
+//            PatentFrameDto(patentTitleSummary.patentDraftSummary, patentDraft?.patentDraftSummary ?: "")
+            PatentFrameDto(patentTitleSummary.patentDraftSummary, patentDraft?.patentDraftSummary ?: getString(R.string.patentDraftSummary))
         ))
     }
 
@@ -215,6 +210,7 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
 
         vpContents.offscreenPageLimit = 3
         vpContents.adapter = ViewContentAdapter(fragmentList, requireActivity() as AppCompatActivity)
+
         val tabArray = arrayOf("발명의 설명", "청구범위", "요약서")
         TabLayoutMediator(tlContentsClassification, vpContents) { tab, position ->
             tab.text = tabArray[position]
@@ -229,8 +225,8 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
         dialogBuilder.window?.apply {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             setLayout(
-                ((context.resources.displayMetrics.widthPixels) * 0.8).toInt(),
-                ((context.resources.displayMetrics.heightPixels) * 0.2).toInt()
+                ((context.resources.displayMetrics.widthPixels) * 0.7).toInt(),
+                ((context.resources.displayMetrics.heightPixels) * 0.16).toInt()
             )
         }
         dialogBuilder.show()
@@ -239,30 +235,22 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
         val cancel = dialogView.findViewById<Button>(R.id.btn_similiarity_text_cancel)
 
         confirm.setOnClickListener {
-            val expAdapter = expFragment.binding.rvPatentContentExp
-            val childCount = expAdapter.childCount
-            val specContents = mutableListOf<String>()
-            for (i in 0 until childCount) {
-                val etExp = expAdapter[i].findViewById<EditText>(R.id.et_spec_content).text.toString()
-                specContents.add(etExp)
-            }
-
             val draftDto = PatentDraftDto(
-                specContents[0],
-                specContents[1],
-                specContents[2],
-                specContents[3],
-                specContents[4],
-                specContents[5],
-                specContents[6],
+                expFragment.getPatentExp1Contents(),
+                expFragment.getPatentExp2Contents(),
+                expFragment.getPatentExp3Contents(),
+                expFragment.getPatentExp4Contents(),
+                expFragment.getPatentExp5Contents(),
+                expFragment.getPatentExp6Contents(),
+                expFragment.getPatentExp7Contents(),
                 claimFragment.getPatentClaimContents(),
                 summaryFragment.getPatentSummaryContents(),
                 patentViewModel.folderId.value!!
             )
-            Log.d(TAG, "setDialogSimiliarityTest: ${draftDto}")
 
             similiarityTestViewModel.addDraft(patentViewModel.folderId.value!!, draftDto)
             dialogBuilder.dismiss()
+            loadingDialog.show()
         }
 
         cancel.setOnClickListener {
@@ -343,6 +331,11 @@ class PatentContentFragment : BaseFragment<FragmentPatentContentBinding>(
             showCustomToast("빈 칸을 입력해주세요.")
             return false
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        loadingDialog.dismiss()
     }
 
     companion object {

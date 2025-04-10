@@ -142,21 +142,6 @@
 
         <TextView
             android:visibility="invisible"
-            android:id="@+id/tv_file_name"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="파일명"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="@+id/iv_file_upload"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_file_size"
-            app:layout_constraintVertical_bias="0.1"/>
-
-        <TextView
-            android:visibility="invisible"
             android:id="@+id/tv_file_size"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -168,6 +153,22 @@
             app:layout_constraintStart_toStartOf="@+id/iv_file_upload"
             app:layout_constraintTop_toBottomOf="@+id/iv_pdf"
             app:layout_constraintVertical_bias="0.3" />
+
+        <TextView
+            android:visibility="invisible"
+            android:id="@+id/tv_file_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="파일명"
+            android:textSize="16sp"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_file_upload"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_file_size"
+            app:layout_constraintVertical_bias="0.1"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

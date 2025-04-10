@@ -12,7 +12,7 @@ data class PatentTitleDto(
         val patentDraftProblemExp: String = "해결하려는 과제",
         val patentDraftSolutionExp: String = "과제의 해결 수단",
         val patentDraftEffectExp: String = "발명의 효과",
-        val patentDraftDetailedExp: String ="발명을 실시하기 위한 구제적인 내용"
+        val patentDraftDetailedExp: String ="발명을 실시하기 위한 구체적인 내용"
     )
 
     data class PatentTitleClaimDto(

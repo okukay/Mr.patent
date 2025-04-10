@@ -58,6 +58,10 @@ class PatentFrameExpAdapter(
         }
     }
 
+    fun getExpContents(): List<String> {
+        return patentFrameExpList.map { it.content }
+    }
+
 
     fun expFillInput(): Boolean {
         return editTexts.all { it.text.isNotBlank() }

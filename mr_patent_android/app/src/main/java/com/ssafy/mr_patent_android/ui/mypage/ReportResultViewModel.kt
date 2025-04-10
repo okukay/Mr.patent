@@ -132,6 +132,7 @@ class ReportResultViewModel : ViewModel() {
             }.onSuccess {
                 if (it.isSuccessful) {
                     it.body()?.let { response ->
+                        Log.d(TAG, "getPdfFile: response: ${response}")
                         val inputStream = response.byteStream()
                         val fileName = "${patentDraftTitle}.pdf"
                         val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)

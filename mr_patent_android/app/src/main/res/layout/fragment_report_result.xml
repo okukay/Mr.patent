@@ -43,18 +43,32 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.12" />
 
+    <TextView
+        android:id="@+id/tv_report_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pretendard_semibold"
+        android:textColor="@color/mr_blue"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/h1_guideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_spec_report"
+        app:layout_constraintVertical_bias="0.02"
+        app:layout_constraintWidth_percent="0.9" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_fitness_result"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:padding="12dp"
         android:background="@drawable/rounded_background"
+        android:padding="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_spec_report"
-        app:layout_constraintWidth_percent="0.9"
-        app:layout_constraintVertical_bias="0.05">
+        app:layout_constraintTop_toBottomOf="@+id/tv_report_name"
+        app:layout_constraintVertical_bias="0.02"
+        app:layout_constraintWidth_percent="0.9">
 
         <TextView
             android:id="@+id/tv_fitness"
@@ -66,19 +80,19 @@
             android:textSize="16sp"
             app:layout_constraintBottom_toTopOf="@id/tv_fitness_result"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.04"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintHorizontal_bias="0.04"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tv_fitness_result"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:fontFamily="@font/pretendard_semibold"
             android:text="PASS"
             android:textColor="@color/mr_blue"
             android:textSize="18sp"
-            android:layout_marginTop="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/tv_fitness"
             app:layout_constraintTop_toBottomOf="@+id/tv_fitness" />
@@ -96,7 +110,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cl_fitness_result"
         app:layout_constraintWidth_percent="0.9"
-        app:layout_constraintHeight_percent="0.6">
+        app:layout_constraintHeight_percent="0.56">
 
         <TextView
             android:id="@+id/tv_patent_similiarity"
