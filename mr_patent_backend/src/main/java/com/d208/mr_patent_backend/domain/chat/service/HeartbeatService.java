@@ -33,14 +33,14 @@ public class HeartbeatService {
         System.out.println("ping" + Instant.now());
     }
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 2000)
     public void checkUserHeartbeats() {
         List<ChatRoom> activeRooms = chatRoomRepository.findBySessionIdIsNotNull();
         Instant now = Instant.now();
 
         for (ChatRoom room : activeRooms) {
             Instant lastHeartbeat = room.getHeartbeat();
-            if (lastHeartbeat != null && Duration.between(lastHeartbeat, now).getSeconds() > 5) {
+            if (lastHeartbeat != null && Duration.between(lastHeartbeat, now).getSeconds() > 2) {
 
                 // 상태 메시지 전송
                 Map<String, Object> statusMessage = Map.of(
