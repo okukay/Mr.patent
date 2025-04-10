@@ -45,6 +45,15 @@ class BookmarkListFragment : BaseFragment<FragmentBookmarkListBinding>(
     }
 
     fun initObserver(){
+        viewModel.loading.observe(viewLifecycleOwner) {
+            if (it) {
+                showLoadingDialog()
+            } else {
+                dismissLoadingDialog()
+            }
+        }
+
+
         viewModel.bookmarkList.observe(viewLifecycleOwner, {
             it?.let {
                 for (i in 0 until it.levels.size) {
