@@ -12,6 +12,7 @@ data class ChatRoomDto(
     @SerializedName("lastTimestamp")val lastMessageTime: String,
     @SerializedName("unreadCount")val unreadCount: Int,
     @SerializedName("receiverId") var receiverId: Int,
+    @SerializedName("userImageName")val userImageName: String="",
 ){
     constructor() : this(-1,-1,"","","","","",0,-1)
 }

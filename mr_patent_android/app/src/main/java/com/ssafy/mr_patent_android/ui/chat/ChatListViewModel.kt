@@ -32,7 +32,6 @@ class ChatListViewModel : ViewModel() {
                 if (it.isSuccessful) {
                     it.body()?.data?.let { chatRoomList ->
                         _chatRoomList.value = chatRoomList.sortedByDescending {  it.lastMessageTime }
-                        Log.d(TAG, "getChatRoomList: ${chatRoomList}")
                     }
                 }else{
                     it.errorBody()?.let { it1 ->

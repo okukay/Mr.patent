@@ -48,10 +48,15 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::b
             if(checkEmail(binding.etEmail.text.toString()) && binding.etPwd.text.length >=2){
                 viewModel.login(binding.etEmail.text.toString(), binding.etPwd.text.toString())
             }
-//            (requireActivity() as LoginActivity).navigateToMain()
 
 
         }
+
+        viewModel.toast.observe(viewLifecycleOwner, {
+            it?.let {
+                showCustomToast(it)
+            }
+        })
 
         binding.etEmail.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
             if (!hasFocus) {

@@ -42,6 +42,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(ActivityMainBinding::infl
         setContentView(binding.root)
         initNavigation()
         initConnection()
+        viewModel.getMemberInfo()
     }
 
     fun initConnection(){

@@ -35,6 +35,7 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
     }
 
     private fun initView() {
+        Log.d(TAG, "initView: ${sharedPreferences.getUser()}")
         binding.tvUserName.text = sharedPreferences.getUser().userName + "님"
 
         if (sharedPreferences.getUser().userRole == 0) {
@@ -43,7 +44,10 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
             binding.tvProfileUpdate.text = "> 프로필 보기"
         }
 
-        profileEditViewModel.getMemberInfo()
+        Glide.with(requireContext())
+            .load(sharedPreferences.getUser().userImage)
+            .circleCrop()
+            .into(binding.ivProfile)
 
         binding.tvProfileUpdate.setOnClickListener {
             when (sharedPreferences.getUser().userRole) {
@@ -89,6 +93,7 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
             if (it == "로그아웃 되었습니다.") {
                 showCustomToast(it)
                 sharedPreferences.clearToken()
+                sharedPreferences.clearUser()
                 val intent = Intent(requireContext(), LoginActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 }
@@ -97,20 +102,20 @@ class MyPageFragment : BaseFragment<FragmentMyPageBinding>(
             }
         }
 
-        profileEditViewModel.profileImage.observe(viewLifecycleOwner, {
-            Log.d(TAG, "initObserver: profileImage: ${it}")
-            if (it != null) {
-                Glide.with(requireContext())
-                    .load(it)
-                    .circleCrop()
-                    .into(binding.ivProfile)
-            } else {
-                Glide.with(requireContext())
-                    .load(R.drawable.user_profile)
-                    .circleCrop()
-                    .into(binding.ivProfile)
-            }
-        })
+//        profileEditViewModel.profileImage.observe(viewLifecycleOwner, {
+//            Log.d(TAG, "initObserver: profileImage: ${it}")
+//            if (it != null) {
+//                Glide.with(requireContext())
+//                    .load(it)
+//                    .circleCrop()
+//                    .into(binding.ivProfile)
+//            } else {
+//                Glide.with(requireContext())
+//                    .load(R.drawable.user_profile)
+//                    .circleCrop()
+//                    .into(binding.ivProfile)
+//            }
+//        })
 
         profileEditViewModel.memberInfo.observe(viewLifecycleOwner, {
             Log.d(TAG, "initObserver: userImage: ${it.userImage}")

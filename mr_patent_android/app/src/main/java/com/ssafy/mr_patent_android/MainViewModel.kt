@@ -9,7 +9,9 @@ import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.networkUtil
 import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPreferences
 import com.ssafy.mr_patent_android.data.model.dto.ChatRoomDto
 import com.ssafy.mr_patent_android.data.model.dto.FcmRequest
+import com.ssafy.mr_patent_android.data.model.dto.UserDto
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.authService
+import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.userService
 import kotlinx.coroutines.launch
 
 private const val TAG = "MainViewModel"
@@ -22,19 +24,44 @@ class MainViewModel: ViewModel() {
         _networkState.postValue(state)
     }
 
-    fun sendFcmToken(token: String) {
+    fun getMemberInfo() {
         viewModelScope.launch {
             runCatching {
-                authService.sendFcmToken(FcmRequest(token, sharedPreferences.getUser().userId))
+                userService.getMember()
             }.onSuccess {
                 if (it.isSuccessful) {
+                    it.body()?.data?.let { response ->
+                        response.userImage?.let {
+                            getImage(it)
+                        }
+                    }
                 } else {
                     it.errorBody()?.let {
-                        networkUtil.getErrorResponse(it)
+                            it1 -> networkUtil.getErrorResponse(it1)
                     }
                 }
             }.onFailure {
-                Log.d(TAG, "sendFcmToken: $it")
+                it.printStackTrace()
+            }
+        }
+    }
+
+    fun getImage(fileName: String) {
+        viewModelScope.launch {
+            runCatching {
+                userService.getImage(fileName)
+            }.onSuccess {
+                if (it.isSuccessful) {
+                    it.body()?.data?.let { response ->
+                        sharedPreferences.addUserImage(response.url)
+                    }
+                } else {
+                    it.errorBody()?.let {
+                            it1 -> networkUtil.getErrorResponse(it1)
+                    }
+                }
+            }.onFailure {
+                it.printStackTrace()
             }
         }
     }

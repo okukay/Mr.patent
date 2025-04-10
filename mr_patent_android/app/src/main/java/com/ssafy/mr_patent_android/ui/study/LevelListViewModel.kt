@@ -17,7 +17,18 @@ class LevelListViewModel : ViewModel() {
     val levelList: LiveData<LevelDto?>
         get() = _levelList
 
+
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean>
+        get() = _isLoading
+
+    fun setLoading(isLoading: Boolean) {
+        _isLoading.value = isLoading
+    }
+
+
     fun getLevels() {
+        _isLoading.value=true
         viewModelScope.launch {
             runCatching {
                 studyService.getLevels()
@@ -33,13 +44,16 @@ class LevelListViewModel : ViewModel() {
                             count = 0
                         )
                         _levelList.value = LevelDto(updatedLevels)
+                        _isLoading.value=false
                     }
 
 
                 } else {
+                    _isLoading.value=false
                     Log.e("LevelListViewModel", "getLevels: ${response.errorBody()}")
                 }
             }.onFailure {
+                _isLoading.value=false
                 Log.e("LevelListViewModel", "getLevels: ${it.message}")
             }
         }

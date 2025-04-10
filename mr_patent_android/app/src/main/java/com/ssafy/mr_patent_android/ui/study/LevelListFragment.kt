@@ -50,6 +50,14 @@ class LevelListFragment : BaseFragment<FragmentLevelListBinding>(FragmentLevelLi
                 }
             }
         })
+
+//        viewModel.isLoading.observe(viewLifecycleOwner, {
+//            if (it) {
+//                showLoadingDialog()
+//            } else {
+//                dismissLoadingDialog()
+//            }
+//        })
     }
 
     fun setLevelCard(level: LevelDto.Level, index: Int ){
@@ -103,6 +111,11 @@ class LevelListFragment : BaseFragment<FragmentLevelListBinding>(FragmentLevelLi
                 }
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.setLoading(false)
     }
 
 }

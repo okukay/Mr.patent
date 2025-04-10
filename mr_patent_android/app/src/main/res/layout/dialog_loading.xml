@@ -5,21 +5,15 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="24dp"
-    android:background="@drawable/bg_rounded_dialog">
+    android:padding="24dp">
 
-    <com.github.ybq.android.spinkit.SpinKitView
-        android:id="@+id/progressBar"
-        android:layout_width="65dp"
-        android:layout_height="65dp"
-        app:SpinKit_Color="@android:color/white"
-        app:SpinKit_Style="Circle" />
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottieLoadingView"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        app:lottie_rawRes="@raw/loading_all" />
 
-    <TextView
-        android:layout_marginTop="12dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="로딩중···"
-        android:textColor="@android:color/white"
-        android:textSize="16sp" />
 </LinearLayout>

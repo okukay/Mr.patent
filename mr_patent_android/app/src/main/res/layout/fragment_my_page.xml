@@ -11,6 +11,8 @@
         android:layout_width="80dp"
         android:layout_height="0dp"
         android:background="@drawable/circle_shape"
+        android:clipToOutline="true"
+        android:backgroundTint="@color/white"
         app:layout_constraintBottom_toBottomOf="@+id/v_line_1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.07"

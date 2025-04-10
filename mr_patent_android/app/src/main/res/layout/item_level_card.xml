@@ -17,7 +17,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:text="Level 1"
+            android:text=""
             android:textColor="#1E54BC"
             android:paddingHorizontal="5dp"
             android:background="@drawable/rounded_background"
