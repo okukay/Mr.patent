@@ -25,6 +25,8 @@ public class FcmService {
         try {
             String response = FirebaseMessaging.getInstance().send(message); //Firebase 서버에 메시지를 전송
             System.out.println("FCM 메시지 전송 성공: " + response);
+            System.out.println(");
+
         } catch (FirebaseMessagingException e) {
             System.out.println("FCM 메시지 전송 실패: " + e.getMessage());
             e.printStackTrace();
