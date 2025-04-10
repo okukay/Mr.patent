@@ -5,6 +5,7 @@ import torch
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from typing import List, Dict, Any, Tuple
 from transformers import AutoTokenizer, AutoModel
+from konlpy.tag import Okt  # 한국어 토큰화기
 
 from app.core.logging import logger
 
@@ -19,6 +20,18 @@ tfidf_vectorizer = TfidfVectorizer(max_features=1000)
 tokenizer = None
 model = None
 BERT_LOADED = False
+
+# 토큰화 함수 정의
+def tokenize_korean(text):
+    okt = Okt()
+    return okt.morphs(text)
+
+# TF-IDF 벡터라이저 초기화 (토큰화기 지정)
+tfidf_vectorizer = TfidfVectorizer(
+    max_features=1000,
+    tokenizer=tokenize_korean,
+    analyzer='word'
+)
 
 def load_bert_model():
     """KLUE BERT 모델 로드"""

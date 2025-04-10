@@ -42,30 +42,30 @@ async def startup():
     await database.connect()
     logger.info("데이터베이스 연결 성공")
 
-    # 벡터라이저 상태 확인
-    from app.services.vectorizer import check_vectorizer_status, train_and_save_vectorizer
-    status = check_vectorizer_status()
+    # # 벡터라이저 상태 확인
+    # from app.services.vectorizer import check_vectorizer_status, train_and_save_vectorizer
+    # status = check_vectorizer_status()
     
-    # 문제가 있으면 긴급 재학습
-    if status.startswith("empty") or status.startswith("not"):
-        logger.warning("벡터라이저 문제 감지: 긴급 재학습 시작...")
+    # # 문제가 있으면 긴급 재학습
+    # if status.startswith("empty") or status.startswith("not"):
+    #     logger.warning("벡터라이저 문제 감지: 긴급 재학습 시작...")
         
-        # 데이터베이스에서 100개 샘플 추출해 학습
-        sample_query = """
-        SELECT patent_title, patent_summary, patent_claim
-        FROM patent LIMIT 100
-        """
-        samples = await database.fetch_all(query=sample_query)
+    #     # 데이터베이스에서 100개 샘플 추출해 학습
+    #     sample_query = """
+    #     SELECT patent_title, patent_summary, patent_claim
+    #     FROM patent LIMIT 100
+    #     """
+    #     samples = await database.fetch_all(query=sample_query)
         
-        texts = []
-        for s in samples:
-            combined = f"{s['patent_title']} {s['patent_summary']} {s['patent_claim']}"
-            if combined.strip():
-                texts.append(combined)
+    #     texts = []
+    #     for s in samples:
+    #         combined = f"{s['patent_title']} {s['patent_summary']} {s['patent_claim']}"
+    #         if combined.strip():
+    #             texts.append(combined)
         
-        if texts:
-            train_and_save_vectorizer(texts)
-            logger.info("벡터라이저 긴급 재학습 완료")
+    #     if texts:
+    #         train_and_save_vectorizer(texts)
+    #         logger.info("벡터라이저 긴급 재학습 완료")
 
 @app.on_event("shutdown")
 async def shutdown():
