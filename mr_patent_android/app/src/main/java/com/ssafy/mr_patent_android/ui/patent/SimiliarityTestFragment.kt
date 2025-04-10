@@ -15,6 +15,7 @@ import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.databinding.FragmentSimiliarityTestBinding
 import com.ssafy.mr_patent_android.ui.mypage.PatentFolderDetailFragmentDirections
 import com.ssafy.mr_patent_android.ui.mypage.PatentFolderDetailViewModel
+import com.ssafy.mr_patent_android.ui.mypage.ReportResultViewModel
 import com.ssafy.mr_patent_android.util.LoadingDialog
 
 private const val TAG = "SimiliarityTestFragment_Mr_Patent"
@@ -28,6 +29,7 @@ class SimiliarityTestFragment : BaseFragment<FragmentSimiliarityTestBinding>(
     private val similiarityTestViewModel : SimiliarityTestViewModel by activityViewModels()
     private val patentViewModel : PatentViewModel by activityViewModels()
     private val patentFolderDetailViewModel : PatentFolderDetailViewModel by activityViewModels()
+    private val reportResultViewModel : ReportResultViewModel by activityViewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +39,7 @@ class SimiliarityTestFragment : BaseFragment<FragmentSimiliarityTestBinding>(
         super.onViewCreated(view, savedInstanceState)
 
         initView()
+        initObserver()
     }
 
     private fun initView() {
@@ -65,6 +68,12 @@ class SimiliarityTestFragment : BaseFragment<FragmentSimiliarityTestBinding>(
                 backstack()
             }
         })
+    }
+
+    private fun initObserver() {
+        reportResultViewModel.setPatentSummaryContents(mutableListOf())
+        reportResultViewModel.setPatentExpContents(mutableListOf())
+        reportResultViewModel.setPatentClaimContents(mutableListOf())
     }
 
     private fun backstack() {

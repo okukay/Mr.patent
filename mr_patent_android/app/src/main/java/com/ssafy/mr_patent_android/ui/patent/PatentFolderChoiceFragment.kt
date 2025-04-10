@@ -4,12 +4,15 @@ import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -77,6 +80,7 @@ class PatentFolderChoiceFragment : BaseFragment<FragmentPatentFolderChoiceBindin
 
         val btnFolderAdd = dialogView.findViewById<Button>(R.id.btn_folder_add)
         val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
+        val tvLengthLimit = dialogView.findViewById<TextView>(R.id.tv_length_limit)
 
         etFolderName.setOnKeyListener { _, keyCode, event ->
             if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
@@ -86,14 +90,22 @@ class PatentFolderChoiceFragment : BaseFragment<FragmentPatentFolderChoiceBindin
             }
         }
 
+        etFolderName.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                val textLength = s?.length ?: 0
+                tvLengthLimit.setText("$textLength/20")
+            }
+        })
+
         btnFolderAdd.setOnClickListener {
-            when (etFolderName.length()) {
-                0 -> { showCustomToast("폴더명을 입력해주세요.") }
-                in 1..30 -> {
-                    patentViewModel.addFolder(etFolderName.text.toString())
-                    dialogBuilder.dismiss()
-                }
-                else -> { showCustomToast("폴더 이름은 30자 까지 가능합니다.") }
+            if (etFolderName.text.isBlank()) {
+                showCustomToast("폴더명을 입력해주세요.")
+            } else {
+                patentViewModel.addFolder(etFolderName.text.toString())
+                dialogBuilder.dismiss()
             }
         }
     }

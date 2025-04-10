@@ -88,9 +88,9 @@ class ExpertFragment :
         }
 
 
-        if (it.category.isNotEmpty()) {
-            it.category.forEach { category ->
-                when (category) {
+        if (it.expertCategory.isNotEmpty()) {
+            it.expertCategory.forEach {
+                when (it.categoryName) {
                     "기계공학" -> binding.tvFieldMecha.visibility = View.VISIBLE
                     "전기/전자" -> binding.tvFieldElec.visibility = View.VISIBLE
                     "화학공학" -> binding.tvFieldChemi.visibility = View.VISIBLE

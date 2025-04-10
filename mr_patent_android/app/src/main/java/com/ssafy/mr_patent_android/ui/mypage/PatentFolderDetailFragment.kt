@@ -57,9 +57,9 @@ class PatentFolderDetailFragment : BaseFragment<FragmentPatentFolderDetailBindin
             binding.rvFolderItems.layoutManager = LinearLayoutManager(requireContext())
             val previewList: MutableList<PatentListResponse.PatentSummaryInfo> = mutableListOf()
             for (i in 0..it.size-1) {
-//                if (it[i].detailedComparisonTotalScore != 0.0) {
+                if (it[i].detailedComparisonTotalScore != 0.0) {
                     previewList.add(it[i])
-//                }
+                }
             }
             if (previewList.isNotEmpty()) {
                 binding.rvFolderItems.adapter = PatentFolderDetailAdapter(previewList) { position ->

@@ -39,6 +39,7 @@ class ReportResultFragment : BaseFragment<FragmentReportResultBinding>(
 
     private fun initView() {
         reportResultViewModel.getFitnessResult(args.id)
+        binding.tvReportName.text = args.name
 
         binding.tvBefore.setOnClickListener {
             findNavController().popBackStack()
@@ -84,6 +85,8 @@ class ReportResultFragment : BaseFragment<FragmentReportResultBinding>(
         }
 
         reportResultViewModel.similiarityResult.observe(viewLifecycleOwner) { // 적합도 결과 PASS
+            Log.d(TAG, "initObserver: 유사도 나와라: ${it}")
+            binding.rvSimiliarityResultPass.layoutManager = LinearLayoutManager(requireContext())
             binding.rvSimiliarityResultPass.adapter = ReportResultAdapter(it)
         }
     }

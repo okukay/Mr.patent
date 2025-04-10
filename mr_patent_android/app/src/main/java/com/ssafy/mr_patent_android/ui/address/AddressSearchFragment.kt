@@ -1,6 +1,7 @@
 package com.ssafy.mr_patent_android.ui.address
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.View
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -50,6 +51,14 @@ class AddressSearchFragment : BaseFragment<FragmentAddressSearchBinding>(
 
             val searchText = binding.etAddressSearch.text.toString()
             search(searchText)
+        }
+
+        binding.etAddressSearch.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
         }
     }
 

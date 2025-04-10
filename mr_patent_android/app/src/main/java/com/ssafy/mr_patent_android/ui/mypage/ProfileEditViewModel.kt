@@ -194,7 +194,9 @@ class ProfileEditViewModel : ViewModel() {
                 if (it.isSuccessful) {
                     it.body()?.data?.let { response ->
                         _toastMsg.value = response.message
-                        getImage(profileEditRequest.userImage ?: sharedPreferences.getUser().userImage)
+                        profileEditRequest.userImage?.let { newImage ->
+                            getImage(newImage)
+                        }
                         if (response.message == "회원정보가 성공적으로 수정되었습니다.") {
                             getMemberInfo()
                         }
