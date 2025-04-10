@@ -110,7 +110,11 @@ public class ChatService {
                 Expert expert = expertRepository.findByUser_UserId(dto.getUserId()); //메세지 보낸userId로 expert 인지 확인
                 Integer expertId = expert != null ? expert.getExpertId() : -1; // 맞으면 expertId 추출 아니면 null
 
-                String imageUrl= s3Service.generatePresignedDownloadUrl(user.getUserImage());
+
+                String imageUrl = null;
+                if (user.getUserImage() != null && !user.getUserImage().isBlank()) {
+                    imageUrl = s3Service.generatePresignedDownloadUrl(user.getUserImage());
+                }
 
                 // SSE 전송 로직 추가
                 sseService.sendToUser(dto.getReceiverId(), Map.of(
@@ -126,6 +130,7 @@ public class ChatService {
                         "timestamp", now
                 ));
                 System.out.println("sse 메세지 전송 완료");
+                System.out.println(imageUrl);
             }
         }
         return ChatMessageDto.builder()

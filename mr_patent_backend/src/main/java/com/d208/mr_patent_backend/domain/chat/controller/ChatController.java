@@ -57,9 +57,11 @@ public class ChatController {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("유저 없음"));
 
-            // 유저 이미지 url
-            String imageUrl= s3Service.generatePresignedDownloadUrl(user.getUserImage());
-            System.out.println(imageUrl);
+
+            String imageUrl = null;
+            if (user.getUserImage() != null && !user.getUserImage().isBlank()) {
+                imageUrl = s3Service.generatePresignedDownloadUrl(user.getUserImage());
+            }
 
             if (token != null) {
                 Map<String, String> data = new HashMap<>();
@@ -74,11 +76,12 @@ public class ChatController {
                 }
 
                 System.out.println("초기화 여부" + FirebaseConfig.isFirebaseInitialized());
+                System.out.println(imageUrl);
 
                 if (FirebaseConfig.isFirebaseInitialized()) {
                     fcmService.sendMessageToToken(
                             token,
-                            "새 메시지 도착!",
+                            user.getUserName()+ " 님이 메시지를 보냈습니다!",
                             message.getMessage(),
                             data
                     );
