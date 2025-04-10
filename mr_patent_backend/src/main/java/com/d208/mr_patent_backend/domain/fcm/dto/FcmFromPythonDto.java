@@ -11,5 +11,5 @@ public class FcmFromPythonDto {
         private Integer userId;
         private String title;
         private String body;
-        private Map<String, String> data;
+        private Map<String, Object> data;
 }
