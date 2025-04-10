@@ -160,13 +160,38 @@ async def get_draft_owner(patent_draft_id: int) -> str:
     WHERE pd.patent_draft_id = :patent_draft_id
     """
     
-    result = await database.fetch_one(
-        query=query,
-        values={"patent_draft_id": patent_draft_id}
-    )
+    try:
+        result = await database.fetch_one(
+            query=query,
+            values={"patent_draft_id": patent_draft_id}
+        )
+        
+        if result and "user_id" in result:
+            # 데이터베이스에서 조회한 실제 사용자 ID 반환 (문자열로 변환)
+            return str(result["user_id"])
+        
+        logger.error(f"특허 초안 ID {patent_draft_id}의 소유자를 찾을 수 없습니다.")
+        return None  # 또는 기본값을 반환하고 싶다면 적절한 값 지정
     
-    # return result["user_id"] if result else None
-    return 1 # 테스트 목적으로 기본값 사용
+    except Exception as e:
+        logger.error(f"특허 초안 소유자 조회 중 오류 발생: {str(e)}")
+        return None
+# async def get_draft_owner(patent_draft_id: int) -> str:
+#     """특허 초안 소유자의 사용자 ID를 조회합니다."""
+#     query = """
+#     SELECT pd.user_patent_folder_id, upf.user_id 
+#     FROM patent_draft pd
+#     JOIN user_patent_folder upf ON pd.user_patent_folder_id = upf.user_patent_folder_id
+#     WHERE pd.patent_draft_id = :patent_draft_id
+#     """
+    
+#     result = await database.fetch_one(
+#         query=query,
+#         values={"patent_draft_id": patent_draft_id}
+#     )
+    
+#     return result["user_id"] if result else None
+#     # return 1 # 테스트 목적으로 기본값 사용
 
 # 특허 초안 제목 조회 함수
 async def get_draft_title(patent_draft_id: int) -> str:
