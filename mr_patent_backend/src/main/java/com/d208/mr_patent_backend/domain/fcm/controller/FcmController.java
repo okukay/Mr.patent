@@ -42,6 +42,9 @@ public class FcmController {
                 .map(FcmToken::getToken)
                 .orElseThrow(() -> new RuntimeException("해당 유저의 FCM 토큰이 존재하지 않습니다."));
 
+        System.out.println("토큰 : " + targetToken);
+
+
         // 💬 Map<String, Object> → Map<String, String> 변환
         Map<String, String> stringDataMap = new HashMap<>();
         if (request.getData() != null) {
@@ -56,7 +59,13 @@ public class FcmController {
                 body,
                 stringDataMap
         );
-
         return ResponseEntity.ok("✅ FCM 토큰 발송 완료");
+    }
+
+    @Operation(summary = "FCM 토큰 삭제")
+    @DeleteMapping("/token/delete/{userId}")
+    public ResponseEntity<Void> deleteFcmToken(@PathVariable Integer userId) {
+        fcmTokenService.deleteFcmToken(userId);
+        return ResponseEntity.ok().build();
     }
 }
