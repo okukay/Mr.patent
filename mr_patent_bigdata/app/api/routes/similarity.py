@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -9,6 +9,7 @@ import traceback
 import logging
 import httpx
 import asyncio
+from pydantic import BaseModel
 
 from app.core.database import database
 from app.services.vectorizer import get_tfidf_vector, get_bert_vector
@@ -17,6 +18,10 @@ from app.services.kipris import get_patent_public_info, download_patent_pdf
 router = APIRouter(prefix="/fastapi", tags=["similarity"])
 
 logger = logging.getLogger(__name__)
+
+# 사용자 토큰을 받을 수 있도록 요청 모델 추가
+class SimilarityCheckRequest(BaseModel):
+    user_token: Optional[str] = None  # 사용자 인증 토큰
 
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""
@@ -105,12 +110,12 @@ def safe_cosine_similarity(a, b):
         # 기타 오류 발생 시 0 반환
         return 0.0
 
-# FCM 알림 전송 함수 추가
-async def send_fcm_notification(user_id: str, title: str, body: str, data: Dict = None):
+# FCM 알림 전송 함수 수정 - 토큰 사용
+async def send_fcm_notification(user_id: str, title: str, body: str, data: Dict = None, user_token: str = None):
     """FCM을 통해 알림을 전송합니다."""
     try:
         # FCM 서버 URL (Spring 서버 API)
-        fcm_url = "http://backend:8080/api/fcm/token/python"
+        fcm_url = "http://j12d208.p.ssafy.io:8080/api/fcm/token/python"
         
         # FCM 메시지 구성
         fcm_message = {
@@ -120,9 +125,19 @@ async def send_fcm_notification(user_id: str, title: str, body: str, data: Dict 
             "data": data or {}
         }
         
-        # Spring 백엔드로 FCM 요청 전송
+        # 헤더 설정 (사용자 토큰 포함)
+        headers = {}
+        if user_token:
+            headers["Authorization"] = f"Bearer {user_token}"
+        
+        # Spring 백엔드로 FCM 요청 전송 (헤더 추가)
         async with httpx.AsyncClient() as client:
-            response = await client.post(fcm_url, json=fcm_message, timeout=10.0)
+            response = await client.post(
+                fcm_url, 
+                json=fcm_message, 
+                headers=headers,  # 인증 헤더 추가
+                timeout=10.0
+            )
             
             if response.status_code == 200:
                 logger.info(f"FCM 알림 전송 성공: {user_id}")
@@ -163,7 +178,7 @@ async def get_draft_title(patent_draft_id: int) -> str:
     
     result = await database.fetch_one(
         query=query,
-        values={"draft_id": patent_draft_id}  # 이 부분 수정: patent_draft_id → draft_id
+        values={"draft_id": patent_draft_id}
     )
     
     return result["patent_draft_title"] if result else "특허 초안"
@@ -219,7 +234,7 @@ async def update_task_status(task_id: str, status: str, error_message: str = Non
     )
 
 @router.post("/draft/{patent_draft_id}/similarity-check", response_model=Dict[str, Any])
-async def run_similarity_check(patent_draft_id: int, background_tasks: BackgroundTasks):
+async def run_similarity_check(patent_draft_id: int, request: SimilarityCheckRequest, background_tasks: BackgroundTasks):
     """특허 초안의 적합도 검사, 유사도 분석, 상세 비교를 비동기적으로 수행합니다."""
     try:
         # 특허 초안 존재 확인
@@ -248,7 +263,8 @@ async def run_similarity_check(patent_draft_id: int, background_tasks: Backgroun
         background_tasks.add_task(
             process_similarity_check,
             patent_draft_id=patent_draft_id,
-            task_id=task_id
+            task_id=task_id,
+            user_token=request.user_token  # 사용자 토큰 전달
         )
         
         return {
@@ -274,8 +290,8 @@ async def run_similarity_check(patent_draft_id: int, background_tasks: Backgroun
             }
         )
 
-# 백그라운드 작업 처리 함수 추가
-async def process_similarity_check(patent_draft_id: int, task_id: str):
+# 백그라운드 작업 처리 함수 수정 - 사용자 토큰 추가
+async def process_similarity_check(patent_draft_id: int, task_id: str, user_token: str = None):
     """백그라운드에서 유사도 검사 전체 프로세스를 수행합니다."""
     try:
         # 특허 초안 정보 조회
@@ -318,7 +334,8 @@ async def process_similarity_check(patent_draft_id: int, task_id: str):
                     data={
                         "patent_draft_id": patent_draft_id,
                         "error": "similarity_search_failed"
-                    }
+                    },
+                    user_token=user_token  # 사용자 토큰 전달
                 )
             return
         
@@ -333,7 +350,7 @@ async def process_similarity_check(patent_draft_id: int, task_id: str):
             await perform_detailed_comparison(patent_draft_id, draft, top_results, now)
         await update_task_status(task_id, "completed")
         
-        # 4. FCM 알림 전송
+        # 4. FCM 알림 전송 (사용자 토큰 추가)
         user_id = await get_draft_owner(patent_draft_id)
         draft_title = await get_draft_title(patent_draft_id)
         
@@ -346,7 +363,8 @@ async def process_similarity_check(patent_draft_id: int, task_id: str):
                     "patent_draft_id": patent_draft_id,
                     "similarity_id": similarity_result["similarity_id"],
                     "notification_type": "similarity_completed"
-                }
+                },
+                user_token=user_token  # 사용자 토큰 전달
             )
         
         logger.info(f"유사도 검사 전체 프로세스 완료: 특허 초안 ID {patent_draft_id}")
@@ -356,7 +374,7 @@ async def process_similarity_check(patent_draft_id: int, task_id: str):
         logger.error(traceback.format_exc())
         await update_task_status(task_id, "failed", str(e))
         
-        # 오류 발생 시에도 FCM 알림
+        # 오류 발생 시에도 FCM 알림 전송 (사용자 토큰 추가)
         user_id = await get_draft_owner(patent_draft_id)
         if user_id:
             await send_fcm_notification(
@@ -366,7 +384,8 @@ async def process_similarity_check(patent_draft_id: int, task_id: str):
                 data={
                     "patent_draft_id": patent_draft_id,
                     "error": "process_failed"
-                }
+                },
+                user_token=user_token  # 사용자 토큰 전달
             )
 
 # 작업 상태 조회 API 추가
