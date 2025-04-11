@@ -15,7 +15,7 @@
         app:layout_constraintHeight_percent="0.08"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.09"/>
+        app:layout_constraintWidth_percent="0.09" />
 
     <View
         android:id="@+id/v_title_end"
@@ -24,7 +24,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.08"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.09" />
+        app:layout_constraintWidth_percent="0.06" />
 
     <TextView
         android:id="@+id/tv_before"
@@ -37,23 +37,23 @@
         android:textColor="@color/mr_blue"
         android:textSize="20sp"
         app:layout_constraintBottom_toTopOf="@+id/tv_draft_write"
-        app:layout_constraintStart_toStartOf="@+id/tv_draft_write"
+        app:layout_constraintStart_toEndOf="@+id/v_title"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.6" />
 
     <TextView
         android:id="@+id/tv_draft_write"
         style="@style/customTitleFontStyle"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:maxLines="2"
         android:text="초안 작성"
         android:textColor="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/v_title_end"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/v_title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.1"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/v_title"
         app:layout_constraintVertical_bias="0.02" />
 
@@ -66,61 +66,44 @@
         android:textColor="@color/black"
         android:textSize="13sp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_draft_write"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/v_title_end"
-        app:layout_constraintHorizontal_bias="0.94"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_before"
-        app:layout_constraintVertical_bias="0.11" />
+        app:layout_constraintVertical_bias="0.0" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/cl_report_items"
-        android:layout_width="0dp"
+    <Button
+        android:visibility="gone"
+        android:id="@+id/btn_report_confirm"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_draft_write"
-        app:layout_constraintWidth_percent="0.9">
+        android:backgroundTint="@color/mr_blue"
+        android:text="리포트\n확인"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_draft_write"
+        app:layout_constraintEnd_toStartOf="@+id/v_title_end"
+        app:layout_constraintTop_toBottomOf="@+id/tv_before" />
 
-        <Button
-            android:id="@+id/btn_report_confirm"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/mr_blue"
-            android:text="리포트 확인하기"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="0.55" />
-
-        <Button
-            android:id="@+id/btn_file_extraction"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/mr_gray_light"
-            android:text="파일 추출하기"
-            android:textColor="@color/black"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="1"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="0.55" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
+<!--        <Button-->
+<!--            android:id="@+id/btn_file_extraction"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:backgroundTint="@color/mr_gray_light"-->
+<!--            android:text="파일 추출하기"-->
+<!--            android:textColor="@color/black"-->
+<!--            app:layout_constraintBottom_toBottomOf="parent"-->
+<!--            app:layout_constraintEnd_toEndOf="parent"-->
+<!--            app:layout_constraintHorizontal_bias="1"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toTopOf="parent"-->
+<!--            app:layout_constraintWidth_percent="0.55" />-->
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/ll_contents"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginVertical="8dp"
+        android:layout_marginTop="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cl_report_items">
+        app:layout_constraintTop_toBottomOf="@+id/tv_draft_write">
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tl_contents_classificaton"

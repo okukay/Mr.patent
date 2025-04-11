@@ -52,7 +52,7 @@
     <string name="quiz_ment">아쉬워요. \n조금만 더 힘내서 도전해볼까요?</string>
     <string name="home_intro">안녕하세요 <u>%s</u> 님, \n특허씨와 함께\n아이디어를 실현해보세요!</string>
     <string name="tv_patent_similiarity">특허 유사도: %d%%</string>
-    <string name="tv_patent_similiarity_id">특허 공고번호: %d</string>
+    <string name="tv_patent_similiarity_id">특허 공고번호: %s</string>
     <string name="tv_patent_content_similiarity">구문 유사도: %d%%</string>
 
     <string name="default_image">android.resource://com.ssafy.mr_patent_android/drawable/user_profile</string>

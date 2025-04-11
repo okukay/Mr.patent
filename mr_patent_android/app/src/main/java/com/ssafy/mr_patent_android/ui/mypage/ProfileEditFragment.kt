@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
@@ -22,6 +23,7 @@ import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.google.android.material.chip.Chip
 import com.ssafy.mr_patent_android.R
+import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPreferences
 import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.data.model.dto.ProfileEditRequest
 import com.ssafy.mr_patent_android.databinding.FragmentProfileEditBinding
@@ -150,6 +152,30 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
             isExpanded[4] = !isExpanded[4]
         }
 
+        binding.etDescription.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
+        }
+
+        binding.etPhone.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
+        }
+
+        binding.etAddress2.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
+        }
+
         binding.ivSearch.setOnClickListener {
             profileEditViewModel.setEditDescription(binding.etDescription.text.toString())
             profileEditViewModel.setEditPhone(binding.etPhone.text.toString())
@@ -202,8 +228,6 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
 
                     val addressChanged1 = binding.etAddress1.text.toString() != profileEditViewModel.expertInfo.value?.expertAddress?.substringBefore("\\")
                     val addressChanged2 = binding.etAddress2.text.toString() != profileEditViewModel.expertInfo.value?.expertAddress?.substringAfter("\\")
-                    Log.d(TAG, "initView: et1: ${binding.etAddress1.text}")
-                    Log.d(TAG, "initView: et2: ${binding.etAddress2.text}")
                     if (addressChanged1 || addressChanged2) {
                         if (binding.etAddress2.text.isBlank()) {
                             profileEditRequest.expertAddress = binding.etAddress1.text.toString()
@@ -250,7 +274,6 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
                         || profileEditRequest.expertPhone != null
                         || profileEditRequest.expertCategories != null
                 if (isEdited) {
-                    Log.d(TAG, "initView: address: ${profileEditRequest.expertAddress}")
                     profileEditViewModel.editUserInfo(profileEditRequest)
                 } else {
                     loadingDialog.dismiss()
@@ -297,6 +320,12 @@ class ProfileEditFragment : BaseFragment<FragmentProfileEditBinding>(
         })
 
         profileEditViewModel.memberInfo.observe(viewLifecycleOwner) {
+
+            Glide.with(requireContext())
+                .load(sharedPreferences.getUser().userImage)
+                .circleCrop()
+                .into(binding.ivProfile)
+
             when (args.role) {
                 "member" -> {
                     binding.etName.setText(it.userName)

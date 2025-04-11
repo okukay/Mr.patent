@@ -224,7 +224,7 @@ class ChatFragment :
                 }
 
                 override fun onPhotoClick(url: String) {
-                    initDialog(url)
+//                    initDialog(url)
                 }
             })
 

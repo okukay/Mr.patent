@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.libraries.places.api.model.kotlin.localDate
+import com.ssafy.mr_patent_android.MainActivity
 import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.networkUtil
 import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPreferences
 import com.ssafy.mr_patent_android.data.model.dto.ProfileEditRequest
@@ -139,9 +140,7 @@ class ProfileEditViewModel : ViewModel() {
             }.onSuccess {
                 if (it.isSuccessful) {
                     it.body()?.data?.let { response ->
-                        if (_profileImage.value != response.url) {
-                            _profileImage.value = response.url
-                        }
+                        sharedPreferences.addUserImage(response.url ?: "")
                     }
                 } else {
                     it.errorBody()?.let {
@@ -195,12 +194,9 @@ class ProfileEditViewModel : ViewModel() {
                 if (it.isSuccessful) {
                     it.body()?.data?.let { response ->
                         _toastMsg.value = response.message
-                        val user = sharedPreferences.getUser()
-                        sharedPreferences.addUser(
-                            UserDto(
-                                user.userId, profileEditRequest.userName ?: user.userName , user.userRole
-                            )
-                        )
+                        profileEditRequest.userImage?.let { newImage ->
+                            getImage(newImage)
+                        }
                         if (response.message == "회원정보가 성공적으로 수정되었습니다.") {
                             getMemberInfo()
                         }

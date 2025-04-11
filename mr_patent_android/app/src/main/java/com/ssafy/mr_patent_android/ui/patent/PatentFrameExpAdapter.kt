@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.ssafy.mr_patent_android.data.model.dto.PatentFrameDto
 import com.ssafy.mr_patent_android.databinding.ListItemSpecBinding
-import com.ssafy.mr_patent_android.ui.mypage.ReportSimiliarContentAdapter
 
 class PatentFrameExpAdapter(
     val mode: String
@@ -57,6 +56,10 @@ class PatentFrameExpAdapter(
             view.rotation = 0f
             layout.visibility = View.GONE
         }
+    }
+
+    fun getExpContents(): List<String> {
+        return patentFrameExpList.map { it.content }
     }
 
 

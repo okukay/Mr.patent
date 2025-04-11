@@ -43,18 +43,32 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.12" />
 
+    <TextView
+        android:id="@+id/tv_report_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pretendard_semibold"
+        android:textColor="@color/mr_blue"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/h1_guideline"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_spec_report"
+        app:layout_constraintVertical_bias="0.02"
+        app:layout_constraintWidth_percent="0.9" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_fitness_result"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:padding="12dp"
         android:background="@drawable/rounded_background"
+        android:padding="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_spec_report"
-        app:layout_constraintWidth_percent="0.9"
-        app:layout_constraintVertical_bias="0.05">
+        app:layout_constraintTop_toBottomOf="@+id/tv_report_name"
+        app:layout_constraintVertical_bias="0.02"
+        app:layout_constraintWidth_percent="0.9">
 
         <TextView
             android:id="@+id/tv_fitness"
@@ -66,19 +80,19 @@
             android:textSize="16sp"
             app:layout_constraintBottom_toTopOf="@id/tv_fitness_result"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.04"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintHorizontal_bias="0.04"/>
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tv_fitness_result"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:fontFamily="@font/pretendard_semibold"
             android:text="PASS"
             android:textColor="@color/mr_blue"
             android:textSize="18sp"
-            android:layout_marginTop="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/tv_fitness"
             app:layout_constraintTop_toBottomOf="@+id/tv_fitness" />
@@ -96,7 +110,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/cl_fitness_result"
         app:layout_constraintWidth_percent="0.9"
-        app:layout_constraintHeight_percent="0.6">
+        app:layout_constraintHeight_percent="0.56">
 
         <TextView
             android:id="@+id/tv_patent_similiarity"
@@ -115,7 +129,7 @@
             android:id="@+id/tv_swipe_exp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="좌우로 밀어 유사 특허 결과를 확인하세요!"
+            android:text="상하로 밀어 유사 특허 결과를 확인하세요!"
             android:textColor="@color/mr_gray_dark"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -123,15 +137,15 @@
             app:layout_constraintTop_toBottomOf="@id/tv_patent_similiarity"
             app:layout_constraintVertical_bias="0.02"/>
 
-        <androidx.viewpager2.widget.ViewPager2
-            android:visibility="gone"
-            android:id="@+id/vp_similiarity_result_pass"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_similiarity_result_pass"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@drawable/rounded_background_stroke"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintWidth_percent="0.98"
             app:layout_constraintHeight_percent="0.84"
             app:layout_constraintTop_toBottomOf="@id/tv_swipe_exp" />
 

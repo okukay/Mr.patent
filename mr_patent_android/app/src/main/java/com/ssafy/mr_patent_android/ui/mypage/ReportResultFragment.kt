@@ -1,6 +1,7 @@
 package com.ssafy.mr_patent_android.ui.mypage
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -38,6 +39,7 @@ class ReportResultFragment : BaseFragment<FragmentReportResultBinding>(
 
     private fun initView() {
         reportResultViewModel.getFitnessResult(args.id)
+        binding.tvReportName.text = args.name
 
         binding.tvBefore.setOnClickListener {
             findNavController().popBackStack()
@@ -54,7 +56,7 @@ class ReportResultFragment : BaseFragment<FragmentReportResultBinding>(
             when (it) {
                 "PASS" -> {
                     binding.tvFitnessResult.setTextColor(resources.getColor(R.color.mr_blue))
-                    binding.vpSimiliarityResultPass.visibility = View.VISIBLE
+                    binding.rvSimiliarityResultPass.visibility = View.VISIBLE
                     binding.rvSimiliarityResultFail.visibility = View.GONE
                     reportResultViewModel.getSimiliarityResult(args.id)
                 }
@@ -62,13 +64,13 @@ class ReportResultFragment : BaseFragment<FragmentReportResultBinding>(
                     binding.tvFitnessResult.setTextColor(resources.getColor(R.color.mr_red))
                     binding.tvPatentSimiliarity.text = "기준 별 적합도 결과"
                     binding.tvSwipeExp.visibility = View.INVISIBLE
-                    binding.vpSimiliarityResultPass.visibility = View.GONE
+                    binding.rvSimiliarityResultPass.visibility = View.GONE
                     binding.rvSimiliarityResultFail.visibility = View.VISIBLE
                 }
             }
         }
 
-        reportResultViewModel.fitnessContents.observe(viewLifecycleOwner) {
+        reportResultViewModel.fitnessContents.observe(viewLifecycleOwner) { // 적합도 결과 FAIL
             binding.rvSimiliarityResultFail.layoutManager = LinearLayoutManager(requireContext())
             binding.rvSimiliarityResultFail.adapter = ReportResultFailAdapter(listOf(
                 FitnessFrameDto(PatentTitleDto.PatentTitleExpDto().patentDraftTechnicalFieldExp, it.technicalField)
@@ -82,8 +84,10 @@ class ReportResultFragment : BaseFragment<FragmentReportResultBinding>(
             ))
         }
 
-        reportResultViewModel.similiarityResult.observe(viewLifecycleOwner) {
-            binding.vpSimiliarityResultPass.adapter = ReportResultAdapter(it)
+        reportResultViewModel.similiarityResult.observe(viewLifecycleOwner) { // 적합도 결과 PASS
+            Log.d(TAG, "initObserver: 유사도 나와라: ${it}")
+            binding.rvSimiliarityResultPass.layoutManager = LinearLayoutManager(requireContext())
+            binding.rvSimiliarityResultPass.adapter = ReportResultAdapter(it)
         }
     }
 

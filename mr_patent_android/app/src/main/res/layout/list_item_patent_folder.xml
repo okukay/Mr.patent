@@ -3,46 +3,69 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="92dp"
+    android:layout_height="wrap_content"
     android:id="@+id/dialog_list_item_patent_folder"
     android:background="@drawable/rounded_background">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/cl_list_item_patent_folder"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/v1_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.2" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/v2_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.25" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/v3_guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.9" />
+
         <ImageView
             android:id="@+id/iv_folder"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:src="@drawable/folder"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.04"
+            app:layout_constraintEnd_toStartOf="@+id/v2_guideline"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintWidth_percent="0.14" />
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent="0.25" />
 
         <TextView
             android:id="@+id/tv_folder_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
             android:fontFamily="@font/pretendard_semibold"
-            android:text="폴더 1"
+            android:maxLines="1"
+            android:text="ㅇㄹㅇ"
             android:textColor="@color/black"
-            android:textSize="18sp"
+            android:textSize="16sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.1"
-            app:layout_constraintStart_toEndOf="@+id/iv_folder"
+            app:layout_constraintEnd_toStartOf="@+id/v3_guideline"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toEndOf="@+id/v2_guideline"
             app:layout_constraintTop_toTopOf="@+id/iv_folder"
-            app:layout_constraintVertical_bias="0.28"/>
+            app:layout_constraintVertical_bias="0.28" />
 
         <TextView
             android:id="@+id/tv_folder_recent"
@@ -51,9 +74,10 @@
             android:text="@string/tv_date_create"
             android:textColor="@color/mr_gray_dark"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/tv_folder_name"
+            app:layout_constraintEnd_toStartOf="@+id/v3_guideline"
+            app:layout_constraintStart_toStartOf="@+id/v2_guideline"
             app:layout_constraintTop_toBottomOf="@+id/tv_folder_name"
-            app:layout_constraintVertical_bias="0.2"/>
+            app:layout_constraintHorizontal_bias="0"/>
 
         <ImageView
             android:visibility="gone"
@@ -63,10 +87,9 @@
             android:src="@drawable/cancel"
             app:layout_constraintBottom_toBottomOf="@+id/iv_folder"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.96"
-            app:layout_constraintStart_toEndOf="@+id/iv_folder"
+            app:layout_constraintStart_toStartOf="@+id/v3_guideline"
             app:layout_constraintTop_toTopOf="@+id/iv_folder"
-            app:layout_constraintVertical_bias="0.2"/>
+            app:layout_constraintVertical_bias="0.2" />
 
         <ImageView
             android:visibility="gone"
@@ -75,11 +98,10 @@
             android:layout_height="wrap_content"
             android:src="@drawable/modify"
             app:layout_constraintBottom_toBottomOf="@+id/iv_folder"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.96"
-            app:layout_constraintStart_toEndOf="@+id/iv_folder"
+            app:layout_constraintStart_toStartOf="@+id/v3_guideline"
             app:layout_constraintTop_toTopOf="@+id/iv_folder"
-            app:layout_constraintVertical_bias="0.2"/>
+            app:layout_constraintVertical_bias="0.2" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

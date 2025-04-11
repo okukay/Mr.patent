@@ -4,11 +4,15 @@ import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -113,6 +117,14 @@ class PatentFolderFragment : BaseFragment<FragmentPatentFolderBinding>(
         val btnFolderAdd = dialogView.findViewById<Button>(R.id.btn_folder_add)
         val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
 
+        etFolderName.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
+        }
+
         btnFolderAdd.setOnClickListener {
             when (etFolderName.length()) {
                 0 -> { showCustomToast("폴더명을 입력해주세요.") }
@@ -141,15 +153,32 @@ class PatentFolderFragment : BaseFragment<FragmentPatentFolderBinding>(
 
         val etFolderName = dialogView.findViewById<EditText>(R.id.et_folder_name)
         val btnFolderEdit = dialogView.findViewById<Button>(R.id.btn_folder_edit)
+        val tvLengthLimit = dialogView.findViewById<TextView>(R.id.tv_length_limit)
+
+        etFolderName.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                true
+            } else {
+                false
+            }
+        }
+
+        etFolderName.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                val textLength = s?.length ?: 0
+                tvLengthLimit.setText("$textLength/20")
+            }
+        })
 
         btnFolderEdit.setOnClickListener {
-            when (btnFolderEdit.length()) {
-                0 -> { showCustomToast("변경할 폴더명을 입력해주세요.") }
-                in 1..30 -> {
-                    patentViewModel.editFolder(patentViewModel.folders.value!![position].userPatentFolderId, etFolderName.text.toString())
-                    dialogBuilder.dismiss()
-                }
-                else -> { showCustomToast("폴더 이름은 30자 까지 가능합니다.") }
+            if (etFolderName.text.isBlank()) {
+                showCustomToast("변경할 폴더명을 입력해주세요.")
+            } else {
+                patentViewModel.editFolder(patentViewModel.folders.value!![position].userPatentFolderId, etFolderName.text.toString())
+                dialogBuilder.dismiss()
             }
         }
     }
