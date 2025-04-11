@@ -30,10 +30,6 @@ class ExpertFragment :
         navArgs<ExpertFragmentArgs>().value.expertId
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -73,6 +69,14 @@ class ExpertFragment :
         profileEditViewModel.memberInfo.observe(viewLifecycleOwner, {
             setInfo(it)
         })
+
+        viewModel.loading.observe(viewLifecycleOwner) {
+            if (it) {
+                showLoadingDialog()
+            } else {
+                dismissLoadingDialog()
+            }
+        }
     }
 
     private fun setInfo(it: UserDto) {
@@ -82,7 +86,8 @@ class ExpertFragment :
         binding.tvPhone.text = it.expertPhone
         val address = it.expertAddress
         if (address.contains("\\")) {
-            binding.tvAddress.text = address.substringBefore("\\").plus(" ").plus(address.substringAfter("\\"))
+            binding.tvAddress.text =
+                address.substringBefore("\\").plus(" ").plus(address.substringAfter("\\"))
         } else {
             binding.tvAddress.text = address
         }
@@ -99,12 +104,21 @@ class ExpertFragment :
             }
         }
 
-        Glide
-            .with(binding.root)
-            .load(sharedPreferences.getUser().userImage)
-            .circleCrop()
-            .placeholder(R.drawable.user_profile)
-            .into(binding.ivProfile)
+        if (sharedPreferences.getUser().userRole == 1) {
+            Glide
+                .with(binding.root)
+                .load(sharedPreferences.getUser().userImage)
+                .circleCrop()
+                .error(R.drawable.user_profile)
+                .into(binding.ivProfile)
+        } else {
+            Glide
+                .with(binding.root)
+                .load(it.userImage)
+                .circleCrop()
+                .error(R.drawable.user_profile)
+                .into(binding.ivProfile)
+        }
     }
 
     fun initDialog() {
@@ -139,5 +153,10 @@ class ExpertFragment :
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         dialog.show()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        dismissLoadingDialog()
     }
 }

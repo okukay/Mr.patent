@@ -9,6 +9,7 @@ import com.ssafy.mr_patent_android.data.model.dto.ChatRoomRequest
 import com.ssafy.mr_patent_android.data.model.dto.UserDto
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.chatService
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.userService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ExpertViewModel : ViewModel() {
@@ -20,8 +21,12 @@ class ExpertViewModel : ViewModel() {
     val roomId: LiveData<String?>
         get() = _roomId
 
+    private val _loading = MutableLiveData<Boolean>(false)
+    val loading: LiveData<Boolean>
+        get() = _loading
 
     fun getExpert(id: Int) {
+        _loading.value = true
         viewModelScope.launch {
             runCatching {
                 userService.getExpert(id)
@@ -34,8 +39,11 @@ class ExpertViewModel : ViewModel() {
                         _expert.value = expert
                     }
                 }
+                delay(100)
+                _loading.value = false
             }.onFailure {
                 it.printStackTrace()
+                _loading.value = false
             }
         }
     }
