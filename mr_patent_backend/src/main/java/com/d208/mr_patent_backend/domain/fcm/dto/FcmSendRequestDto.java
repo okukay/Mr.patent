@@ -11,4 +11,5 @@ public class FcmSendRequestDto {
     private String title;
     private String body;
     private Map<String, String> data;
+
 }

@@ -41,7 +41,7 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String generateAccessToken(Authentication authentication) {
+    public String generateAccessToken(Authentication authentication,Integer userId) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
@@ -52,6 +52,7 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .setSubject(authentication.getName())
                 .claim("auth", authorities)
+                .claim("userId", userId)  // userId 추가
                 .setExpiration(accessTokenValidity)
                 .signWith(key)
                 .compact();
@@ -109,5 +110,11 @@ public class JwtTokenProvider {
     public String getUserEmail(String token) {
         Claims claims = parseClaims(token);
         return claims.getSubject();
+    }
+
+    // userId 추출 메서드 추가
+    public Integer getUserId(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("userId", Integer.class);
     }
 }

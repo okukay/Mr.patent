@@ -2,6 +2,7 @@ import os
 import uuid
 import re
 import pickle
+import json
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -14,10 +15,10 @@ from app.services.vectorizer import fit_tfidf_vectorizer
 from app.services.spark_vectorizer import process_patents_with_spark  # Spark 기반 병렬 처리 함수 임포트
 from striprtf.striprtf import rtf_to_text
 
-router = APIRouter(prefix="/api/patent", tags=["patent"])
+router = APIRouter(prefix="/fastapi/patent", tags=["patent"])
 
 # 추출된 데이터 저장을 위한 디렉토리
-DATA_DIR = "/tmp/patent_data"
+DATA_DIR = os.path.join(os.getcwd(), "temp_data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
 def save_extracted_data(patents: List[Dict[str, Any]], filename: str = "extracted_patents.pkl") -> str:
@@ -46,11 +47,18 @@ async def process_patent_files(rtf_directory: str, task_id: str):
         rtf_files = [f for f in os.listdir(rtf_directory) if f.endswith(".rtf")]
         total_files = len(rtf_files)
         
+        # 진행 정보를 JSON으로 저장
+        progress_info = {
+            "total_files": total_files,
+            "processed_files": 0,
+            "progress": 0
+        }
+        
         await database.execute(
             task_status.update().where(task_status.c.task_id == task_id).values(
-                total_files=total_files,
-                processed_files=0,
-                progress=0
+                task_status="PROCESSING",
+                task_error_message=json.dumps(progress_info),
+                task_updated_at=datetime.utcnow()
             )
         )
         
@@ -84,12 +92,19 @@ async def process_patent_files(rtf_directory: str, task_id: str):
                 processed_files += 1
                 progress = int((processed_files / total_files) * 50)
                 
+                # 진행 정보 업데이트
+                progress_info = {
+                    "total_files": total_files,
+                    "processed_files": processed_files,
+                    "progress": progress
+                }
+                
                 # 작업 상태 업데이트
                 await database.execute(
                     task_status.update().where(task_status.c.task_id == task_id).values(
-                        processed_files=processed_files,
-                        progress=progress,
-                        status="EXTRACTING"
+                        task_status="EXTRACTING",
+                        task_error_message=json.dumps(progress_info),
+                        task_updated_at=datetime.utcnow()
                     )
                 )
                 
@@ -108,11 +123,15 @@ async def process_patent_files(rtf_directory: str, task_id: str):
         fit_tfidf_vectorizer(corpus)
         logger.info("TF-IDF 벡터라이저 학습 완료")
         
+        # 진행 정보 업데이트
+        progress_info["progress"] = 60
+        
         # 작업 상태 업데이트
         await database.execute(
             task_status.update().where(task_status.c.task_id == task_id).values(
-                progress=60,
-                status="VECTORIZING"
+                task_status="VECTORIZING",
+                task_error_message=json.dumps(progress_info),
+                task_updated_at=datetime.utcnow()
             )
         )
         
@@ -120,11 +139,15 @@ async def process_patent_files(rtf_directory: str, task_id: str):
         logger.info(f"총 {len(all_patents)}개 특허 Spark 병렬 벡터화 시작")
         total_processed = await process_patents_with_spark(all_patents, batch_size=1000, with_bert=False)
         
+        # 진행 정보 업데이트
+        progress_info["progress"] = 100
+        
         # 작업 완료
         await database.execute(
             task_status.update().where(task_status.c.task_id == task_id).values(
-                progress=100,
-                status="COMPLETED"
+                task_status="COMPLETED",
+                task_error_message=json.dumps(progress_info),
+                task_updated_at=datetime.utcnow()
             )
         )
         
@@ -134,7 +157,9 @@ async def process_patent_files(rtf_directory: str, task_id: str):
         logger.error(f"데이터 처리 중 오류 발생: {e}")
         await database.execute(
             task_status.update().where(task_status.c.task_id == task_id).values(
-                status="FAILED"
+                task_status="FAILED",
+                task_error_message=str(e),
+                task_updated_at=datetime.utcnow()
             )
         )
         raise
@@ -150,17 +175,27 @@ async def process_saved_data(task_id: str, filename: str):
             if "application_number" in patent_data and "발명의명칭" in patent_data["application_number"]:
                 patent_data["application_number"] = patent_data["application_number"].replace("발명의명칭", "")
         
+        # 진행 정보 초기화
+        progress_info = {
+            "total_patents": len(all_patents),
+            "progress": 30
+        }
+        
         # TF-IDF 벡터라이저 학습
         logger.info("TF-IDF 벡터라이저 학습 시작")
         corpus = prepare_corpus(all_patents)
         fit_tfidf_vectorizer(corpus)
         logger.info("TF-IDF 벡터라이저 학습 완료")
         
+        # 진행 정보 업데이트
+        progress_info["progress"] = 60
+        
         # 작업 상태 업데이트
         await database.execute(
             task_status.update().where(task_status.c.task_id == task_id).values(
-                progress=60,
-                status="VECTORIZING"
+                task_status="VECTORIZING",
+                task_error_message=json.dumps(progress_info),
+                task_updated_at=datetime.utcnow()
             )
         )
         
@@ -168,11 +203,16 @@ async def process_saved_data(task_id: str, filename: str):
         logger.info(f"총 {len(all_patents)}개 특허 Spark 병렬 벡터화 시작")
         total_processed = await process_patents_with_spark(all_patents, batch_size=1000, with_bert=False)
         
+        # 진행 정보 업데이트
+        progress_info["progress"] = 100
+        progress_info["processed_patents"] = total_processed
+        
         # 작업 완료
         await database.execute(
             task_status.update().where(task_status.c.task_id == task_id).values(
-                progress=100,
-                status="COMPLETED"
+                task_status="COMPLETED",
+                task_error_message=json.dumps(progress_info),
+                task_updated_at=datetime.utcnow()
             )
         )
         
@@ -182,7 +222,9 @@ async def process_saved_data(task_id: str, filename: str):
         logger.error(f"저장된 데이터 처리 중 오류 발생: {e}")
         await database.execute(
             task_status.update().where(task_status.c.task_id == task_id).values(
-                status="FAILED"
+                task_status="FAILED",
+                task_error_message=str(e),
+                task_updated_at=datetime.utcnow()
             )
         )
 
@@ -191,13 +233,18 @@ async def process_saved_data(task_id: str, filename: str):
 async def extract_and_vectorize(request: ProcessRequest, background_tasks: BackgroundTasks):
     """특허 RTF 파일 처리 시작"""
     task_id = str(uuid.uuid4())
+    now = datetime.utcnow()
     
-    # 작업 상태 데이터베이스에 초기 상태 저장
+    # 작업 상태 데이터베이스에 초기 상태 저장 (새 스키마 적용)
     await database.execute(
         task_status.insert().values(
             task_id=task_id,
-            status="PENDING",
-            created_at=datetime.utcnow()
+            patent_draft_id=None,  # 특허 파일 처리는 특정 초안과 관련 없음
+            task_type="extract_vectorize",
+            task_status="PENDING",
+            task_error_message=None,
+            task_created_at=now,
+            task_updated_at=now
         )
     )
     
@@ -216,13 +263,18 @@ async def extract_and_vectorize(request: ProcessRequest, background_tasks: Backg
 async def resume_from_saved(request: ResumeRequest, background_tasks: BackgroundTasks):
     """저장된 데이터에서 처리 재개"""
     task_id = str(uuid.uuid4())
+    now = datetime.utcnow()
     
     # 작업 상태 데이터베이스에 초기 상태 저장
     await database.execute(
         task_status.insert().values(
             task_id=task_id,
-            status="PENDING",
-            created_at=datetime.utcnow()
+            patent_draft_id=None,  # 특허 파일 처리는 특정 초안과 관련 없음
+            task_type="resume_processing",
+            task_status="PENDING",
+            task_error_message=None,
+            task_created_at=now,
+            task_updated_at=now
         )
     )
     
@@ -252,13 +304,18 @@ async def resume_processing(request: ResumeRequest, background_tasks: Background
     
     # 새 작업 ID 생성
     new_task_id = str(uuid.uuid4())
+    now = datetime.utcnow()
     
     # 작업 상태 데이터베이스에 초기 상태 저장
     await database.execute(
         task_status.insert().values(
             task_id=new_task_id,
-            status="PENDING",
-            created_at=datetime.utcnow()
+            patent_draft_id=0,  # 특허 파일 처리는 특정 초안과 관련 없음
+            task_type="retry_processing",
+            task_status="PENDING",
+            task_error_message=None,
+            task_created_at=now,
+            task_updated_at=now
         )
     )
     

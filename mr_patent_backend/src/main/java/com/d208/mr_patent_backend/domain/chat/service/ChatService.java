@@ -5,19 +5,23 @@ import com.d208.mr_patent_backend.domain.chat.entity.ChatMessage;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatMessageRepository;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatRoomRepository;
 import com.d208.mr_patent_backend.domain.s3.service.S3Service;
+import com.d208.mr_patent_backend.domain.user.entity.Expert;
+import com.d208.mr_patent_backend.domain.user.entity.User;
+import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
+import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -27,14 +31,32 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final SseService sseService;
     private final S3Service s3Service;
+    private final UserRepository userRepository;
+    private final ExpertRepository expertRepository;
+
 
 
     //메세지 저장
     @Transactional
-    public void saveMessage(ChatMessageDto dto) {
-        LocalDateTime now = dto.getTimeStamp() != null ? dto.getTimeStamp() : LocalDateTime.now();
+    public ChatMessageDto saveMessage(ChatMessageDto dto) {
+        Instant now = Instant.now();
 
+        String type = dto.getMessageType();
+        //"TEXT"|"PDF"|"WORD"|"IMAGE"
+
+        if (type != null) {
+            switch (type) {
+                case "IMAGE":
+                    dto.setMessage("사진을 보냈습니다.");
+                    break;
+                case "WORD":
+                case "PDF":
+                    dto.setMessage("파일을 보냈습니다.");
+                    break;
+            }
+        }
         ChatMessage message = ChatMessage.builder()
+                .chatId(dto.getChatId())
                 .roomId(dto.getRoomId())
                 .userId(dto.getUserId())
                 .receiverId(dto.getReceiverId())
@@ -59,12 +81,12 @@ public class ChatService {
                 .orElseThrow(() -> new RuntimeException("받는 사람 채팅방이 없습니다."));
 
         // 4. senderRoom 업데이트
-        senderRoom.setLastMessage(dto.getMessage());
+        senderRoom.setLastMessage(message.getMessage());
         senderRoom.setLastTimestamp(now);
         senderRoom.setUpdated(now);
 
         // 5. receiverRoom 업데이트
-        receiverRoom.setLastMessage(dto.getMessage());
+        receiverRoom.setLastMessage(message.getMessage());
         receiverRoom.setLastTimestamp(now);
         if (!dto.isRead()) {
             receiverRoom.setUnreadCount(receiverRoom.getUnreadCount() + 1);
@@ -75,21 +97,55 @@ public class ChatService {
         chatRoomRepository.save(senderRoom);
         chatRoomRepository.save(receiverRoom);
 
-        System.out.println("채팅방 메타데이터 업데이트 완료");
+        System.out.println("채팅방 업데이트 완료");
 
         // 상대방 오프라인일 경우 -> sse연결되어있다면 -> sse전송
         if (!dto.isRead()) {
             if(sseService.isConnected(dto.getReceiverId())) {
+                System.out.println("sse 연결확인");
+
+                User user = userRepository.findById(dto.getUserId())
+                        .orElseThrow(() -> new RuntimeException("유저 정보를 찾을 수 없습니다."));
+
+                Expert expert = expertRepository.findByUser_UserId(dto.getUserId()); //메세지 보낸userId로 expert 인지 확인
+                Integer expertId = expert != null ? expert.getExpertId() : -1; // 맞으면 expertId 추출 아니면 null
+
+
+                String imageUrl = null;
+                if (user.getUserImage() != null && !user.getUserImage().isBlank()) {
+                    imageUrl = s3Service.generatePresignedDownloadUrl(user.getUserImage());
+                }
+
                 // SSE 전송 로직 추가
                 sseService.sendToUser(dto.getReceiverId(), Map.of(
-                        "type", "CHAT_UPDATE",
+                        "userId",dto.getUserId(),
+                        "expertId", expertId,
                         "roomId", dto.getRoomId(),
+                        "unreadCount", receiverRoom.getUnreadCount(),
                         "lastMessage", dto.getMessage(),
-                        "timestamp", now,
-                        "unreadCount", receiverRoom.getUnreadCount()
+                        "userName" ,user.getUserName(),
+                        "userImage", imageUrl,
+                        "userImageName",user.getUserImage(),
+                        "receiverId", dto.getReceiverId(),
+                        "timestamp", now
                 ));
+                System.out.println("sse 메세지 전송 완료");
+                System.out.println(imageUrl);
             }
         }
+        return ChatMessageDto.builder()
+                .chatId(message.getChatId())
+                .roomId(message.getRoomId())
+                .userId(message.getUserId())
+                .receiverId(message.getReceiverId())
+                .message(message.getMessage())
+                .timeStamp(message.getTimestamp())
+                .read(message.isRead())
+                .type(message.getType())
+                .messageType(message.getMessageType())
+                .fileUrl(message.getFileUrl())
+                .fileName(message.getFileName())
+                .build();
     }
 
 

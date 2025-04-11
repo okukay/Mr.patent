@@ -96,7 +96,7 @@ public class UserService {
         // Expert 엔티티 생성 및 저장
         Expert expert = new Expert();
         expert.setUser(user);
-        expert.setExpertIdentification(requestDto.getExpertIdentification());
+        expert.setExpertIdentification(passwordEncoder.encode(requestDto.getExpertIdentification()));
         expert.setExpertDescription(requestDto.getExpertDescription());
         expert.setExpertAddress(requestDto.getExpertAddress());
         expert.setExpertPhone(requestDto.getExpertPhone());
@@ -164,7 +164,7 @@ public class UserService {
                 .userName(user.getUserName())
                 .userRole(user.getUserRole())
                 .grantType("Bearer")
-                .accessToken(jwtTokenProvider.generateAccessToken(authentication))
+                .accessToken(jwtTokenProvider.generateAccessToken(authentication, user.getUserId()))
                 .refreshToken(jwtTokenProvider.generateRefreshToken())
                 .build();
 
@@ -220,7 +220,7 @@ public class UserService {
                 .userName(user.getUserName())
                 .userRole(user.getUserRole())
                 .grantType("Bearer")
-                .accessToken(jwtTokenProvider.generateAccessToken(authentication))
+                .accessToken(jwtTokenProvider.generateAccessToken(authentication, user.getUserId()))
                 .refreshToken(jwtTokenProvider.generateRefreshToken())
                 .build();
 
@@ -253,16 +253,21 @@ public class UserService {
             Expert expert = expertRepository.findByUser(user)
                     .orElseThrow(() -> new RuntimeException("변리사 정보를 찾을 수 없습니다."));
 
-            List<String> categories = expert.getExpertCategory().stream()
-                    .map(ec -> ec.getCategory().getCategoryName())
+            List<ExpertCategoryDTO> categories = expert.getExpertCategory().stream()
+                    .map(ec -> {
+                        ExpertCategoryDTO dto = new ExpertCategoryDTO();
+                        dto.setCategoryName(ec.getCategory().getCategoryName());
+                        return dto;
+                    })
                     .collect(Collectors.toList());
 
             builder
+                    .expertId(expert.getExpertId())
                     .expertDescription(expert.getExpertDescription())
                     .expertAddress(expert.getExpertAddress())
                     .expertPhone(expert.getExpertPhone())
                     .expertGetDate(expert.getExpertGetDate())
-                    .categories(categories);
+                    .expertCategories(categories);
         }
 
         return builder.build();

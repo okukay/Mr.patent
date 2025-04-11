@@ -2,14 +2,16 @@ import os
 import pickle
 import numpy as np
 import torch
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from typing import List, Dict, Any, Tuple
 from transformers import AutoTokenizer, AutoModel
+from konlpy.tag import Okt  # 한국어 토큰화기
 
 from app.core.logging import logger
 
 # 벡터라이저 저장 경로
 VECTORIZER_PATH = "models/tfidf_vectorizer.pkl"
+# VECTORIZER_PATH = "models/tfidf_vectorizer_test.pkl"
 os.makedirs(os.path.dirname(VECTORIZER_PATH), exist_ok=True)
 
 # TF-IDF 벡터라이저 초기화
@@ -19,6 +21,18 @@ tfidf_vectorizer = TfidfVectorizer(max_features=1000)
 tokenizer = None
 model = None
 BERT_LOADED = False
+
+# 토큰화 함수 정의
+def tokenize_korean(text):
+    okt = Okt()
+    return okt.morphs(text)
+
+# TF-IDF 벡터라이저 초기화 (토큰화기 지정)
+tfidf_vectorizer = TfidfVectorizer(
+    max_features=1000,
+    tokenizer=tokenize_korean,
+    analyzer='word'
+)
 
 def load_bert_model():
     """KLUE BERT 모델 로드"""
@@ -59,7 +73,8 @@ def load_vectorizer(filename=VECTORIZER_PATH):
 def fit_tfidf_vectorizer(corpus: List[str]) -> None:
     """TF-IDF 벡터라이저 학습"""
     global tfidf_vectorizer
-    tfidf_vectorizer = TfidfVectorizer(max_features=1000)
+    
+    # 기존 벡터라이저 재사용 (새로 생성하지 않음)
     tfidf_vectorizer.fit(corpus)
     logger.info("TF-IDF 벡터라이저 학습 완료")
     
@@ -72,26 +87,70 @@ def save_vectorizer(vectorizer, filename=VECTORIZER_PATH):
         pickle.dump(vectorizer, f)
     logger.info(f"TF-IDF 벡터라이저 저장 완료 (경로: {filename})")
 
-def get_tfidf_vector(text: str) -> np.ndarray:
+def update_vectorizer_vocabulary(new_text):
+    """벡터라이저 어휘 확장"""
+    global tfidf_vectorizer
+    
+    # 현재 어휘 가져오기
+    current_vocab = tfidf_vectorizer.vocabulary_
+    
+    # 새 텍스트에서 용어 추출
+    count_vec = CountVectorizer()
+    count_vec.fit([new_text])
+    new_vocab = count_vec.vocabulary_
+    
+    # 어휘 통합
+    max_idx = max(current_vocab.values()) if current_vocab else -1
+    for word, _ in new_vocab.items():
+        if word not in current_vocab:
+            max_idx += 1
+            current_vocab[word] = max_idx
+    
+    # 벡터라이저 업데이트
+    tfidf_vectorizer.vocabulary_ = current_vocab
+    logger.info(f"벡터라이저 어휘 {len(new_vocab)}개 추가 ({len(current_vocab)}개로 확장)")
+    
+    # 저장
+    save_vectorizer(tfidf_vectorizer)
+    
+    return tfidf_vectorizer
+
+def get_tfidf_vector(text: str, update_vocab: bool = False) -> np.ndarray:
     """텍스트의 TF-IDF 벡터 계산"""
     global tfidf_vectorizer
     
     if not text:
         return np.zeros(1000)
     
+    # 어휘 업데이트 옵션 처리
+    if update_vocab:
+        update_vectorizer_vocabulary(text)
+    
     try:
         # 벡터라이저 사용하여 변환
-        return tfidf_vectorizer.transform([text]).toarray()[0]
+        vector = tfidf_vectorizer.transform([text]).toarray()[0]
+        
+        # 모두 0인 벡터인지 확인
+        if np.all(vector == 0):
+            logger.warning("모든 단어가 어휘에 없어 0 벡터가 생성되었습니다.")
+            if update_vocab:
+                # 이미 어휘를 업데이트했는데도 0 벡터라면 안전 벡터 사용
+                return safe_vector(None, 1000)
+            # 어휘 업데이트 시도
+            return get_tfidf_vector(text, update_vocab=True)
+        
+        return vector
     except Exception as e:
         logger.error(f"TF-IDF 벡터 생성 중 오류: {e}")
-        # 저장된 벡터라이저 로드 시도
-        try:
-            load_vectorizer()
-            return tfidf_vectorizer.transform([text]).toarray()[0]
-        except:
-            # 빈 벡터 반환
-            logger.warning("벡터라이저 로드 실패. 영벡터를 반환합니다.")
-            return np.zeros(1000)
+        # 안전한 벡터 반환
+        return safe_vector(None, 1000)
+
+def safe_vector(vec, dim=1000):
+    """안전한 벡터 반환 (NaN, 영벡터 처리)"""
+    if vec is None or (isinstance(vec, np.ndarray) and (np.all(vec == 0) or np.isnan(vec).any())):
+        # 랜덤 소음 추가 (정규분포, 작은 표준편차)
+        return np.random.normal(0, 0.01, dim)
+    return vec
 
 def get_bert_vector(text: str, max_length: int = 512) -> np.ndarray:
     """텍스트의 KLUE BERT 벡터 계산"""
@@ -161,3 +220,24 @@ def generate_field_vectors(field_text: str, with_bert=False) -> Tuple[np.ndarray
     else:
         # TF-IDF 벡터만 반환
         return tfidf_vector, None
+
+def check_vectorizer_status():
+    """벡터라이저 상태 확인"""
+    global tfidf_vectorizer
+    
+    if tfidf_vectorizer is None:
+        logger.error("TF-IDF 벡터라이저가 초기화되지 않음")
+        return "not_initialized"
+    
+    vocab = getattr(tfidf_vectorizer, 'vocabulary_', {})
+    vocab_size = len(vocab)
+    
+    if vocab_size == 0:
+        logger.error("TF-IDF 벡터라이저 어휘 사전이 비어 있음")
+        return "empty_vocabulary"
+    
+    # 샘플 단어 출력 (최대 10개)
+    sample_words = list(vocab.keys())[:10]
+    logger.info(f"TF-IDF 벡터라이저 어휘 크기: {vocab_size}, 샘플 단어: {sample_words}")
+    
+    return f"ok_with_{vocab_size}_words"

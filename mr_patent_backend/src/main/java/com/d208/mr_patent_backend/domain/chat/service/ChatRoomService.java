@@ -5,10 +5,13 @@ import com.d208.mr_patent_backend.domain.chat.dto.ChatRoomCreateRequest;
 import com.d208.mr_patent_backend.domain.chat.entity.ChatRoom;
 import com.d208.mr_patent_backend.domain.chat.repository.ChatRoomRepository;
 import com.d208.mr_patent_backend.domain.s3.service.S3Service;
+import com.d208.mr_patent_backend.domain.user.entity.Expert;
 import com.d208.mr_patent_backend.domain.user.entity.User;
+import com.d208.mr_patent_backend.domain.user.repository.ExpertRepository;
 import com.d208.mr_patent_backend.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,12 +28,14 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final ExpertRepository expertRepository;
 
 
     // 채팅방 생성(2개)
     @Transactional
     public String createChatRoom(ChatRoomCreateRequest request ) {
 
+        Instant now = Instant.now();
         Integer userId = request.getUserId();
         Integer receiverId = request.getReceiverId();
 
@@ -52,9 +57,8 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
-
-                .created(LocalDateTime.now())
-                .updated(LocalDateTime.now())
+                .created(now)
+                .updated(now)
                 .build();
 
         // 변리사용 채팅방
@@ -65,9 +69,8 @@ public class ChatRoomService {
                 .lastMessage(null)
                 .unreadCount(0)
                 .status(0)
-
-                .created(LocalDateTime.now())
-                .updated(LocalDateTime.now())
+                .created(now)
+                .updated(now)
                 .build();
 
         chatRoomRepository.save(userRoom);
@@ -79,6 +82,7 @@ public class ChatRoomService {
 
     // userId에 따른 채팅방 목록 조회
     public List<ChatListDto> getChatRoomsByUserId(Integer userId) {
+
         List<ChatRoom> chatRooms = chatRoomRepository.findByUserIdAndLastMessageIsNotNull(userId);
 
         //(리스트 조회한걸 -> Dto 형식으로 변환)
@@ -95,14 +99,18 @@ public class ChatRoomService {
                     if (userImage != null && !userImage.isBlank()) {
                         downUrl = s3Service.generatePresignedDownloadUrl(userImage);
                     }
+//
 
-//                   String downUrl = s3Service.generatePresignedDownloadUrl(receiver.getUserImage());
+                    // receiverId를 가지고 expert인지 확인하고 expertId 반환
+                    Integer receiverId = room.getReceiverId();
+                    Expert expert = expertRepository.findByUser_UserId(receiverId); //메세지 보낸userId로 expert 인지 확인
+                    Integer expertId = expert != null ? expert.getExpertId() : -1; // 맞으면 expertId 추출 아니면 null
 
-
+//
 
                     return ChatListDto.builder()
                             .userId(room.getUserId())         // 로그인한 사용자 ID
-                            .expertId(room.getExpertId())     // 전문가 ID (사용한다면)
+                            .expertId(expertId)    // 전문가 ID (사용한다면)
                             .roomId(room.getRoomId())
                             .receiverId(room.getReceiverId()) // 상대방 ID
                             .unreadCount(room.getUnreadCount())

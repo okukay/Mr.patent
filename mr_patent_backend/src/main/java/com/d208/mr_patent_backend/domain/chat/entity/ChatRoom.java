@@ -3,6 +3,7 @@ package com.d208.mr_patent_backend.domain.chat.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 
@@ -23,6 +24,7 @@ public class ChatRoom {
 
     @Id
     private Integer userId;
+
     private Integer receiverId;
     private Integer status;
     private Integer unreadCount;
@@ -30,9 +32,13 @@ public class ChatRoom {
 
     @Column(columnDefinition = "TEXT")
     private String lastMessage;
-    private LocalDateTime lastTimestamp;
-    private LocalDateTime created;
-    private LocalDateTime updated;
+    private Instant lastTimestamp;
+    private Instant created;
+    private Instant updated;
+
+    @Column(name = "heartbeat")
+    private Instant heartbeat;
+
 
 //    private String userName;
 //    private String userImage;

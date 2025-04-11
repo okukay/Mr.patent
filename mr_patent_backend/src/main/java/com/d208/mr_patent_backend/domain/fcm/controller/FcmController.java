@@ -1,11 +1,16 @@
 package com.d208.mr_patent_backend.domain.fcm.controller;
 
-import com.d208.mr_patent_backend.domain.fcm.dto.FcmSendRequestDto;
+import com.d208.mr_patent_backend.domain.fcm.dto.FcmFromPythonDto;
+import com.d208.mr_patent_backend.domain.fcm.entity.FcmToken;
+import com.d208.mr_patent_backend.domain.fcm.repository.FcmTokenRepository;
 import com.d208.mr_patent_backend.domain.fcm.service.FcmService;
 import com.d208.mr_patent_backend.domain.fcm.service.FcmTokenService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -13,26 +18,54 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FcmController {
 
-//    private final FcmService fcmService;
-//    private final FcmTokenService fcmTokenService;
+    private final FcmTokenService fcmTokenService;
+    private final FcmService fcmService;
+    private final FcmTokenRepository fcmTokenRepository;
 
-    // 테스트용: userId로 저장된 토큰 조회 → 알림 전송
-//    @PostMapping("/send/{userId}")
-//    public String sendTestNotification(
-//            @PathVariable Integer userId,
-//            @RequestBody FcmSendRequestDto requestDto){
-//        String targetToken = fcmTokenService.getTokenByUserId(userId);
-//
-//        if (targetToken == null) {
-//            return " FCM 토큰 없음 ";
-//        }
-//        fcmService.sendMessageToToken(
-//                targetToken,
-//                requestDto.getTitle(),
-//                requestDto.getBody(),
-//                requestDto.getData()
-//        );
-//
-//        return "✅ FCM 테스트 메시지 전송 완료 (userId: " + userId + ")";
-//    }
+    @Operation(summary = "FastAPI 에서 FCM 요청")
+    @PostMapping("/token/python")
+    public ResponseEntity<String> sendFcmFromPython(@RequestBody FcmFromPythonDto request) {
+
+        Integer userId = request.getUserId();
+        String title = request.getTitle();
+        String body = request.getBody();
+        String dataLog = request.getData() != null ? request.getData().toString() : "null";
+
+        System.out.println("\n🔔 [FCM 요청 수신 - FastAPI]");
+        System.out.println("📌 userId: " + userId);
+        System.out.println("📝 title: " + title);
+        System.out.println("📝 body: " + body);
+        System.out.println("📦 data: " + dataLog);
+
+        // 🔍 토큰 조회
+        String targetToken = fcmTokenRepository.findByUserId(userId)
+                .map(FcmToken::getToken)
+                .orElseThrow(() -> new RuntimeException("해당 유저의 FCM 토큰이 존재하지 않습니다."));
+
+        System.out.println("토큰 : " + targetToken);
+
+
+        // 💬 Map<String, Object> → Map<String, String> 변환
+        Map<String, String> stringDataMap = new HashMap<>();
+        if (request.getData() != null) {
+            request.getData().forEach((key, value) -> {
+                stringDataMap.put(key, value != null ? value.toString() : "null");
+            });
+        }
+
+        fcmService.sendMessageToToken(
+                targetToken,
+                title,
+                body,
+                stringDataMap
+        );
+        return ResponseEntity.ok("✅ FCM 토큰 발송 완료");
+    }
+
+    @Operation(summary = "FCM 토큰 삭제")
+    @DeleteMapping("/token/delete/{userId}")
+    public ResponseEntity<Void> deleteFcmToken(@PathVariable Integer userId) {
+        fcmTokenService.deleteFcmToken(userId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -33,7 +33,7 @@ public class S3Service {
 
         // Presigned URL 설정
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5)) // 유효 시간 5분
+                .signatureDuration(Duration.ofMinutes(15)) // 유효 시간 5분
                 .putObjectRequest(putObjectRequest)       // putObjectRequest 이 객체를 업로드 하겠다 ~
                 .build();
 
@@ -46,6 +46,10 @@ public class S3Service {
 
     //파일 다운로드용 Presigned URL 생성
     public String generatePresignedDownloadUrl(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return null;
+        }
+
         S3Presigner presigner = awsS3Config.s3Presigner();
 
         // 다운로드할 파일 정보
@@ -56,7 +60,7 @@ public class S3Service {
 
         // Presigned GET URL 생성 설정
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5)) // 유효 시간 설정 (일회성, 시간제한된 접근 링크라 없으면 url 생성 안댐)
+                .signatureDuration(Duration.ofMinutes(15)) // 유효 시간 설정 (일회성, 시간제한된 접근 링크라 없으면 url 생성 안댐)
                 .getObjectRequest(getObjectRequest)
                 .build();
 

@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface ExpertRepository extends JpaRepository<Expert, Integer> {
     Optional<Expert> findByUser(User user);
 
+    Expert findByUser_UserId(Integer userId);
+
     @Query("SELECT DISTINCT e FROM Expert e " +
             "JOIN FETCH e.user " +
             "LEFT JOIN FETCH e.expertCategory ec " +

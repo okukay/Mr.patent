@@ -1,11 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
+import json
+import logging
 
 from app.core.database import database
-from app.schemas.patent import FolderCreate, FolderResponse, PatentDraftResponse
+from app.schemas.patent import FolderCreate, FolderResponse, PatentDraftResponse, FolderUpdate
 
-router = APIRouter(prefix="/api", tags=["folders"])
+router = APIRouter(prefix="/fastapi", tags=["folders"])
+
+logger = logging.getLogger(__name__)
 
 def get_current_timestamp():
     """현재 시간을 ISO 8601 형식으로 변환 (UTC)"""
@@ -27,8 +31,7 @@ async def get_user_folders(user_id: int):
     
     if not folders:
         return {
-            "data": {"folders": []},
-            "timestamp": get_current_timestamp()
+            "data": {"folders": []}
         }
     
     result = []
@@ -36,12 +39,11 @@ async def get_user_folders(user_id: int):
         result.append({
             "user_patent_folder_id": folder["user_patent_folder_id"],
             "user_patent_folder_title": folder["user_patent_folder_title"],
-            "created_at": folder["user_patent_folder_created_at"].isoformat() + 'Z'
+            "created_at": folder["user_patent_folder_created_at"].isoformat().replace('+00:00', 'Z') if folder["user_patent_folder_created_at"] else None
         })
     
     return {
-        "data": {"folders": result},
-        "timestamp": get_current_timestamp()
+        "data": {"folders": result}
     }
 
 @router.post("/folder", response_model=Dict[str, Any])
@@ -78,73 +80,142 @@ async def create_folder(folder: FolderCreate):
             "data": {
                 "user_patent_folder_id": folder_id,
                 "user_patent_folder_title": folder.user_patent_folder_title,
-                "created_at": now.isoformat().replace('+00:00', 'Z')
-            },
-            "timestamp": get_current_timestamp()
+                "created_at": now.isoformat().replace('+00:00', 'Z')  # 수정된 부분
+            }
         }
     except Exception as e:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "INVALID_INPUT",
-                "message": "폴더 생성 중 오류가 발생했습니다.",
-                "timestamp": get_current_timestamp()
+                "message": "폴더 생성 중 오류가 발생했습니다."
             }
         )
 
 @router.get("/folder/{folder_id}/patents", response_model=Dict[str, Any])
 async def get_folder_patents(folder_id: int):
-    """특정 폴더에 속한 특허 초안 목록 조회"""
-    # 폴더 존재 확인
-    folder_query = """
-    SELECT * FROM user_patent_folder 
-    WHERE user_patent_folder_id = :folder_id
-    """
-    folder = await database.fetch_one(
-        query=folder_query, 
-        values={"folder_id": folder_id}
-    )
-    
-    if not folder:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "code": "FOLDER_NOT_FOUND",
-                "message": "지정한 폴더를 찾을 수 없습니다.",
-                "timestamp": get_current_timestamp()
-            }
+    """폴더별 특허 초안 목록 조회"""
+    try:
+        # 폴더 존재 확인
+        folder_query = """
+        SELECT * FROM user_patent_folder WHERE user_patent_folder_id = :folder_id
+        """
+        folder = await database.fetch_one(
+            query=folder_query,
+            values={"folder_id": folder_id}
         )
-    
-    # 폴더 내 특허 초안 조회
-    patents_query = """
-    SELECT * FROM patent_draft
-    WHERE user_patent_folder_id = :folder_id
-    ORDER BY patent_draft_updated_at DESC
-    """
-    
-    patents = await database.fetch_all(
-        query=patents_query,
-        values={"folder_id": folder_id}
-    )
-    
-    if not patents:
+        
+        if not folder:
+            return {
+                "code": 404,
+                "error": {
+                    "code": "FOLDER_NOT_FOUND",
+                    "message": "폴더를 찾을 수 없습니다."
+                }
+            }
+        
+        # 폴더의 특허 초안 목록 조회 (기본 정보)
+        drafts_query = """
+        SELECT 
+            pd.patent_draft_id, 
+            pd.patent_draft_title, 
+            pd.patent_draft_created_at
+        FROM patent_draft pd
+        WHERE pd.user_patent_folder_id = :folder_id
+        ORDER BY pd.patent_draft_created_at DESC
+        """
+        
+        drafts = await database.fetch_all(
+            query=drafts_query,
+            values={"folder_id": folder_id}
+        )
+        
+        # 특허 초안 목록 응답 포맷
+        patents_data = []
+        
+        for draft in drafts:
+            draft_dict = dict(draft)
+            patent_draft_id = draft_dict["patent_draft_id"]
+            
+            # 기본값 설정 - 불리언 사용
+            is_corrected = False
+            total_score = 0.0  # 소수점 형태로 저장
+            
+            try:
+                # 1. fitness 테이블에서 적합도 통과 여부 조회
+                fitness_query = """
+                SELECT fitness_is_corrected
+                FROM fitness
+                WHERE patent_draft_id = :patent_draft_id
+                ORDER BY fitness_updated_at DESC
+                LIMIT 1
+                """
+                
+                fitness_data = await database.fetch_one(
+                    query=fitness_query,
+                    values={"patent_draft_id": patent_draft_id}
+                )
+                
+                if fitness_data and fitness_data["fitness_is_corrected"] is not None:
+                    # 0=실패, 1=통과를 불리언 값으로 변환
+                    is_corrected = bool(int(fitness_data["fitness_is_corrected"]))
+            except Exception as e:
+                logger.error(f"Fitness 정보 조회 중 오류: {str(e)}")
+                # 오류 발생 시 기본값 사용
+            
+            try:
+                # 2. detailed_comparison 테이블에서 종합 유사도 점수 조회
+                score_query = """
+                SELECT detailed_comparison_total_score
+                FROM detailed_comparison
+                WHERE patent_draft_id = :patent_draft_id
+                ORDER BY detailed_comparison_updated_at DESC
+                LIMIT 1
+                """
+                
+                score_data = await database.fetch_one(
+                    query=score_query,
+                    values={"patent_draft_id": patent_draft_id}
+                )
+                
+                if score_data and score_data["detailed_comparison_total_score"] is not None:
+                    # 소수점 형태 그대로 사용
+                    total_score = float(score_data["detailed_comparison_total_score"])
+            except Exception as e:
+                logger.error(f"상세 점수 조회 중 오류: {str(e)}")
+                # 오류 발생 시 기본값 사용
+            
+            # created_at 형식을 get_current_timestamp() 함수로 대체
+            created_at = get_current_timestamp()
+            
+            # 특허 초안 정보에 ERD 컬럼명과 동일한 필드명 사용
+            patents_data.append({
+                "patent_draft_id": patent_draft_id,
+                "patent_draft_title": draft_dict["patent_draft_title"] or "",
+                "fitness_is_corrected": is_corrected,
+                "detailed_comparison_total_score": total_score,
+                "created_at": draft_dict["patent_draft_created_at"].isoformat().replace('+00:00', 'Z') if draft_dict["patent_draft_created_at"] else None
+            })
+        
         return {
-            "data": {"patents": []},
-            "timestamp": get_current_timestamp()
+            "data": {
+                "patents": patents_data
+            }
         }
     
-    result = []
-    for patent in patents:
-        result.append({
-            "patent_draft_id": patent["patent_draft_id"],
-            "patent_draft_title": patent["patent_draft_title"],
-            "created_at": patent["patent_draft_created_at"].isoformat() + 'Z'
-        })
-    
-    return {
-        "data": {"patents": result},
-        "timestamp": get_current_timestamp()
-    }
+    except Exception as e:
+        # 상세 에러 로깅
+        import traceback
+        logger.error(f"폴더별 특허 초안 목록 조회 중 오류: {str(e)}")
+        logger.error(traceback.format_exc())
+        
+        return {
+            "code": 500,
+            "error": {
+                "code": "SERVER_ERROR",
+                "message": f"서버 오류가 발생했습니다: {str(e)}"
+            }
+        }
 
 @router.delete("/folder/{folder_id}", response_model=Dict[str, str])
 async def delete_folder(folder_id: int):
@@ -202,3 +273,75 @@ async def delete_folder(folder_id: int):
             "status": False,
             "error": "폴더 삭제에 실패했습니다."
         }
+
+@router.patch("/folder/{folder_id}", response_model=Dict[str, Any])
+async def update_folder_name(
+    folder_id: int,
+    folder_data: FolderUpdate
+):
+    """특허 폴더명 수정"""
+    try:
+        # 폴더 존재 확인
+        folder_query = """
+        SELECT * FROM user_patent_folder 
+        WHERE user_patent_folder_id = :folder_id
+        """
+        
+        folder = await database.fetch_one(
+            query=folder_query,
+            values={"folder_id": folder_id}
+        )
+        
+        if not folder:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "code": "FOLDER_NOT_FOUND",
+                    "message": "지정한 폴더를 찾을 수 없습니다."
+                }
+            )
+        
+        # 폴더명 업데이트
+        update_query = """
+        UPDATE user_patent_folder
+        SET user_patent_folder_title = :title,
+            user_patent_folder_updated_at = :updated_at
+        WHERE user_patent_folder_id = :folder_id
+        """
+        
+        now = datetime.now(timezone.utc)
+        await database.execute(
+            query=update_query,
+            values={
+                "title": folder_data.user_patent_folder_title,
+                "updated_at": now,
+                "folder_id": folder_id
+            }
+        )
+        
+        # 업데이트된 폴더 정보 조회
+        updated_folder = await database.fetch_one(
+            query=folder_query,
+            values={"folder_id": folder_id}
+        )
+        
+        # 결과 포맷팅
+        result = dict(updated_folder)
+        # 실제 DB에 저장된 시간 사용
+        result["created_at"] = updated_folder["user_patent_folder_created_at"].isoformat().replace('+00:00', 'Z') if updated_folder["user_patent_folder_created_at"] else None
+        result["updated_at"] = updated_folder["user_patent_folder_updated_at"].isoformat().replace('+00:00', 'Z') if updated_folder["user_patent_folder_updated_at"] else None
+        
+        return {
+            "data": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "code": "INTERNAL_ERROR",
+                "message": f"폴더명 수정 중 오류가 발생했습니다: {str(e)}"
+            }
+        )

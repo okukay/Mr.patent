@@ -49,7 +49,6 @@ class PatentDraftBase(BaseModel):
     patent_draft_claim: str = ""
 
 class PatentDraftCreate(PatentDraftBase):
-    patent_draft_id: Optional[int] = None
     user_patent_folder_id: Optional[int] = None
     
 class PatentDraftResponse(PatentDraftBase):
@@ -60,3 +59,24 @@ class PatentDraftResponse(PatentDraftBase):
     
     class Config:
         orm_mode = True
+
+class PatentPublicBase(BaseModel):
+    patent_public_number: str
+    patent_public_content: str
+    patent_public_api_response: str
+
+class PatentPublicCreate(PatentPublicBase):
+    patent_id: int
+
+class PatentPublicResponse(PatentPublicBase):
+    patent_public_id: int
+    patent_id: int
+    parsed_data: Optional[Dict[str, Any]] = None
+    patent_public_created_at: datetime
+    patent_public_updated_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+class FolderUpdate(BaseModel):
+    user_patent_folder_title: str

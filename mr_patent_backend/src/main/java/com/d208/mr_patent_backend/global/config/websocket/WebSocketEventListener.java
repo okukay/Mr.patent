@@ -26,7 +26,7 @@ public class WebSocketEventListener {
 
     @EventListener
     public void handleSubscribeEvent(SessionSubscribeEvent event) {
-        System.out.println(" [SUBSCRIBE 이벤트 발생]");
+        System.out.println(" [입장(구독)]");
 
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
 
@@ -34,19 +34,20 @@ public class WebSocketEventListener {
         String userId = accessor.getFirstNativeHeader("userId");
         String roomId = accessor.getFirstNativeHeader("roomId");
 
-        System.out.println(" [SUBSCRIBE] sessionId = " + sessionId + ", userId = " + userId + ", roomId = " + roomId);
+        System.out.println(" [구독] sessionId = " + sessionId + ", userId = " + userId + ", roomId = " + roomId);
 
         if (sessionId != null && userId != null && roomId != null) {
             int userid = Integer.parseInt(userId);
 
             chatRoomRepository.findByRoomIdAndUserId(roomId, userid).ifPresent(room -> {
-                System.out.println(" ChatRoom 찾음: " + room);
 
-                room.setSessionId(sessionId);  // 1. sessionId 저장
-                room.setStatus(room.getStatus() + 1); // 2. status 증가
+                if (room.getSessionId() == null || room.getSessionId().isBlank()) {
+                    room.setStatus(room.getStatus() + 1);
+                }
+                room.setSessionId(sessionId);  //  sessionId 저장
                 chatRoomRepository.save(room);
-                System.out.println(" ChatRoom 저장 완료");
 
+                //읽음 처리 서비스 로직
                 chatReadService.handleUserEntered(roomId, userid);
 
                 int totalStatus = chatRoomRepository.findByRoomId(roomId).stream()
@@ -67,12 +68,15 @@ public class WebSocketEventListener {
     @EventListener
     public void handleDisconnectEvent(SessionDisconnectEvent event) {
         String sessionId = event.getSessionId();
-        System.out.println(" [DISCONNECT 이벤트 발생] sessionId = " + sessionId);
+        System.out.println(" [퇴장] sessionId = " + sessionId);
 
         chatRoomRepository.findBySessionId(sessionId).ifPresentOrElse(room -> {
-            System.out.println(" [DISCONNECT 처리] roomId = " + room.getRoomId() + ", userId = " + room.getUserId());
+            System.out.println(" [퇴장] roomId = " + room.getRoomId() + ", userId = " + room.getUserId());
 
             String roomId = room.getRoomId();
+
+            room.setSessionId(null);
+
             // 1. status -1 처리
             int updatedStatus = Math.max(0, room.getStatus() - 1);
             room.setStatus(updatedStatus);
