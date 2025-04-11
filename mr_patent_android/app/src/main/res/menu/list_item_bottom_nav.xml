@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_fragment_home"
+        android:title="홈"
+        android:icon="@drawable/bottom_nav_home" />
+
+    <item
+        android:id="@+id/nav_fragment_patent"
+        android:title="특허"
+        android:icon="@drawable/bottom_nav_patent" />
+
+    <item
+        android:id="@+id/nav_fragment_study"
+        android:title="학습"
+        android:icon="@drawable/bottom_nav_practice" />
+
+    <item
+        android:id="@+id/nav_fragment_chat"
+        android:title="채팅"
+        android:icon="@drawable/bottom_nav_chat" />
+
+    <item
+        android:id="@+id/nav_fragment_mypage"
+        android:title="마이페이지"
+        android:icon="@drawable/bottom_nav_mypage" />
+
+</menu>

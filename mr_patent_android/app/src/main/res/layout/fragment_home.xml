@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/home_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.home.HomeFragment">
+
+    <!-- 상단 환영 메시지 -->
+    <TextView
+        android:id="@+id/tv_intro"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="20dp"
+        android:gravity="bottom"
+        app:layout_constraintHeight_percent="0.43"
+        android:lineSpacingMultiplier="2"
+        android:text="@string/home_intro"
+        android:textSize="25dp"
+        style="@style/customTitleFontStyle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <TextView
+        android:id="@+id/tv_go_patent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="특허로\n바로가기\n->"
+        android:lineSpacingExtra="3dp"
+        android:textAlignment="textEnd"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/iv_home_pic"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <TextView
+        android:id="@+id/tv_go_kipris"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAlignment="textEnd"
+        android:text="KIPRIS\n바로가기\n->"
+        android:lineSpacingExtra="3dp"
+        android:layout_marginEnd="20dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_go_patent"
+        app:layout_constraintEnd_toStartOf="@+id/tv_go_patent"/>
+
+    <ImageView
+        android:id="@+id/iv_home_pic"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/home_pic"
+        app:layout_constraintHeight_percent="0.36"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <Button
+        android:id="@+id/btn_go_expert"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:backgroundTint="@color/mr_blue"
+        android:text="변리사 상담 바로가기 ->"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/iv_home_pic"
+        app:layout_constraintStart_toStartOf="@+id/iv_home_pic"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

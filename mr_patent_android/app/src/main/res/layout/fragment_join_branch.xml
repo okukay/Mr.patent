@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fragment_join_branch"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.join.JoinBranchFragment">
+
+    <TextView
+        style="@style/customBeforeFontStyle"
+        android:id="@+id/tv_before"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_bias="0.07"
+        app:layout_constraintVertical_bias="0.05"/>
+
+    <TextView
+        android:id="@+id/tv_choice"
+        style="@style/customTitleFontStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="회원 유형을 선택해주세요!"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/tv_before"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.11" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_general_person"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:background="@drawable/rounded_background"
+        android:elevation="2dp"
+        android:padding="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tv_choice"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.26"
+        app:layout_constraintWidth_percent="0.72">
+
+        <ImageView
+            android:id="@+id/iv_general_member"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/member_type_general_member"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintHorizontal_bias="0.06"/>
+
+        <TextView
+            android:id="@+id/tv_general_member"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_semibold"
+            android:text="예비 출원인"
+            android:textColor="@color/mr_black"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_general_member"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.36"
+            app:layout_constraintStart_toEndOf="@+id/iv_general_member"
+            app:layout_constraintTop_toTopOf="@+id/iv_general_member"
+            app:layout_constraintVertical_bias="0.32" />
+
+        <TextView
+            android:id="@+id/tv_general_member_exp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="특허 출원을 희망해요."
+            android:textColor="@color/mr_blue"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/tv_general_member"
+            app:layout_constraintStart_toStartOf="@+id/tv_general_member"
+            app:layout_constraintTop_toBottomOf="@+id/tv_general_member"
+            app:layout_constraintVertical_bias="0.2" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_expert"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:background="@drawable/rounded_background"
+        android:elevation="2dp"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cl_general_person"
+        app:layout_constraintWidth_percent="0.72"
+        app:layout_constraintVertical_bias="0.2">
+
+        <ImageView
+            android:id="@+id/iv_expert"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/member_type_expert"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintHorizontal_bias="0.06"/>
+
+        <TextView
+            android:id="@+id/tv_expert"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_semibold"
+            android:text="변리사"
+            android:textColor="@color/mr_black"
+            android:textSize="18sp"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_expert"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.36"
+            app:layout_constraintStart_toEndOf="@+id/iv_expert"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.32" />
+
+        <TextView
+            android:id="@+id/tv_expert_exp1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="예비 출원인을 도와"
+            android:textColor="@color/mr_blue"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/tv_expert"
+            app:layout_constraintStart_toStartOf="@+id/tv_expert"
+            app:layout_constraintTop_toBottomOf="@+id/tv_expert" />
+
+        <TextView
+            android:id="@+id/tv_expert_exp2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="출원을 준비해요."
+            android:textColor="@color/mr_blue"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/tv_expert"
+            app:layout_constraintStart_toStartOf="@+id/tv_expert"
+            app:layout_constraintTop_toBottomOf="@+id/tv_expert_exp1" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

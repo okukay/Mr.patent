@@ -1,0 +1,124 @@
+<!-- bottom_sheet_layout.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/mr_white">
+
+    <LinearLayout
+        android:id="@+id/chat_input_bar"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:orientation="horizontal"
+        android:background="@color/mr_white"
+        android:padding="10dp">
+
+        <ImageButton
+            android:id="@+id/btn_down"
+            android:layout_gravity="center"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/down"
+            android:contentDescription="Add"
+            android:backgroundTint="@color/mr_white"
+            android:background="@drawable/circle_shape"/>
+
+        <View
+            android:id="@+id/et_message"
+            android:layout_width="0dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginVertical="3dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:hint="메시지를 입력하세요"
+            android:textSize="12sp"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:background="@drawable/rounded_background"
+            android:backgroundTint="@color/mr_white"/>
+
+        <Button
+            android:enabled="false"
+            android:id="@+id/btn_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="전송"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/selector_btn_color" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_image"
+        android:layout_gravity="center"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:visibility="gone"/>
+
+    <include
+        android:id="@+id/preview_image"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="300dp"
+        layout="@layout/item_file_preview"
+        android:visibility="gone"/>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/chat_bottom_sheet_menu"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+>
+
+        <ImageButton
+            android:id="@+id/btn_gallery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/circle_shape"
+            android:backgroundTint="@color/mr_gray_lighter"
+            android:padding="10dp"
+            android:src="@drawable/gallery_icon"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btn_file"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.4"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="갤러리"
+            app:layout_constraintTop_toBottomOf="@+id/btn_gallery"
+            app:layout_constraintEnd_toEndOf="@+id/btn_gallery"
+            app:layout_constraintStart_toStartOf="@+id/btn_gallery" />
+
+        <ImageButton
+            android:id="@+id/btn_file"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/circle_shape"
+            android:backgroundTint="@color/mr_gray_lighter"
+            android:padding="10dp"
+            android:src="@drawable/file_icon"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btn_gallery"
+            app:layout_constraintTop_toTopOf="parent"
+
+            app:layout_constraintVertical_bias="0.4"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="문서 파일"
+            app:layout_constraintTop_toBottomOf="@+id/btn_file"
+            app:layout_constraintEnd_toEndOf="@+id/btn_file"
+            app:layout_constraintStart_toStartOf="@+id/btn_file" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

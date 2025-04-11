@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_join_finish"
+    tools:context=".ui.join.JoinFinishFragment">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/h1_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.15" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/h2_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.4" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/v1_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.25" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/v2_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.75" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/h3_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.9" />
+
+    <ImageView
+        android:id="@+id/iv_complete"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="8dp"
+        android:layout_margin="8dp"
+        android:src="@drawable/complete"
+        app:layout_constraintStart_toStartOf="@id/v1_guideline"
+        app:layout_constraintEnd_toEndOf="@id/v2_guideline"
+        app:layout_constraintTop_toTopOf="@id/h1_guideline"
+        app:layout_constraintBottom_toBottomOf="@id/h2_guideline"/>
+
+    <TextView
+        android:id="@+id/tv_join_finish"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pretendard_semibold"
+        android:text="가입 신청 완료!"
+        android:textSize="22sp"
+        android:textColor="@color/mr_blue"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toTopOf="@id/h2_guideline"
+        app:layout_constraintStart_toStartOf="@id/v1_guideline"
+        app:layout_constraintEnd_toEndOf="@id/v2_guideline" />
+
+    <TextView
+        android:id="@+id/tv_join_finish_exp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pretendard_semibold"
+        android:text="관리자의 승인까지 최대 7일이 소요됩니다 😊"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_join_finish" />
+
+
+    <Button
+        android:id="@+id/btn_confirm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:backgroundTint="@color/mr_blue"
+        android:fontFamily="@font/pretendard_semibold"
+        android:text="확  인"
+        android:textSize="16sp"
+        app:layout_constraintTop_toTopOf="@id/h3_guideline"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

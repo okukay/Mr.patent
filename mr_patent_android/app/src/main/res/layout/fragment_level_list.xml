@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="20dp"
+    tools:context=".ui.study.LevelListFragment">
+
+    <View
+        android:id="@+id/v_title"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.08"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.09"/>
+
+    <TextView
+        android:id="@+id/tv_title"
+        style="@style/customTitleFontStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end|bottom"
+        android:text="학습"
+        app:layout_constraintStart_toEndOf="@+id/v_title"
+        app:layout_constraintTop_toBottomOf="@+id/v_title" />
+
+
+
+    <include
+        android:id="@+id/card_level1"
+        layout="@layout/item_level_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.25"
+        app:layout_constraintVertical_chainStyle="spread"
+        app:layout_constraintBottom_toTopOf="@id/card_level3"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintWidth_percent="0.4"
+        app:layout_constraintEnd_toStartOf="@id/card_level2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_title" />
+
+    <!-- Level 2 Card -->
+    <include
+        android:id="@+id/card_level2"
+        layout="@layout/item_level_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.25"
+        app:layout_constraintVertical_chainStyle="spread"
+        app:layout_constraintBottom_toTopOf="@id/card_level4"
+        app:layout_constraintWidth_percent="0.4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/card_level1"
+        app:layout_constraintTop_toBottomOf="@+id/tv_title" />
+
+    <!-- Level 3 Card -->
+    <include
+        android:id="@+id/card_level3"
+        layout="@layout/item_level_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.25"
+        app:layout_constraintBottom_toTopOf="@id/card_level5"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintWidth_percent="0.4"
+        app:layout_constraintEnd_toStartOf="@id/card_level4"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/card_level1" />
+
+    <!-- Level 4 Card -->
+    <include
+        android:id="@+id/card_level4"
+        layout="@layout/item_level_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.25"
+        app:layout_constraintVertical_chainStyle="spread"
+        app:layout_constraintBottom_toTopOf="@id/card_dictionary"
+        app:layout_constraintWidth_percent="0.4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/card_level3"
+        app:layout_constraintTop_toBottomOf="@+id/card_level1" />
+
+    <!-- Level 5 Card -->
+    <include
+        android:id="@+id/card_level5"
+        layout="@layout/item_level_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.25"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintWidth_percent="0.4"
+        app:layout_constraintEnd_toStartOf="@id/card_dictionary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/card_level3" />
+
+    <!-- Dictionary Card -->
+    <include
+        android:id="@+id/card_dictionary"
+        layout="@layout/item_level_card"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.25"
+        app:layout_constraintWidth_percent="0.4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/card_level5"
+        app:layout_constraintTop_toBottomOf="@+id/card_level3" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

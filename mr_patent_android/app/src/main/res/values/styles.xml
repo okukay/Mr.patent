@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="BottomNavigationView" parent="@style/TextAppearance.AppCompat.Caption">
+        <item name="android:textSize">10sp</item>
+    </style>
+
+    <style name="BottomNavigationView.Active" parent="@style/TextAppearance.AppCompat.Caption">
+        <item name="android:textSize">10sp</item>
+    </style>
+
+    <style name="customSwitchStyle" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="thumbTint">@color/selector_switch_thumb</item>
+        <item name="trackTint">@color/selector_switch_track</item>
+        <item name="trackDecorationTint">@color/mr_blue</item>
+        <item name="minHeight">28dp</item>
+    </style>
+
+    <style name="customDatePickerDialog" parent="@style/ThemeOverlay.Material3.MaterialCalendar">
+        <item name="colorPrimary">@color/mr_blue</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <item name="materialCalendarStyle">@style/customDatePickerStyle</item>
+        <item name="materialCalendarHeaderLayout">@style/customDatePickerDialogHeaderLayout</item>
+        <item name="buttonBarPositiveButtonStyle">@style/customDatePickerDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/customDatePickerDialogButton</item>
+    </style>
+
+    <style name="customDatePickerStyle" parent="@style/Widget.MaterialComponents.MaterialCalendar">
+        <item name="android:backgroundTint">#DAE6FF</item>
+    </style>
+
+    <style name="customDatePickerDialogHeaderLayout" parent="@style/Widget.Material3.MaterialCalendar.HeaderLayout">
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_marginBottom">30dp</item>
+    </style>
+
+    <style name="customDatePickerDialogButton" parent="@style/Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/black</item>
+    </style>
+</resources>

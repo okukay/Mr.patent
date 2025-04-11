@@ -1,0 +1,37 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Mr_patent_android" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+         <item name="colorPrimary">@color/mr_blue</item>
+        <item name="colorOnPrimary">@color/mr_white</item>
+        <item name="colorPrimaryContainer">@color/mr_white</item>
+        <item name="colorOnPrimaryContainer">@color/mr_blue</item>
+        <item name="colorSecondary">@color/mr_blue</item>
+
+        <item name="android:statusBarColor">@color/mr_white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/mr_white</item>
+        <item name="android:colorPrimaryDark">@color/mr_blue</item>
+
+        <item name="android:fontFamily">@font/pretendard_medium</item>
+        <item name="android:textViewStyle">@style/customTextViewFontStyle</item>
+        <item name="materialButtonStyle">@style/customButtonFontStyle</item>
+        <item name="editTextStyle">@style/customEditTextFontStyle</item>
+        <item name="chipStyle">@style/CustomChipChoice</item>
+        <item name="chipGroupStyle">@style/CustomChipChoice</item>
+    </style>
+
+
+
+    <style name="CustomChipChoice" parent="@style/Widget.MaterialComponents.Chip.Filter">
+        <item name="chipBackgroundColor">@color/selector_chip_color</item>
+        <item name="android:textColor">@color/selector_chip_text</item>
+        <item name="chipStrokeColor">@color/selector_chip_stroke</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="checkedIcon">@null</item>
+    </style>
+
+
+
+    <style name="Theme.Mr_patent_android" parent="Base.Theme.Mr_patent_android" />
+</resources>

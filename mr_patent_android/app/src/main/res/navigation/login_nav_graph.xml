@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation"
+    app:startDestination="@id/nav_loginFragment">
+
+    <fragment
+        android:id="@+id/nav_loginFragment"
+        android:name="com.ssafy.mr_patent_android.ui.login.LoginFragment"
+        android:label="fragment_login"
+        tools:layout="@layout/fragment_login" >
+        <action
+            android:id="@+id/action_loginFragment_to_emailVerifyFragment2"
+            app:destination="@id/nav_emailVerifyFragment" />
+        <action
+            android:id="@+id/action_nav_loginFragment_to_joinBranchFragment"
+            app:destination="@id/nav_joinBranchFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_emailVerifyFragment"
+        android:name="com.ssafy.mr_patent_android.ui.login.EmailVerifyFragment"
+        android:label="fragment_email_verify"
+        tools:layout="@layout/fragment_email_verify" >
+        <action
+            android:id="@+id/action_emailVerifyFragment2_to_pwdChangeFragment"
+            app:destination="@id/nav_pwdChangeFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_pwdChangeFragment"
+        android:name="com.ssafy.mr_patent_android.ui.login.PwdChangeFragment"
+        android:label="fragment_pwd_change"
+        tools:layout="@layout/fragment_pwd_change" >
+        <argument
+            android:name="email"
+            app:argType="string"
+            android:defaultValue=""/>
+
+        <argument
+            android:name="code"
+            app:argType="integer"
+            android:defaultValue="5"/>
+
+        <action
+            android:id="@+id/action_nav_pwdChangeFragment_to_nav_loginFragment"
+            app:destination="@id/nav_loginFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_joinBranchFragment"
+        android:name="com.ssafy.mr_patent_android.ui.join.JoinBranchFragment"
+        android:label="fragment_join_branch"
+        tools:layout="@layout/fragment_join_branch" >
+        <action
+            android:id="@+id/action_nav_joinBranchFragment_to_joinProfileFragment"
+            app:destination="@id/nav_joinProfileFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_joinProfileFragment"
+        android:name="com.ssafy.mr_patent_android.ui.join.JoinProfileFragment"
+        android:label="fragment_join_profile"
+        tools:layout="@layout/fragment_join_profile" >
+        <action
+            android:id="@+id/action_joinProfileFragment_to_joinMemberFragment"
+            app:destination="@id/nav_joinMemberFragment" />
+        <action
+            android:id="@+id/action_joinProfileFragment_to_joinExpertFragment"
+            app:destination="@id/nav_joinExpertFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_joinMemberFragment"
+        android:name="com.ssafy.mr_patent_android.ui.join.JoinMemberFragment"
+        android:label="fragment_join_member"
+        tools:layout="@layout/fragment_join_member" >
+        <action
+            android:id="@+id/action_joinMemberFragment_to_joinFinishFragment"
+            app:destination="@id/nav_joinFinishFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_joinExpertFragment"
+        android:name="com.ssafy.mr_patent_android.ui.join.JoinExpertFragment"
+        android:label="fragment_join_expert"
+        tools:layout="@layout/fragment_join_expert" >
+        <argument
+            android:name="address"
+            app:argType="string"
+            android:defaultValue="" />
+        <action
+            android:id="@+id/action_joinExpertFragment_to_joinFinishFragment"
+            app:destination="@id/nav_joinFinishFragment" />
+        <action
+            android:id="@+id/action_nav_joinExpertFragment_to_addressSearchFragment"
+            app:destination="@id/nav_addressSearchFragment" />
+        <action
+            android:id="@+id/action_nav_joinExpertFragment_to_nav_joinProfileFragment"
+            app:destination="@id/nav_joinProfileFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_joinFinishFragment"
+        android:name="com.ssafy.mr_patent_android.ui.join.JoinFinishFragment"
+        android:label="fragment_join_finish"
+        tools:layout="@layout/fragment_join_finish" >
+        <action
+            android:id="@+id/action_joinFinishFragment_to_nav_loginFragment"
+            app:destination="@id/nav_loginFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/nav_addressSearchFragment"
+        android:name="com.ssafy.mr_patent_android.ui.address.AddressSearchFragment"
+        android:label="fragment_address_search"
+        tools:layout="@layout/fragment_address_search">
+        <action
+            android:id="@+id/action_nav_addressSearchFragment_to_nav_joinExpertFragment"
+            app:destination="@id/nav_joinExpertFragment" />
+    </fragment>
+</navigation>

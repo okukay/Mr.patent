@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="20dp"
+    android:id="@+id/study_card_fragment"
+    tools:context=".ui.study.StudyCardFragment">
+
+    <View
+        android:id="@+id/v_title"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.08"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.09" />
+
+    <View
+        android:id="@+id/v_title2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.08"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.09" />
+
+    <TextView
+        android:id="@+id/tv_title"
+        style="@style/customTitleFontStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end|bottom"
+        android:text="Level 1"
+        app:layout_constraintStart_toEndOf="@+id/v_title"
+        app:layout_constraintTop_toBottomOf="@+id/v_title" />
+
+    <TextView
+        android:id="@+id/tv_sequence"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="3/30"
+        android:textColor="@color/mr_gray"
+        android:paddingVertical="10dp"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@+id/tv_title"
+        app:layout_constraintTop_toBottomOf="@+id/tv_title" />
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/vp_study_card"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_sequence"
+ />
+
+    <ToggleButton
+        android:id="@+id/t_btn_bookmark"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/selector_bookmark"
+        android:backgroundTint="@color/mr_red"
+        android:text=""
+        android:textOff=""
+        android:textOn=""
+        app:layout_constraintStart_toStartOf="@+id/tv_sequence"
+        app:layout_constraintTop_toBottomOf="@+id/tv_sequence" />
+
+    <ImageButton
+        android:id="@+id/btn_back"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/circle_shape"
+        android:src="@drawable/arrow_up"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.6"
+        android:rotation="-90"
+        android:backgroundTint="@color/mr_gray_lighter"
+        app:tint="@color/mr_blue" />
+
+    <ImageButton
+        android:id="@+id/btn_next"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/circle_shape"
+        android:src="@drawable/arrow_up"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.6"
+        android:rotation="90"
+        android:backgroundTint="@color/mr_gray_lighter"
+        app:tint="@color/mr_blue"/>
+
+    <Button
+        android:id="@+id/btn_all"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="단어전체보기"
+        android:backgroundTint="@color/mr_blue"
+        app:layout_constraintEnd_toStartOf="@+id/v_title2"
+        app:layout_constraintTop_toBottomOf="@+id/v_title2" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

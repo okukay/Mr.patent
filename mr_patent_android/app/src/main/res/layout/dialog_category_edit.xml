@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="320dp"
+    android:background="@drawable/rounded_background"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_category_edit"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.8" >
+
+        <TextView
+            android:id="@+id/tv_file_extraction_complete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/pretendard_semibold"
+            android:text="주력 카테고리를 선택하세요. "
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/ll_category"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.05" />
+
+        <LinearLayout
+            android:id="@+id/ll_category"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            app:layout_constraintTop_toBottomOf="@id/tv_file_extraction_complete"
+            app:layout_constraintBottom_toTopOf="@+id/btn_list_attorney_go"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHeight_percent="0.66"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintWidth_percent="0.92">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_chemi"
+                    app:checkedChip="@+id/chip_chemi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipCornerRadius="100dp"
+                    style="@style/CustomChipChoice"
+                    android:text="화학공학" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_mecha"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/CustomChipChoice"
+                    android:text="기계공학" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_life"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipCornerRadius="100dp"
+                    style="@style/CustomChipChoice"
+                    android:text="생명공학" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_elec"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipCornerRadius="100dp"
+                    style="@style/CustomChipChoice"
+                    android:text="전기/전자" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_list_attorney_go"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:backgroundTint="@color/mr_blue"
+            android:text="변경"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/ll_category"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.96" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

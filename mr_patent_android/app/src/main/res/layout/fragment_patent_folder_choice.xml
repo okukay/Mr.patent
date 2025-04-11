@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_patent_folder_choice"
+    tools:context=".ui.patent.PatentFolderChoiceFragment">
+
+    <View
+        android:id="@+id/v_title"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintHeight_percent="0.08"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintWidth_percent="0.09"/>
+
+    <TextView
+        android:id="@+id/tv_before"
+        style="@style/customBeforeFontStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/pretendard_semibold"
+        app:layout_constraintBottom_toTopOf="@+id/tv_folder_choice"
+        app:layout_constraintStart_toStartOf="@+id/tv_folder_choice"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.6" />
+
+    <TextView
+        android:id="@+id/tv_folder_choice"
+        style="@style/customTitleFontStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="폴더를 선택해주세요."
+        android:textColor="@color/black"
+        app:layout_constraintStart_toEndOf="@+id/v_title"
+        app:layout_constraintTop_toBottomOf="@+id/v_title"
+        app:layout_constraintVertical_bias="0.12" />
+
+    <ImageView
+        android:id="@+id/iv_folder_add"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:src="@drawable/folder_add"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_folder_choice"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.92"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tv_folder_choice"
+        app:layout_constraintHeight_percent="0.036"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_folder_items"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.8"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_folder_choice"
+        app:layout_constraintWidth_percent="0.86" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
