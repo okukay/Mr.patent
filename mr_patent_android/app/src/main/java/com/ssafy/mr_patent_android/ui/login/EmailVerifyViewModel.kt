@@ -11,13 +11,12 @@ import com.ssafy.mr_patent_android.data.model.dto.UserDto
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.authService
 import kotlinx.coroutines.launch
 
-private const val TAG = "EmailVerifyViewModel_Mr_Patent"
-class EmailVerifyViewModel:ViewModel() {
+class EmailVerifyViewModel : ViewModel() {
     private val _toastMsg = MutableLiveData<String?>()
     val toastMsg: LiveData<String?>
         get() = _toastMsg
 
-    private  val _codeState = MutableLiveData<Boolean>()
+    private val _codeState = MutableLiveData<Boolean>()
     val codeState: LiveData<Boolean>
         get() = _codeState
 
@@ -42,27 +41,6 @@ class EmailVerifyViewModel:ViewModel() {
         _emailVerifyState.value = false
     }
 
-//    fun emailVerify(email: String, code: Int) {
-//        _emailVerifyState.value = false
-//        viewModelScope.launch {
-//            runCatching {
-//                authService.sendCodePwd(
-//                    PwdChangeRequest(email, code, null)
-//                )
-//            }.onSuccess {
-//                if (it.isSuccessful) {
-//                    Log.d(TAG, "emailVerify: $it")
-//                    _emailVerifyState.value = true
-//                } else {
-//                    it.errorBody()?.let { it1 ->
-//                        val res = networkUtil.getErrorResponse(it1)
-//                    }
-//                }
-//            }.onFailure {
-//            }
-//        }
-//    }
-
     fun emailVerifyForgot(email: String, code: Int) {
         viewModelScope.launch {
             runCatching {
@@ -74,7 +52,6 @@ class EmailVerifyViewModel:ViewModel() {
                     _emailVerifyState.value = true
                 } else {
                     it.errorBody()?.let { it1 ->
-                        val res = networkUtil.getErrorResponse(it1)
                     }
                 }
             }.onFailure {
@@ -102,11 +79,10 @@ class EmailVerifyViewModel:ViewModel() {
     }
 
     fun sendCode(email: String) {
-        // 코드 전송 요청
         viewModelScope.launch {
             runCatching {
                 authService.sendCode(email)
-            }.onSuccess { 
+            }.onSuccess {
                 if (it.isSuccessful) {
                     _codeState.value = true
                     it.body()?.data?.let { response ->
@@ -114,7 +90,7 @@ class EmailVerifyViewModel:ViewModel() {
                     }
                 } else {
                     it.errorBody()?.let { it1 ->
-                        val res=networkUtil.getErrorResponse(it1)
+                        val res = networkUtil.getErrorResponse(it1)
                     }
                 }
             }.onFailure {
@@ -124,10 +100,9 @@ class EmailVerifyViewModel:ViewModel() {
     }
 
     fun sendCodeForgot(email: String) {
-        // 코드 전송 요청
         viewModelScope.launch {
             runCatching {
-                authService.sendForgotCode(PwdChangeRequest(email,null,null))
+                authService.sendForgotCode(PwdChangeRequest(email, null, null))
             }.onSuccess {
                 if (it.isSuccessful) {
                     _codeState.value = true
@@ -136,11 +111,10 @@ class EmailVerifyViewModel:ViewModel() {
                     }
                 } else {
                     it.errorBody()?.let { it1 ->
-                        val res=networkUtil.getErrorResponse(it1)
+                        val res = networkUtil.getErrorResponse(it1)
                     }
                 }
             }.onFailure {
-                Log.d(TAG, "sendCode: failure")
             }
         }
     }

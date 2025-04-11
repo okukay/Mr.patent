@@ -17,15 +17,11 @@ import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.databinding.FragmentLoginBinding
 
-private const val TAG = "LoginFragment"
-class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::bind, R.layout.fragment_login) {
+class LoginFragment :
+    BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::bind, R.layout.fragment_login) {
     val viewModel: LoginViewModel by viewModels()
-    var emailFlag= false
-    var pwdFlag= false
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
+    var emailFlag = false
+    var pwdFlag = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -33,19 +29,18 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::b
         initObserver()
 
     }
-    fun initView(){
+
+    fun initView() {
         binding.tvPwdForgot.setOnClickListener {
-            // 비밀번호 찾기
             findNavController().navigate(R.id.nav_emailVerifyFragment)
         }
 
         binding.tvSignup.setOnClickListener {
-            // 회원가입
             findNavController().navigate(R.id.nav_joinBranchFragment)
         }
 
         binding.btnLogin.setOnClickListener {
-            if(checkEmail(binding.etEmail.text.toString()) && binding.etPwd.text.length >=2){
+            if (checkEmail(binding.etEmail.text.toString()) && binding.etPwd.text.length >= 2) {
                 viewModel.login(binding.etEmail.text.toString(), binding.etPwd.text.toString())
             }
 
@@ -69,7 +64,7 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::b
         }
         binding.etPwd.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
             if (!hasFocus) {
-                if (binding.etPwd.text.length <2) {
+                if (binding.etPwd.text.length < 2) {
                     binding.etPwd.error = "6자 이상 입력해주세요."
                 }
             }
@@ -101,34 +96,29 @@ class LoginFragment : BaseFragment<FragmentLoginBinding>(FragmentLoginBinding::b
             }
         }
 
-}
-    fun initObserver(){
+    }
+
+    fun initObserver() {
         viewModel.loginState.observe(viewLifecycleOwner, {
-            if (it){
-                // 로그인
-                Log.d(TAG, "로그인 성공")
+            if (it) {
 
                 initFcm()
-                val intent= Intent(requireContext(), MainActivity::class.java)
-                intent.flags= Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                val intent = Intent(requireContext(), MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
             }
         })
     }
 
-    private fun initFcm(){
+    private fun initFcm() {
 
         FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
             if (!task.isSuccessful) {
-
-                Log.w(TAG, "Fetching FCM registration token failed", task.exception)
                 return@OnCompleteListener
             }
-            // Get new FCM registration token
             val token = task.result
 
             viewModel.sendFcmToken(token)
-            Log.d(TAG, "FCM 토큰: $token")
         })
     }
 

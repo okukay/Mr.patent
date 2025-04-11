@@ -18,8 +18,8 @@ import com.ssafy.mr_patent_android.data.model.dto.QuizDto
 import com.ssafy.mr_patent_android.databinding.DialogQuizOutBinding
 import com.ssafy.mr_patent_android.databinding.FragmentQuizBinding
 
-private const val TAG = "QuizFragment"
-class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind, R.layout.fragment_quiz) {
+class QuizFragment :
+    BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind, R.layout.fragment_quiz) {
     private val quizViewModel: QuizViewModel by viewModels()
     private lateinit var optionAdapter: QuizOptionAdapter
     val levelId by lazy {
@@ -27,7 +27,6 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
     }
 
     private var currentQuestionIndex = 0
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -38,6 +37,7 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
         initView()
         initObserver()
     }
+
     fun initDialog() {
         val dialogBinding = DialogQuizOutBinding.inflate(layoutInflater)
         val dialog = Dialog(requireContext())
@@ -57,7 +57,7 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
         dialog.show()
     }
 
-    fun initView(){
+    fun initView() {
 
         quizViewModel.getQuiz(1)
 
@@ -73,12 +73,13 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
                     it.visibility = View.INVISIBLE
                 } else {
                     binding.button.text = "퀴즈 완료"
-                    Log.d(TAG, "initView: ${quizViewModel.wrongAnswers.value}")
                     quizViewModel.wrongAnswers.value?.let { wrongAnswers ->
-                        Log.d(TAG, "initView: $wrongAnswers")
                     }
                     findNavController().navigate(
-                        QuizFragmentDirections.actionQuizFragmentToQuizResultFragment((quizViewModel.wrongAnswers.value?: emptyList<Int>()).toIntArray()  , levelId),
+                        QuizFragmentDirections.actionQuizFragmentToQuizResultFragment(
+                            (quizViewModel.wrongAnswers.value ?: emptyList<Int>()).toIntArray(),
+                            levelId
+                        ),
                         NavOptions.Builder()
                             .setPopUpTo(R.id.quizFragment, true)
                             .build()
@@ -93,7 +94,7 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
         dismissLoadingDialog()
     }
 
-    fun initObserver(){
+    fun initObserver() {
         quizViewModel.loading.observe(viewLifecycleOwner) {
             if (it) {
                 showLoadingDialog()
@@ -102,7 +103,6 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
             }
         }
         quizViewModel.quizData.observe(viewLifecycleOwner) { quizData ->
-            Log.d(TAG, "onViewCreated: $quizData")
             currentQuestionIndex = 0
             updateQuestion(quizData)
         }
@@ -111,12 +111,11 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
 
     private fun updateQuestion(quizData: QuizDto) {
         val question = quizData.questions[currentQuestionIndex]
-        
+
         binding.cardStudy.text = question.questionText
-        
-        optionAdapter = QuizOptionAdapter(question.options, question.correctOption, question.wordId, quizViewModel){
-            if(it != question.correctOption) {
-                Log.d(TAG, "updateQuestion: ${question.wordId}")
+
+        optionAdapter = QuizOptionAdapter(question.options, question.correctOption) {
+            if (it != question.correctOption) {
                 quizViewModel.addWrongQuiz(question.wordId)
             }
             binding.button.visibility = View.VISIBLE
@@ -124,8 +123,9 @@ class QuizFragment : BaseFragment<FragmentQuizBinding>(FragmentQuizBinding::bind
         binding.rvQuizOptions.adapter = optionAdapter
 
         binding.tvSequence.text = "${currentQuestionIndex + 1}/${quizData.questions.size}"
-        binding.linearProgressIndicator.progress = (currentQuestionIndex )
+        binding.linearProgressIndicator.progress = (currentQuestionIndex)
 
-        binding.button.text = if (currentQuestionIndex == quizData.questions.size - 1) "퀴즈 완료" else "다음 문제"
+        binding.button.text =
+            if (currentQuestionIndex == quizData.questions.size - 1) "퀴즈 완료" else "다음 문제"
     }
 }

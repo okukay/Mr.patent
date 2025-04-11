@@ -13,21 +13,23 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.DecimalFormat
 
-private const val TAG = "FileUtil_Mr_Patent"
 class FileUtil {
     fun formatFileSize(sizeInBytes: Long): String {
-        Log.d(TAG, "formatFileSize: ${sizeInBytes}")
         val df = DecimalFormat("#.##")
 
         return when {
             sizeInBytes >= 1024 * 1024 -> {
-                val sizeInMB = BigDecimal(sizeInBytes).divide(BigDecimal(1024 * 1024), 2, RoundingMode.FLOOR)
+                val sizeInMB =
+                    BigDecimal(sizeInBytes).divide(BigDecimal(1024 * 1024), 2, RoundingMode.FLOOR)
                 "${df.format(sizeInMB)} MB"
             }
+
             sizeInBytes >= 1024 -> {
-                val sizeInKB = BigDecimal(sizeInBytes).divide(BigDecimal(1024), 2, RoundingMode.FLOOR)
+                val sizeInKB =
+                    BigDecimal(sizeInBytes).divide(BigDecimal(1024), 2, RoundingMode.FLOOR)
                 "${df.format(sizeInKB)} KB"
             }
+
             else -> "$sizeInBytes Bytes"
         }
     }
@@ -36,7 +38,6 @@ class FileUtil {
         val contentResolver = context.contentResolver
         val mimeType = contentResolver.getType(uri)
 
-        // MIME 타입으로 확장자 추출 시도
         if (mimeType != null) {
             return MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
         }
@@ -63,12 +64,12 @@ class FileUtil {
         }
     }
 
-    fun formatType(fileType: String) : String {
+    fun formatType(fileType: String): String {
         return when (fileType.lowercase()) {
-            "image", "jpg", "jpeg","png"-> "IMAGE"
-            "doc","docx" -> "WORD"
+            "image", "jpg", "jpeg", "png" -> "IMAGE"
+            "doc", "docx" -> "WORD"
             "pdf" -> "PDF"
-            else -> "TEXT" // default fallback
+            else -> "TEXT"
         }
     }
 
@@ -109,7 +110,7 @@ class FileUtil {
         return size
     }
 
-    fun getFileFromUri(context: Context, uri: Uri?, name:String, type:String): File {
+    fun getFileFromUri(context: Context, uri: Uri?, name: String, type: String): File {
         val inputStream = uri?.let { context.contentResolver.openInputStream(it) }
         val file = File(context.cacheDir, "$name.$type")
         inputStream.use { input ->
@@ -120,29 +121,13 @@ class FileUtil {
         return file
     }
 
-    fun getFilePathFromUri(context: Context, uri: Uri, extension: String): String {
-        val inputStream = context.contentResolver.openInputStream(uri)
-        val fileName = "selected_${System.currentTimeMillis()}.$extension"
-        val file = File(context.cacheDir, fileName)
 
-        inputStream.use { input ->
-            file.outputStream().use { output ->
-                input?.copyTo(output)
-            }
-        }
-
-        return file.absolutePath
-    }
-
-    fun isFileSizeValid(context: Context,uri: Uri): Boolean {
+    fun isFileSizeValid(context: Context, uri: Uri): Boolean {
         return try {
             val fileSize = context.contentResolver.openInputStream(uri)?.available()?.toLong() ?: 0
-            val formattedSize = formatFileSize(fileSize)
-            Log.d(TAG, "파일 크기: $formattedSize")
 
             fileSize <= 5 * 1024 * 1024
         } catch (e: Exception) {
-            Log.e(TAG, "파일 크기 확인 중 오류 발생", e)
             false
         }
     }

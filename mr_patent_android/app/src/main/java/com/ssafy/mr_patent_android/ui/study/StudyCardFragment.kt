@@ -2,14 +2,9 @@ package com.ssafy.mr_patent_android.ui.study
 
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -20,18 +15,18 @@ import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.databinding.FragmentStudyCardBinding
 
 private const val TAG = "StudyCardFragment"
-class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(FragmentStudyCardBinding::bind, R.layout.fragment_study_card) {
+
+class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(
+    FragmentStudyCardBinding::bind,
+    R.layout.fragment_study_card
+) {
     val viewModel: StudyCardViewModel by viewModels()
     lateinit var wordCardAdapter: WordCardAdapter
     val level_id by lazy {
-        navArgs<StudyCardFragmentArgs>().value.levelId }
+        navArgs<StudyCardFragmentArgs>().value.levelId
+    }
     val type by lazy {
         navArgs<StudyCardFragmentArgs>().value.type
-    }
-
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -42,25 +37,28 @@ class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(FragmentStudyCa
 
     }
 
-    fun initView(){
+    fun initView() {
         if (type == "bookmark") {
             binding.tvTitle.text = "북마크 단어장"
             viewModel.getBookmarkWordList(level_id)
-            binding.tvSequence.text = "${binding.vpStudyCard.currentItem+1}/${viewModel.total.value ?: ""}"
+            binding.tvSequence.text =
+                "${binding.vpStudyCard.currentItem + 1}/${viewModel.total.value ?: ""}"
             binding.vpStudyCard.setPageTransformer { page, position ->
                 val firstItem = binding.vpStudyCard.currentItem == 0
-                val lastItem = binding.vpStudyCard.currentItem == viewModel.total.value?.toInt()!!-1
+                val lastItem =
+                    binding.vpStudyCard.currentItem == viewModel.total.value?.toInt()!! - 1
                 binding.btnBack.isVisible = !firstItem
                 binding.btnNext.isVisible = !lastItem
 
-                binding.tvSequence.text = "${binding.vpStudyCard.currentItem+1}/${viewModel.total.value?: ""}"
+                binding.tvSequence.text =
+                    "${binding.vpStudyCard.currentItem + 1}/${viewModel.total.value ?: ""}"
             }
         } else {
             binding.tvTitle.text = "Level $level_id"
             viewModel.getWordList(level_id)
-            binding.tvSequence.text = "${binding.vpStudyCard.currentItem+1}/30"
+            binding.tvSequence.text = "${binding.vpStudyCard.currentItem + 1}/30"
             binding.vpStudyCard.setPageTransformer { page, position ->
-                binding.tvSequence.text = "${binding.vpStudyCard.currentItem+1}/30"
+                binding.tvSequence.text = "${binding.vpStudyCard.currentItem + 1}/30"
 
                 val firstItem = binding.vpStudyCard.currentItem == 0
                 val lastItem = binding.vpStudyCard.currentItem == 29
@@ -70,20 +68,25 @@ class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(FragmentStudyCa
             }
         }
         binding.btnAll.setOnClickListener {
-            findNavController().navigate(StudyCardFragmentDirections.actionStudyCardFragmentToStudyAllFragment(level_id, type),
-            NavOptions.Builder()
-                .setPopUpTo(R.id.studyCardFragment, true)
-                .build())
+            findNavController().navigate(
+                StudyCardFragmentDirections.actionStudyCardFragmentToStudyAllFragment(
+                    level_id,
+                    type
+                ),
+                NavOptions.Builder()
+                    .setPopUpTo(R.id.studyCardFragment, true)
+                    .build()
+            )
         }
 
 
-        
+
         binding.btnNext.setOnClickListener {
-            binding.vpStudyCard.setCurrentItem(binding.vpStudyCard.currentItem+1, true)
+            binding.vpStudyCard.setCurrentItem(binding.vpStudyCard.currentItem + 1, true)
         }
 
         binding.btnBack.setOnClickListener {
-            binding.vpStudyCard.setCurrentItem(binding.vpStudyCard.currentItem-1, true)
+            binding.vpStudyCard.setCurrentItem(binding.vpStudyCard.currentItem - 1, true)
         }
 
         binding.vpStudyCard.addItemDecoration(object : RecyclerView.ItemDecoration() {
@@ -99,7 +102,7 @@ class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(FragmentStudyCa
         })
     }
 
-    fun initObserver(){
+    fun initObserver() {
         viewModel.loading.observe(viewLifecycleOwner) {
             if (it) {
                 showLoadingDialog()
@@ -129,12 +132,11 @@ class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(FragmentStudyCa
                     }
                     binding.vpStudyCard.adapter = wordCardAdapter
                 } else {
-                    // 최초 이후엔 데이터 갱신만 필요하면 아래처럼 처리할 수도 있어요
-//                    wordCardAdapter.submitList(list.toMutableList()) // 필요 시 함수 직접 만들어도 OK
                 }
             }
         }
-        binding.vpStudyCard.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+        binding.vpStudyCard.registerOnPageChangeCallback(object :
+            ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
                 updateExternalBookmarkState()
@@ -153,8 +155,6 @@ class StudyCardFragment : BaseFragment<FragmentStudyCardBinding>(FragmentStudyCa
         }
 
     }
-
-
 
     private fun updateExternalBookmarkState() {
         val current = binding.vpStudyCard.currentItem

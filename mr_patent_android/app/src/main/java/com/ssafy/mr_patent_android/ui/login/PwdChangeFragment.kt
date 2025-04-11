@@ -21,17 +21,11 @@ class PwdChangeFragment : Fragment() {
     var email = ""
     var code = 0
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentPwdChangeBinding.inflate(inflater, container, false)
-        // Inflate the layout for this fragment
         return binding.root
     }
 
@@ -71,7 +65,6 @@ class PwdChangeFragment : Fragment() {
 
 
         binding.btnChabgePwd.setOnClickListener {
-        // 비밀번호 변경
             viewModel.changePwd(PwdChangeRequest(email, null, binding.etPwd.text.toString()))
         }
 
@@ -80,11 +73,9 @@ class PwdChangeFragment : Fragment() {
     fun initObserver() {
         viewModel.changeState.observe(viewLifecycleOwner, {
             if(it) {
-                // 비밀번호 변경 성공
                 Toast.makeText(requireContext(), "비밀번호 변경 성공", Toast.LENGTH_SHORT).show()
                 findNavController().navigate(R.id.nav_loginFragment)
             } else {
-                // 비밀번호 변경 실패
                 Toast.makeText(requireContext(), "비밀번호 변경 실패", Toast.LENGTH_SHORT).show()
             }
         })

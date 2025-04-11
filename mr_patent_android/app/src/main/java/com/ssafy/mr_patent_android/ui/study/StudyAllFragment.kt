@@ -11,18 +11,19 @@ import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.databinding.FragmentStudyAllBinding
 
-class StudyAllFragment : BaseFragment<FragmentStudyAllBinding>(FragmentStudyAllBinding::bind, R.layout.fragment_study_all) {
+class StudyAllFragment : BaseFragment<FragmentStudyAllBinding>(
+    FragmentStudyAllBinding::bind,
+    R.layout.fragment_study_all
+) {
     val viewModel: StudyCardViewModel by viewModels()
     private lateinit var wordAllAdapter: WordAllAdapter
     val level_id by lazy {
-        navArgs<StudyAllFragmentArgs>().value.levelId }
+        navArgs<StudyAllFragmentArgs>().value.levelId
+    }
     val type by lazy {
         navArgs<StudyAllFragmentArgs>().value.type
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -35,9 +36,9 @@ class StudyAllFragment : BaseFragment<FragmentStudyAllBinding>(FragmentStudyAllB
         }
 
         binding.btnStudyCard.setOnClickListener {
-            findNavController().navigate (
+            findNavController().navigate(
                 StudyAllFragmentDirections.actionStudyAllFragmentToStudyCardFragment(
-                    level_id,type
+                    level_id, type
                 ),
                 NavOptions.Builder()
                     .setPopUpTo(R.id.studyAllFragment, true)
@@ -72,9 +73,6 @@ class StudyAllFragment : BaseFragment<FragmentStudyAllBinding>(FragmentStudyAllB
                     return@WordAllAdapter result
                 }
                 binding.rvStudyAll.adapter = wordAllAdapter
-            } else {
-                // 필요 시 목록 전체 갱신
-                // wordAllAdapter.submitList(list.toMutableList()) // 따로 만들거나 전체 업데이트도 가능
             }
         }
     }

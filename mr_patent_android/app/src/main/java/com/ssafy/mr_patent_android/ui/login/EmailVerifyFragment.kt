@@ -15,15 +15,13 @@ import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.databinding.FragmentEmailVerifyBinding
 
-private const val TAG = "EmailVerifyFragment"
-class EmailVerifyFragment : BaseFragment<FragmentEmailVerifyBinding>(FragmentEmailVerifyBinding::bind, R.layout.fragment_email_verify) {
-    val viewModel : EmailVerifyViewModel by viewModels()
+class EmailVerifyFragment : BaseFragment<FragmentEmailVerifyBinding>(
+    FragmentEmailVerifyBinding::bind,
+    R.layout.fragment_email_verify
+) {
+    val viewModel: EmailVerifyViewModel by viewModels()
     private var timer: CountDownTimer? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -34,13 +32,14 @@ class EmailVerifyFragment : BaseFragment<FragmentEmailVerifyBinding>(FragmentEma
 
     fun initView() {
         binding.tvBack.setOnClickListener {
-            // 뒤로가기
             requireActivity().onBackPressed()
         }
 
         binding.btnSendCode.setOnClickListener {
-            // 코드 전송
-            if(binding.etEmail.text.toString().isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(binding.etEmail.text.toString()).matches()) {
+            if (binding.etEmail.text.toString()
+                    .isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(binding.etEmail.text.toString())
+                    .matches()
+            ) {
                 showCustomToast("이메일을 확인해주세요.")
             } else {
                 viewModel.setCodeState(true)
@@ -49,16 +48,17 @@ class EmailVerifyFragment : BaseFragment<FragmentEmailVerifyBinding>(FragmentEma
         }
 
         binding.btnVerifyEmail.setOnClickListener {
-            // 코드 확인
-            viewModel.emailVerifyForgot(binding.etEmail.text.toString(), binding.etPwd.text.toString().toInt())
+            viewModel.emailVerifyForgot(
+                binding.etEmail.text.toString(),
+                binding.etPwd.text.toString().toInt()
+            )
 
         }
     }
 
     fun initObserver() {
         viewModel.codeState.observe(viewLifecycleOwner, {
-            if(it) {
-                // 코드 전송 성공
+            if (it) {
                 startTimer()
                 binding.btnSendCode.isEnabled = false
                 binding.etPwd.isEnabled = true
@@ -66,11 +66,9 @@ class EmailVerifyFragment : BaseFragment<FragmentEmailVerifyBinding>(FragmentEma
 
                 binding.etPwd.addTextChangedListener {
                     val isEnable = binding.etPwd.text.toString().length == 6
-                    // 코드 입력
                     binding.btnVerifyEmail.isEnabled = isEnable
                 }
             } else {
-                // 시간 끝
                 binding.btnSendCode.isEnabled = true
                 binding.btnVerifyEmail.isEnabled = false
                 timer?.cancel()
@@ -79,7 +77,7 @@ class EmailVerifyFragment : BaseFragment<FragmentEmailVerifyBinding>(FragmentEma
 
         viewModel.emailVerifyState.observe(viewLifecycleOwner) { isSuccess ->
             if (isSuccess) {
-                stopTimer() // 타이머 먼저 정리하고
+                stopTimer()
                 showCustomToast("이메일 인증 성공")
                 findNavController().navigate(
                     EmailVerifyFragmentDirections
@@ -96,7 +94,7 @@ class EmailVerifyFragment : BaseFragment<FragmentEmailVerifyBinding>(FragmentEma
     }
 
     fun startTimer() {
-        stopTimer() // 혹시 기존 타이머가 있다면 먼저 정지
+        stopTimer()
         timer = object : CountDownTimer(600000, 1000) {
             override fun onTick(time: Long) {
                 binding?.tvTime?.text = "남은 시간: ${time / 60000}분 ${(time % 60000) / 1000}초"
@@ -125,5 +123,5 @@ class EmailVerifyFragment : BaseFragment<FragmentEmailVerifyBinding>(FragmentEma
         super.onDestroyView()
     }
 
-    }
+}
 

@@ -1,8 +1,6 @@
 package com.ssafy.mr_patent_android.ui.chat
 
-import android.util.Log
 import android.view.LayoutInflater
-import android.view.RoundedCorner
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -18,15 +16,18 @@ import com.ssafy.mr_patent_android.databinding.ListItemChatFileBinding
 import com.ssafy.mr_patent_android.databinding.ListItemChatMessageBinding
 import com.ssafy.mr_patent_android.databinding.ListItemChatPhotoBinding
 import com.ssafy.mr_patent_android.util.TimeUtil
-import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
 
 
 private const val TAG = "MessageListAdapter"
-open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessageDto>, val itemClickListener:ItemClickListener) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
+open class MessageListAdapter(
+    var user: UserDto,
+    var messageList: List<ChatMessageDto>,
+    val itemClickListener: ItemClickListener
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        Log.d(TAG, "onCreateViewHolder: ")
         if (viewType == MESSAGE_CONTENT) {
 
             val binding = ListItemChatMessageBinding.inflate(
@@ -35,31 +36,28 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                 false
             )
             return MessageViewHolder(binding)
-        }
-        else if (viewType == FILE_CONTENT) {
+        } else if (viewType == FILE_CONTENT) {
             val binding = ListItemChatFileBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
                 false
             )
             return FileViewHolder(binding)
-        }
-        else if (viewType == PHOTO_CONTENT) {
+        } else if (viewType == PHOTO_CONTENT) {
             val binding = ListItemChatPhotoBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
                 false
             )
             return PhotoViewHolder(binding)
-        }
-        else if (viewType == DIVIDER) {
+        } else if (viewType == DIVIDER) {
             val binding = ListItemChatDividerBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
                 false
             )
             return DividerViewHolder(binding)
-        } else{
+        } else {
             val binding = ListItemChatDividerBinding.inflate(
                 LayoutInflater.from(parent.context),
                 parent,
@@ -70,7 +68,7 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when(holder){
+        when (holder) {
             is MessageViewHolder -> holder.bind(position)
             is FileViewHolder -> holder.bind(position)
             is PhotoViewHolder -> holder.bind(position)
@@ -96,9 +94,12 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
         fun onPhotoClick(url: String)
     }
 
-    inner class MessageViewHolder(private val binding: ListItemChatMessageBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class MessageViewHolder(private val binding: ListItemChatMessageBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
-            val date = TimeUtil().parseUtcWithJavaTime(messageList[position].timestamp?:"2025-04-05T23:30:52.123Z")
+            val date = TimeUtil().parseUtcWithJavaTime(
+                messageList[position].timestamp ?: "2025-04-05T23:30:52.123Z"
+            )
             val formatter = DateTimeFormatter.ofPattern("HH:mm")
             val formattedDateTime = date.format(formatter)
 
@@ -108,7 +109,8 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                     binding.llUserMessageText.visibility = View.VISIBLE
                     binding.tvUserMessageText.text = it.message
                     binding.tvUserMessageTime.text = formattedDateTime
-                    binding.vUserMessageIsRead.visibility = if (it.isRead) View.GONE else View.VISIBLE
+                    binding.vUserMessageIsRead.visibility =
+                        if (it.isRead) View.GONE else View.VISIBLE
                 } else {
                     binding.llUserMessageText.visibility = View.GONE
                     binding.llOtherMessageText.visibility = View.VISIBLE
@@ -130,9 +132,12 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
         }
     }
 
-    inner class FileViewHolder(private val binding: ListItemChatFileBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class FileViewHolder(private val binding: ListItemChatFileBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
-            val date = TimeUtil().parseUtcWithJavaTime(messageList[position].timestamp?:"2025-04-05T23:30:52.123Z")
+            val date = TimeUtil().parseUtcWithJavaTime(
+                messageList[position].timestamp ?: "2025-04-05T23:30:52.123Z"
+            )
             val formatter = DateTimeFormatter.ofPattern("HH:mm")
             val formattedDateTime = date.format(formatter)
 
@@ -144,12 +149,17 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                     binding.tvUserMessageTimeFile.text = formattedDateTime
                     binding.icUserMessageFile.tvFileName.text = it.fileName
                     binding.icUserMessageFile.layoutFilePreview.setOnClickListener {
-                        messageList[position].fileUrl?.let { it1 -> itemClickListener.onFileClick(it1) }
+                        messageList[position].fileUrl?.let { it1 ->
+                            itemClickListener.onFileClick(
+                                it1
+                            )
+                        }
                     }
-                    binding.viewUserMessageFileIsread.visibility = if (it.isRead) View.GONE else View.VISIBLE
-                    if("PDF".equals(it.messageType)){
+                    binding.viewUserMessageFileIsread.visibility =
+                        if (it.isRead) View.GONE else View.VISIBLE
+                    if ("PDF".equals(it.messageType)) {
                         binding.icUserMessageFile.previewImage.setImageResource(R.drawable.pdf_icon)
-                    } else{
+                    } else {
                         binding.icUserMessageFile.previewImage.setImageResource(R.drawable.word_icon)
                     }
                 } else {
@@ -157,13 +167,17 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                     binding.llOtherMessageFile.visibility = View.VISIBLE
                     binding.tvOtherMessageTimePhoto.text = formattedDateTime
                     binding.icOtherMessageFile.tvFileName.text = it.fileName
-                    if("PDF".equals(it.messageType)){
+                    if ("PDF".equals(it.messageType)) {
                         binding.icOtherMessageFile.previewImage.setImageResource(R.drawable.pdf_icon)
-                    } else{
+                    } else {
                         binding.icOtherMessageFile.previewImage.setImageResource(R.drawable.word_icon)
                     }
                     binding.icOtherMessageFile.layoutFilePreview.setOnClickListener {
-                        messageList[position].fileUrl?.let { it1 -> itemClickListener.onFileClick(it1) }
+                        messageList[position].fileUrl?.let { it1 ->
+                            itemClickListener.onFileClick(
+                                it1
+                            )
+                        }
                     }
 
                     binding.profileImageOther.setOnClickListener {
@@ -184,15 +198,18 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
         }
     }
 
-    inner class PhotoViewHolder(private val binding: ListItemChatPhotoBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class PhotoViewHolder(private val binding: ListItemChatPhotoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
 
             messageList[position].let {
-                val date = TimeUtil().parseUtcWithJavaTime(it.timestamp?:"2025-04-05T23:30:52.123Z")
+                val date =
+                    TimeUtil().parseUtcWithJavaTime(it.timestamp ?: "2025-04-05T23:30:52.123Z")
                 val formatter = DateTimeFormatter.ofPattern("HH:mm")
                 val formattedDateTime = date.format(formatter)
                 if (it.userId == sharedPreferences.getUser().userId) {
-                    binding.viewUserMessagePhotoIsread.visibility = if (it.isRead) View.GONE else View.VISIBLE
+                    binding.viewUserMessagePhotoIsread.visibility =
+                        if (it.isRead) View.GONE else View.VISIBLE
 
                     binding.llOtherMessagePhoto.visibility = View.GONE
                     binding.llUserMessagePhoto.visibility = View.VISIBLE
@@ -202,9 +219,12 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                         .fallback(R.drawable.user_profile)
                         .error(R.drawable.image_load_error_icon)
                         .into(binding.ivUserMessagePhoto)
-                    Log.d(TAG, "bind: ${messageList[position].fileUrl}")
                     binding.ivUserMessagePhoto.setOnClickListener {
-                        messageList[position].fileUrl?.let { it1 -> itemClickListener.onPhotoClick(it1) }
+                        messageList[position].fileUrl?.let { it1 ->
+                            itemClickListener.onPhotoClick(
+                                it1
+                            )
+                        }
                     }
 
 
@@ -219,7 +239,11 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
                         .error(R.drawable.user_profile)
                         .into(binding.ivOtherMessagePhoto)
                     binding.ivOtherMessagePhoto.setOnClickListener {
-                        messageList[position].fileUrl?.let { it1 -> itemClickListener.onPhotoClick(it1) }
+                        messageList[position].fileUrl?.let { it1 ->
+                            itemClickListener.onPhotoClick(
+                                it1
+                            )
+                        }
                     }
                     binding.profileImageOther.setOnClickListener {
                         itemClickListener.onItemClick(user.userImage)
@@ -238,13 +262,14 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
         }
     }
 
-    inner class DividerViewHolder(private val binding: ListItemChatDividerBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class DividerViewHolder(private val binding: ListItemChatDividerBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
             binding.tvChatDividerTime.text = messageList[position].timestamp
         }
     }
 
-    companion object{
+    companion object {
         const val MESSAGE_CONTENT = 0
         const val FILE_CONTENT = 1
         const val PHOTO_CONTENT = 2
@@ -252,9 +277,9 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
         const val NO_CONTENT = 4
     }
 
-    fun addMessage(message: ChatMessageDto, state:Int) {
+    fun addMessage(message: ChatMessageDto, state: Int) {
         val mutableList = messageList.toMutableList()
-        mutableList.add(0,message)
+        mutableList.add(0, message)
         messageList = mutableList
         notifyItemInserted(0)
     }
@@ -272,7 +297,6 @@ open class MessageListAdapter(var user:UserDto,var messageList: List<ChatMessage
 
         notifyDataSetChanged()
 
-        Log.d(TAG, "Update completed. Current list size: ${messageList.size}")
     }
 
     fun setRead() {

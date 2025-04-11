@@ -10,6 +10,7 @@ import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.userServic
 import kotlinx.coroutines.launch
 
 private const val TAG = "ExpertListViewModel"
+
 class ExpertListViewModel : ViewModel() {
     private val _expertList = MutableLiveData<List<UserDto>>()
     val expertList: LiveData<List<UserDto>>
@@ -26,10 +27,6 @@ class ExpertListViewModel : ViewModel() {
     private val _filterState = MutableLiveData<List<String?>>()
     val filterState: LiveData<List<String?>>
         get() = _filterState
-
-    fun setSortState(sortState: Int) {
-        _sortState.value = sortState
-    }
 
     fun setFilterState(filterState: List<String?>) {
         _filterState.value = filterState

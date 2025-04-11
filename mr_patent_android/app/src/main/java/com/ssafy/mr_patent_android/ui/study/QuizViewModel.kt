@@ -4,8 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssafy.mr_patent_android.data.model.dto.AnswerDto
-import com.ssafy.mr_patent_android.data.model.dto.Question
 import com.ssafy.mr_patent_android.data.model.dto.QuizDto
 import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.studyService
 import kotlinx.coroutines.launch
@@ -27,8 +25,6 @@ class QuizViewModel : ViewModel() {
         }
     }
 
-
-
     fun getQuiz(levelId: Int) {
         _loading.value = true
         viewModelScope.launch {
@@ -39,12 +35,12 @@ class QuizViewModel : ViewModel() {
                     it.body()?.data?.let { it1 ->
                         _quizData.value = it1
                     }
-                }else{
-                    _quizData.value = QuizDto() }
+                } else {
+                    _quizData.value = QuizDto()
+                }
 
                 _loading.value = false
             }.onFailure {
-                // mock data
                 _loading.value = false
 
             }

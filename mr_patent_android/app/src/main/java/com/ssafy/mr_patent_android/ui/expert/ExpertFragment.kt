@@ -18,7 +18,6 @@ import com.ssafy.mr_patent_android.databinding.DialogChatBinding
 import com.ssafy.mr_patent_android.databinding.FragmentExpertBinding
 import com.ssafy.mr_patent_android.ui.chat.ChatFragmentArgs
 
-private const val TAG = "ExpertFragment_Mr_Patent"
 class ExpertFragment :
     BaseFragment<FragmentExpertBinding>(FragmentExpertBinding::bind, R.layout.fragment_expert) {
     val viewModel: ExpertViewModel by viewModels()
@@ -26,17 +25,10 @@ class ExpertFragment :
         navArgs<ExpertFragmentArgs>().value.expertId
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         initView()
         initObserver()
-
     }
 
     fun initView() {
@@ -44,9 +36,11 @@ class ExpertFragment :
         if (sharedPreferences.getUser().userRole == 1) {
             binding.btnEditProfile.visibility = View.VISIBLE
             binding.btnEditProfile.setOnClickListener {
-                findNavController().navigate(ExpertFragmentDirections.actionPatentAttorneyFragmentToProfileEditFragment(
-                    "expert", expert_id
-                ))
+                findNavController().navigate(
+                    ExpertFragmentDirections.actionPatentAttorneyFragmentToProfileEditFragment(
+                        "expert", expert_id
+                    )
+                )
             }
             binding.fabChat.visibility = View.GONE
         } else {
@@ -68,7 +62,8 @@ class ExpertFragment :
             binding.tvPhone.text = it.expertPhone
             val address = it.expertAddress
             if (address.contains("\\")) {
-                binding.tvAddress.text = address.substringBefore("\\").plus(" ").plus(address.substringAfter("\\"))
+                binding.tvAddress.text =
+                    address.substringBefore("\\").plus(" ").plus(address.substringAfter("\\"))
             } else {
                 binding.tvAddress.text = address
             }
@@ -103,16 +98,16 @@ class ExpertFragment :
         dialogBinding.tvName.text = viewModel.expert.value?.userName
 
         dialogBinding.dlBtnYes.setOnClickListener {
-            val expert= viewModel.expert.value!!
+            val expert = viewModel.expert.value!!
             viewModel.startChat(expert.userId)
             viewModel.roomId.observe(viewLifecycleOwner) {
-                Log.d(TAG, "initDialog: $it")
                 if (it != null) {
                     findNavController().navigate(
                         ExpertFragmentDirections.actionPatentAttorneyFragmentToChatFragment(
-                            expert.userId, expert.expertId, it, expert.userName, expert.userImage)
+                            expert.userId, expert.expertId, it, expert.userName, expert.userImage
+                        )
                     )
-                }else {
+                } else {
                     showCustomToast("정보를 받아올 수 없습니다.")
                 }
             }
@@ -128,7 +123,5 @@ class ExpertFragment :
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
         dialog.show()
-
-
     }
 }

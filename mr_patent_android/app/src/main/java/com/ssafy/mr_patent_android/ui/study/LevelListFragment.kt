@@ -2,11 +2,7 @@ package com.ssafy.mr_patent_android.ui.study
 
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -18,15 +14,21 @@ import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.data.model.dto.LevelDto
 import com.ssafy.mr_patent_android.databinding.FragmentLevelListBinding
 
-private const val TAG = "FragmentLevelListBinding"
-class LevelListFragment : BaseFragment<FragmentLevelListBinding>(FragmentLevelListBinding::bind ,R.layout.fragment_level_list) {
+class LevelListFragment : BaseFragment<FragmentLevelListBinding>(
+    FragmentLevelListBinding::bind,
+    R.layout.fragment_level_list
+) {
     val viewModel: LevelListViewModel by viewModels()
-    val bgColor= arrayOf("#E5EEFF", "#D9E5FF", "#C6D9FF", "#ACC8FF", "#9BB9F3", "#6D9AF0")
-    val cardList= intArrayOf(R.id.card_level1, R.id.card_level2, R.id.card_level3, R.id.card_level4, R.id.card_level5, R.id.card_dictionary)
+    val bgColor = arrayOf("#E5EEFF", "#D9E5FF", "#C6D9FF", "#ACC8FF", "#9BB9F3", "#6D9AF0")
+    val cardList = intArrayOf(
+        R.id.card_level1,
+        R.id.card_level2,
+        R.id.card_level3,
+        R.id.card_level4,
+        R.id.card_level5,
+        R.id.card_dictionary
+    )
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -36,31 +38,24 @@ class LevelListFragment : BaseFragment<FragmentLevelListBinding>(FragmentLevelLi
 
     }
 
-    fun initView(){
+    fun initView() {
         viewModel.getLevels()
 
     }
 
-    fun initObserver(){
+    fun initObserver() {
         viewModel.levelList.observe(viewLifecycleOwner, {
             it?.let {
-                for (i in it.levels.indices){
+                for (i in it.levels.indices) {
                     val level = it.levels[i]
                     setLevelCard(level, i)
                 }
             }
         })
 
-//        viewModel.isLoading.observe(viewLifecycleOwner, {
-//            if (it) {
-//                showLoadingDialog()
-//            } else {
-//                dismissLoadingDialog()
-//            }
-//        })
     }
 
-    fun setLevelCard(level: LevelDto.Level, index: Int ){
+    fun setLevelCard(level: LevelDto.Level, index: Int) {
         val cardView = view?.findViewById<CardView>(cardList[index])
         cardView?.let {
             val card = it.findViewById<CardView>(cardList[index])
@@ -73,9 +68,13 @@ class LevelListFragment : BaseFragment<FragmentLevelListBinding>(FragmentLevelLi
             card.setCardBackgroundColor(Color.parseColor(bgColor[index]))
             titleTv.text = level.level_name
 
-            card.setOnClickListener{
+            card.setOnClickListener {
                 if (level.is_accessible) {
-                    findNavController().navigate(LevelListFragmentDirections.actionNavFragmentStudyToLevelFragment(level.level_id))
+                    findNavController().navigate(
+                        LevelListFragmentDirections.actionNavFragmentStudyToLevelFragment(
+                            level.level_id
+                        )
+                    )
                 }
             }
 
@@ -88,7 +87,7 @@ class LevelListFragment : BaseFragment<FragmentLevelListBinding>(FragmentLevelLi
                 } else {
                     if (level.best_score == 100) {
                         text = "미응시"
-                        color="#9E9E9E"
+                        color = "#9E9E9E"
                     } else {
                         text = "학습중 | ${level.best_score}점"
                         color = "#FF6756"

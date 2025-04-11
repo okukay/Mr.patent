@@ -16,23 +16,21 @@ import com.ssafy.mr_patent_android.MainViewModel
 import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.ApplicationClass.Companion.sharedPreferences
 import com.ssafy.mr_patent_android.base.BaseFragment
-import com.ssafy.mr_patent_android.data.model.dto.ChatRoomDto
 import com.ssafy.mr_patent_android.databinding.FragmentChatListBinding
 import com.ssafy.mr_patent_android.util.LoadingDialogSkeleton
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.net.URL
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.concurrent.TimeUnit
 
-private const val TAG = "ChatListFragment"
-class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListBinding::bind, R.layout.fragment_chat_list) {
+class ChatListFragment : BaseFragment<FragmentChatListBinding>(
+    FragmentChatListBinding::bind,
+    R.layout.fragment_chat_list
+) {
     val viewModel: ChatListViewModel by viewModels()
     val activityViewModel: MainViewModel by activityViewModels()
     private var eventSource: BackgroundEventSource? = null
-    lateinit var mainActivity : MainActivity
+    lateinit var mainActivity: MainActivity
 
     val loadingDialog by lazy {
         LoadingDialogSkeleton(requireContext())
@@ -48,7 +46,6 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
     override fun onResume() {
         super.onResume()
         if (eventSource == null) {
-            Log.d(TAG, "onResume: SSE 연결 시작")
             eventSource = BackgroundEventSource
                 .Builder(
                     SseEventHandler(viewModel),
@@ -69,12 +66,13 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG, "onPause: SSE 연결 종료 시도")
+        loadingDialog.dismiss()
         lifecycleScope.launch(Dispatchers.IO) {
             eventSource?.close()
             eventSource = null
         }
     }
+
     private fun initView() {
         eventSource?.start()
     }
@@ -88,14 +86,15 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
             }
         }
 
-        var cnt=0
-        activityViewModel.networkState.observe(requireActivity()){
+        var cnt = 0
+        activityViewModel.networkState.observe(requireActivity()) {
             if (isAdded) {
                 if (it == false) {
-                    cnt+=1
-                    requireActivity().findViewById<AppBarLayout>(R.id.appbar).visibility = View.VISIBLE
+                    cnt += 1
+                    requireActivity().findViewById<AppBarLayout>(R.id.appbar).visibility =
+                        View.VISIBLE
                 } else {
-                    if (cnt>=0) {
+                    if (cnt >= 0) {
                         eventSource?.start()
 
                         viewModel.getChatRoomList()
@@ -109,23 +108,19 @@ class ChatListFragment : BaseFragment<FragmentChatListBinding>(FragmentChatListB
         val adapter = ChatListAdapter { roomDto ->
             findNavController().navigate(
                 ChatListFragmentDirections.actionNavFragmentChatToChatFragment(
-                    roomDto.receiverId, roomDto.expertId, roomDto.roomId, roomDto.userName, roomDto.userImage ?: ""
+                    roomDto.receiverId,
+                    roomDto.expertId,
+                    roomDto.roomId,
+                    roomDto.userName,
+                    roomDto.userImage ?: ""
                 )
             )
         }
         binding.rvChatList.adapter = adapter
 
         viewModel.chatRoomList.observe(viewLifecycleOwner) { chatList ->
-            Log.d(TAG, "initObserver: $chatList")
             adapter.submitList(chatList)
         }
-    }
-
-
-    override fun onDestroy() {
-        super.onDestroy()
-//        viewModel.setChatRoomList(emptyList())
-        Log.d(TAG, "onDestroy: ")
     }
 
 

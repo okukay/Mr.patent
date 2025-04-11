@@ -11,19 +11,17 @@ import com.ssafy.mr_patent_android.databinding.ItemQuizOptionBinding
 class QuizOptionAdapter(
     private var options: List<Question.Option>,
     private val correctOptionId: Int,
-    private val wordId: Int,
-    private val viewModel: QuizViewModel,
     val itemClickListener: ItemClickListener
 ) : RecyclerView.Adapter<QuizOptionAdapter.OptionViewHolder>() {
 
     private var selectedOption: Int? = null
     private var isAnswerChecked = false
 
-    inner class OptionViewHolder(private val binding: ItemQuizOptionBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class OptionViewHolder(private val binding: ItemQuizOptionBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(option: Question.Option) {
             binding.tvOptionText.text = option.optionText
 
-            // 배경 초기화
             binding.tvOptionText.setBackgroundResource(R.drawable.rounded_background_stroke)
 
             if (isAnswerChecked) {
@@ -36,6 +34,7 @@ class QuizOptionAdapter(
                         )
                         binding.tvIndicator.text = "O"
                     }
+
                     selectedOption -> {
                         if (selectedOption != correctOptionId) {
                             binding.tvOptionText.setBackgroundResource(R.drawable.quiz_option_wrong)
@@ -65,7 +64,8 @@ class QuizOptionAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OptionViewHolder {
-        val binding = ItemQuizOptionBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ItemQuizOptionBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return OptionViewHolder(binding)
     }
 

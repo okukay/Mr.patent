@@ -1,5 +1,6 @@
 package com.ssafy.mr_patent_android.ui.study
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
@@ -21,21 +22,20 @@ import com.ssafy.mr_patent_android.databinding.DialogStartQuizBinding
 import com.ssafy.mr_patent_android.databinding.FragmentQuizResultBinding
 
 private const val TAG = "QuizResultFragment"
-class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(FragmentQuizResultBinding::bind, R.layout.fragment_quiz_result) {
+
+class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(
+    FragmentQuizResultBinding::bind,
+    R.layout.fragment_quiz_result
+) {
     private lateinit var gestureDetector: GestureDetectorCompat
     private val viewModel: StudyCardViewModel by viewModels()
 
     private lateinit var wordAllAdapter: WordAllAdapter
     val wrongQuiz by lazy {
-       navArgs<QuizResultFragmentArgs>().value.answerDto
+        navArgs<QuizResultFragmentArgs>().value.answerDto
     }
     val levelId by lazy {
         navArgs<QuizResultFragmentArgs>().value.levelId
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -47,6 +47,7 @@ class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(FragmentQuizR
 
         binding.tvQuizResult.text = getString(R.string.quiz_result, 8)
     }
+
     fun initView() {
         viewModel.getQuizResult(levelId, wrongQuiz.toList())
         binding.tvTitle.text = "퀴즈 결과"
@@ -54,17 +55,16 @@ class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(FragmentQuizR
 
     fun initObserver() {
         viewModel.resultData.observe(viewLifecycleOwner) { result ->
-            Log.d(TAG, "initObserver: $result")
             binding.tvQuizResult.text = getString(R.string.quiz_result, result.score)
             binding.tvQuizScore.text = "${result.score}/10"
-            if(result.score ==10){
+            if (result.score == 10) {
                 binding.tvQuizPassed.text = "Passed"
-                binding.circularProgressIndicator.progress=10
+                binding.circularProgressIndicator.progress = 10
                 binding.btnGoLevelList.setBackgroundColor(resources.getColor(R.color.mr_blue))
-                binding.tvWrongList.visibility = View.GONE }
-            else{
+                binding.tvWrongList.visibility = View.GONE
+            } else {
                 initSlide()
-                if(result.score <= 7) {
+                if (result.score <= 7) {
                     binding.tvQuizMent.visibility = View.VISIBLE
                     binding.tvQuizMent.text = getString(R.string.quiz_ment)
                     binding.circularProgressIndicator.setIndicatorColor(
@@ -74,16 +74,18 @@ class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(FragmentQuizR
 
                     binding.btnRetry.visibility = View.VISIBLE
                     binding.btnGoLevelList.setBackgroundColor(resources.getColor(R.color.mr_gray))
-                    binding.btnRetry.setOnClickListener{
+                    binding.btnRetry.setOnClickListener {
                         initDialog()
                     }
-                }else{
+                } else {
                     binding.tvQuizPassed.text = "Passed"
                     binding.btnGoLevelList.setBackgroundColor(resources.getColor(R.color.mr_blue))
                 }
 
                 if (!::wordAllAdapter.isInitialized) {
-                    wordAllAdapter = WordAllAdapter((viewModel.resultData.value?.words?: listOf()).toMutableList()) { position, checked ->
+                    wordAllAdapter = WordAllAdapter(
+                        (viewModel.resultData.value?.words ?: listOf()).toMutableList()
+                    ) { position, checked ->
                         if (viewModel.isLoading.value == true) return@WordAllAdapter false
 
                         val result = viewModel.createBookmark(position)
@@ -96,12 +98,9 @@ class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(FragmentQuizR
                         return@WordAllAdapter result
                     }
                     binding.rvWrongList.adapter = wordAllAdapter
-                } else {
-                    // 필요 시 목록 전체 갱신
-                    // wordAllAdapter.submitList(list.toMutableList()) // 따로 만들거나 전체 업데이트도 가능
                 }
 
-                binding.circularProgressIndicator.progress= result.score
+                binding.circularProgressIndicator.progress = result.score
 
             }
 
@@ -110,7 +109,7 @@ class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(FragmentQuizR
                 findNavController().navigate(
                     QuizResultFragmentDirections.actionQuizResultFragmentToNavFragmentStudy(),
                     NavOptions.Builder()
-                        .setPopUpTo(R.id.nav_fragment_study,false)
+                        .setPopUpTo(R.id.nav_fragment_study, false)
                         .build()
                 )
             }
@@ -122,7 +121,8 @@ class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(FragmentQuizR
         dialog.setCanceledOnTouchOutside(true)
         dialog.setCancelable(true)
 
-        val bindingDialog = DialogStartQuizBinding.inflate(LayoutInflater.from(requireContext()), null, false)
+        val bindingDialog =
+            DialogStartQuizBinding.inflate(LayoutInflater.from(requireContext()), null, false)
 
         dialog.setContentView(bindingDialog.root)
 
@@ -143,22 +143,25 @@ class QuizResultFragment : BaseFragment<FragmentQuizResultBinding>(FragmentQuizR
         dialog.show()
     }
 
-    fun initSlide(){
+    @SuppressLint("ClickableViewAccessibility")
+    fun initSlide() {
         val slidePanel = binding.suplQuizResult
 
-        slidePanel.isTouchEnabled = true// SlidingUpPanel
+        slidePanel.isTouchEnabled = true
 
-        gestureDetector = GestureDetectorCompat(requireContext(), object : GestureDetector.SimpleOnGestureListener() {
-            override fun onFling(
-                e1: MotionEvent?,
-                e2: MotionEvent,
-                velocityX: Float,
-                velocityY: Float
-            ): Boolean {
-                slidePanel.panelState = SlidingUpPanelLayout.PanelState.EXPANDED
-                return super.onFling(e1, e2, velocityX, velocityY)
-            }
-        })
+        gestureDetector = GestureDetectorCompat(
+            requireContext(),
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onFling(
+                    e1: MotionEvent?,
+                    e2: MotionEvent,
+                    velocityX: Float,
+                    velocityY: Float
+                ): Boolean {
+                    slidePanel.panelState = SlidingUpPanelLayout.PanelState.EXPANDED
+                    return super.onFling(e1, e2, velocityX, velocityY)
+                }
+            })
         binding.tvWrongList.setOnTouchListener { v, event ->
             gestureDetector.onTouchEvent(event)
             true

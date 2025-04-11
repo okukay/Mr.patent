@@ -1,6 +1,5 @@
 package com.ssafy.mr_patent_android.ui.study
 
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageView
@@ -12,14 +11,13 @@ import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.data.model.dto.LevelDto
 import com.ssafy.mr_patent_android.databinding.FragmentBookmarkListBinding
-import com.ssafy.mr_patent_android.databinding.FragmentLevelListBinding
 
 class BookmarkListFragment : BaseFragment<FragmentBookmarkListBinding>(
     FragmentBookmarkListBinding::bind,
     R.layout.fragment_bookmark_list
 ) {
     val viewModel: BookmarkViewModel by viewModels()
-    val cardList= intArrayOf(
+    val cardList = intArrayOf(
         R.id.bookmark_level1,
         R.id.bookmark_level2,
         R.id.bookmark_level3,
@@ -27,9 +25,6 @@ class BookmarkListFragment : BaseFragment<FragmentBookmarkListBinding>(
         R.id.bookmark_level5,
     )
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -39,12 +34,12 @@ class BookmarkListFragment : BaseFragment<FragmentBookmarkListBinding>(
 
     }
 
-    fun initView(){
+    fun initView() {
         viewModel.getBookmarkList()
 
     }
 
-    fun initObserver(){
+    fun initObserver() {
         viewModel.loading.observe(viewLifecycleOwner) {
             if (it) {
                 showLoadingDialog()
@@ -63,7 +58,7 @@ class BookmarkListFragment : BaseFragment<FragmentBookmarkListBinding>(
         })
     }
 
-    fun setLevelCard(level: LevelDto.Level, index: Int ) {
+    fun setLevelCard(level: LevelDto.Level, index: Int) {
         val cardView = view?.findViewById<CardView>(cardList[index])
         cardView?.let {
             val bookmarkText = it.findViewById<TextView>(R.id.tv_bookmark_count)
@@ -82,7 +77,12 @@ class BookmarkListFragment : BaseFragment<FragmentBookmarkListBinding>(
             )
 
             it.setOnClickListener {
-                findNavController().navigate(BookmarkListFragmentDirections.actionBookmarkListFragmentToStudyCardFragment(level.level_id,"bookmark"))
+                findNavController().navigate(
+                    BookmarkListFragmentDirections.actionBookmarkListFragmentToStudyCardFragment(
+                        level.level_id,
+                        "bookmark"
+                    )
+                )
             }
         }
     }

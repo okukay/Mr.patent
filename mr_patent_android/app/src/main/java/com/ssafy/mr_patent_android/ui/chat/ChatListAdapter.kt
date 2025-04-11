@@ -1,33 +1,28 @@
 package com.ssafy.mr_patent_android.ui.chat
 
-import android.os.Build
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.RequiresApi
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.signature.ObjectKey
 import com.ssafy.mr_patent_android.R
 import com.ssafy.mr_patent_android.data.model.dto.ChatRoomDto
-import com.ssafy.mr_patent_android.data.model.dto.UserDto
 import com.ssafy.mr_patent_android.databinding.ListItemChatRoomBinding
-import com.ssafy.mr_patent_android.databinding.ListItemExpertBinding
 import com.ssafy.mr_patent_android.util.TimeUtil
 import java.net.URLDecoder
 
-private const val TAG = "ChatListAdapter"
 class ChatListAdapter(private val itemClickListener: ItemClickListener) :
     RecyclerView.Adapter<ChatListAdapter.ChatViewHolder>() {
 
     private var chatList: List<ChatRoomDto> = emptyList()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
-        val binding = ListItemChatRoomBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ListItemChatRoomBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ChatViewHolder(binding)
     }
 
@@ -86,7 +81,6 @@ class ChatListAdapter(private val itemClickListener: ItemClickListener) :
         val path = url.substringBefore("?").substringAfterLast("/")
         val decoded = URLDecoder.decode(path, "UTF-8")
         val fileName = decoded.substringAfterLast("/")
-        Log.d(TAG, "extractFileNameOnly: ${fileName.substringBeforeLast(".")}")
         return fileName.substringBeforeLast(".")
     }
 }

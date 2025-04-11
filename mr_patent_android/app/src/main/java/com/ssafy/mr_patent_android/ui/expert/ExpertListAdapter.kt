@@ -14,10 +14,12 @@ import com.ssafy.mr_patent_android.data.model.dto.UserDto
 import com.ssafy.mr_patent_android.databinding.ListItemExpertBinding
 
 
-class ExpertListAdapter(val groupList: List<UserDto>, val itemClickListener:ItemClickListener) : RecyclerView.Adapter<ExpertListAdapter.ExpertListAdapter>() {
+class ExpertListAdapter(val groupList: List<UserDto>, val itemClickListener: ItemClickListener) :
+    RecyclerView.Adapter<ExpertListAdapter.ExpertListAdapter>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ExpertListAdapter {
-        val binding = ListItemExpertBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        val binding =
+            ListItemExpertBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ExpertListAdapter(binding)
     }
 
@@ -32,7 +34,8 @@ class ExpertListAdapter(val groupList: List<UserDto>, val itemClickListener:Item
         fun onItemClick(id: Int)
     }
 
-    inner class ExpertListAdapter(private val binding: ListItemExpertBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class ExpertListAdapter(private val binding: ListItemExpertBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun bind(position: Int) {
 
             binding.listItemExpert.setOnClickListener {

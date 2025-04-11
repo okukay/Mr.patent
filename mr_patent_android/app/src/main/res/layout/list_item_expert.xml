@@ -43,14 +43,19 @@
         app:layout_constraintStart_toStartOf="@id/tv_expert_name"
         app:layout_constraintTop_toBottomOf="@id/tv_expert_name" />
 
-
+<HorizontalScrollView
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:fadeScrollbars="true"
+    android:scrollbarSize="0dp"
+    android:scrollbarAlwaysDrawHorizontalTrack="false"
+    app:layout_constraintEnd_toEndOf="@+id/tv_expert_description"
+    app:layout_constraintStart_toStartOf="@+id/tv_expert_description"
+    app:layout_constraintTop_toBottomOf="@+id/tv_expert_description">
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="@+id/tv_expert_description"
-        app:layout_constraintStart_toStartOf="@+id/tv_expert_description"
-        app:layout_constraintTop_toBottomOf="@+id/tv_expert_description">
+        android:layout_marginTop="16dp">
 
         <TextView
             android:visibility="gone"
@@ -99,6 +104,6 @@
             android:background="@drawable/outlined_button"/>
 
     </LinearLayout>
-
+</HorizontalScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

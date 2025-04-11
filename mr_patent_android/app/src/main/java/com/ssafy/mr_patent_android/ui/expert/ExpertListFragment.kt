@@ -12,8 +12,6 @@ import com.ssafy.mr_patent_android.base.BaseFragment
 import com.ssafy.mr_patent_android.databinding.FragmentExpertListBinding
 import com.ssafy.mr_patent_android.ui.home.HomeFragment.Companion.categoryMap
 
-private const val TAG = "ExpertListFragment"
-
 class ExpertListFragment : BaseFragment<FragmentExpertListBinding>(
     FragmentExpertListBinding::bind,
     R.layout.fragment_expert_list
@@ -21,9 +19,6 @@ class ExpertListFragment : BaseFragment<FragmentExpertListBinding>(
     private lateinit var expertListAdapter: ExpertListAdapter
     val viewModel: ExpertListViewModel by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -65,9 +60,7 @@ class ExpertListFragment : BaseFragment<FragmentExpertListBinding>(
                     id: Long
                 ) {
                     if (viewModel.expertList.value.isNullOrEmpty()) {
-                        Log.d(TAG, "onItemSelected: expertList is null")
-                    }
-                    else {
+                    } else {
                         val expertList = viewModel.expertList.value!!
 
                         when (position) {
@@ -129,7 +122,6 @@ class ExpertListFragment : BaseFragment<FragmentExpertListBinding>(
     private fun initObserver() {
 
         viewModel.filterState.observe(viewLifecycleOwner) { filters ->
-            Log.d(TAG, "initObserver: $filters")
             val filteredList = if (filters.isEmpty()) {
                 viewModel.expertList.value
             } else {
@@ -139,16 +131,18 @@ class ExpertListFragment : BaseFragment<FragmentExpertListBinding>(
             }
 
             val sortedList = when (binding.spinnerPatentAttorneys.selectedItemPosition) {
-                0 -> filteredList?.sortedByDescending { it.expertCreatedAt } // 최신순
-                1 -> filteredList?.sortedBy { it.expertCreatedAt } // 오래된순
-                else -> filteredList?.sortedByDescending { it.expertGetDate } // 경력순
+                0 -> filteredList?.sortedByDescending { it.expertCreatedAt }
+                1 -> filteredList?.sortedBy { it.expertCreatedAt }
+                else -> filteredList?.sortedByDescending { it.expertGetDate }
             }
 
             viewModel.setNewExpertList(sortedList)
 
             expertListAdapter = ExpertListAdapter(sortedList ?: listOf()) { id ->
                 findNavController().navigate(
-                    ExpertListFragmentDirections.actionPatentAttorneyListFragmentToPatentAttorneyFragment(id)
+                    ExpertListFragmentDirections.actionPatentAttorneyListFragmentToPatentAttorneyFragment(
+                        id
+                    )
                 )
             }
             binding.rvPatentAttorneys.adapter = expertListAdapter

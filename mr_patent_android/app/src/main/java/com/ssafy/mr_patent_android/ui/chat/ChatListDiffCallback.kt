@@ -1,8 +1,6 @@
 package com.ssafy.mr_patent_android.ui.chat
 
-import android.util.Log
 import androidx.recyclerview.widget.DiffUtil
-import com.ssafy.mr_patent_android.data.model.dto.ChatMessageDto
 import com.ssafy.mr_patent_android.data.model.dto.ChatRoomDto
 
 class ChatListDiffCallback(

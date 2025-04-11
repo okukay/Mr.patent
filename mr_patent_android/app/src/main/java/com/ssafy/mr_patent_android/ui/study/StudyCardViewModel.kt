@@ -11,7 +11,6 @@ import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.studyServi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-private const val TAG = "StudyCardViewModel"
 class StudyCardViewModel : ViewModel() {
     private val _wordList = MutableLiveData<List<WordDto.Word>>()
     val wordList: LiveData<List<WordDto.Word>>
@@ -33,28 +32,25 @@ class StudyCardViewModel : ViewModel() {
     val bookmarkState: LiveData<Boolean>
         get() = _bookmarkState
 
-    fun setBookmarkState(state: Boolean) {
-        _bookmarkState.value = state
-    }
 
     private val _total = MutableLiveData<Int>()
     val total: LiveData<Int>
         get() = _total
 
 
-    fun getWordList(levelId:Int){
+    fun getWordList(levelId: Int) {
         _loading.value = true
         viewModelScope.launch {
             runCatching {
                 studyService.getWords(levelId)
             }.onSuccess { response ->
-                if(response.isSuccessful){
+                if (response.isSuccessful) {
                     response.body()?.let {
                         _wordList.value = it.data?.words
                     }
-                }else{
+                } else {
                     _wordList.value = List(10)
-                    {WordDto.Word(true, 1,"뜻", "단어")}
+                    { WordDto.Word(true, 1, "뜻", "단어") }
                     Log.d("StudyCardViewModel", "getWordList: ${response.errorBody()}")
                 }
                 _loading.value = false
@@ -64,6 +60,7 @@ class StudyCardViewModel : ViewModel() {
             }
         }
     }
+
     fun createBookmark(position: Int): Boolean {
         val currentList = _wordList.value?.toMutableList() ?: return false
         val word = currentList[position]
@@ -79,7 +76,6 @@ class StudyCardViewModel : ViewModel() {
             }
 
             if (response.isSuccessful) {
-                // 성공했으면 리스트 갱신
                 val updatedWord = word.copy(
                     is_bookmarked = !word.is_bookmarked,
                     bookmark_id = response.body()?.data?.bookmark_id ?: 0
@@ -94,62 +90,55 @@ class StudyCardViewModel : ViewModel() {
         return result
     }
 
-    fun getBookmarkWordList(levelId: Int){
+    fun getBookmarkWordList(levelId: Int) {
         viewModelScope.launch {
             runCatching {
                 studyService.getBookmarkWords(levelId)
             }.onSuccess { response ->
-                if(response.isSuccessful){
+                if (response.isSuccessful) {
                     response.body()?.let {
                         _wordList.value = it.data?.words
                         _total.value = it.data?.total
                     }
-                }else{
-                    Log.d("StudyCardViewModel", "getWordList: ${response.errorBody()}")
+                } else {
                 }
             }.onFailure {
-                Log.d("StudyCardViewModel", "getWordList: ${it.message}")
             }
         }
     }
 
-    fun getQuizResult(levelId:Int,wrongList: List<Int>){
+    fun getQuizResult(levelId: Int, wrongList: List<Int>) {
         viewModelScope.launch {
             runCatching {
                 val answerDto = AnswerDto(
                     answers = wrongList.map { AnswerDto.WordId(it) }
                 )
 
-                studyService.postQuizResult(levelId,answerDto)
+                studyService.postQuizResult(levelId, answerDto)
             }.onSuccess { response ->
                 if (response.isSuccessful) {
-                    Log.d(TAG, "getQuizResult: ${response.body()?.data}")
                     response.body()?.data?.let { result ->
 
                         val list = result
-                        result.wrong_answers.forEach { it->
+                        result.wrong_answers.forEach { it ->
                             list.words = result.wrong_answers.map {
-                                    WordDto.Word(
-                                        is_bookmarked = it.is_bookmarked,
-                                        word_id = it.word_id,
-                                        word_mean = it.word_mean,
-                                        word_name = it.word_name,
-                                        bookmark_id = it.bookmark_id
-                                    )
+                                WordDto.Word(
+                                    is_bookmarked = it.is_bookmarked,
+                                    word_id = it.word_id,
+                                    word_mean = it.word_mean,
+                                    word_name = it.word_name,
+                                    bookmark_id = it.bookmark_id
+                                )
 
                             }
 
                         }
 
-                        _wordList.value= list.words
+                        _wordList.value = list.words
                         _resultData.value = list
-                        Log.d(TAG, "getQuizResult: ${_resultData.value}")
-
-
                     }
                 }
             }.onFailure { error ->
-                // Handle error
                 error.printStackTrace()
             }
         }

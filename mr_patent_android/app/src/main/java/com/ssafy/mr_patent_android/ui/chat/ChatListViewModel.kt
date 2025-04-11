@@ -16,7 +16,6 @@ import com.ssafy.mr_patent_android.data.remote.RetrofitUtil.Companion.userServic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private const val TAG = "ChatListViewModel"
 class ChatListViewModel : ViewModel() {
     private val _chatRoomList = MutableLiveData<List<ChatRoomDto>>()
     val chatRoomList: LiveData<List<ChatRoomDto>>
@@ -26,11 +25,7 @@ class ChatListViewModel : ViewModel() {
     val loading: LiveData<Boolean>
         get() = _loading
 
-
-    fun setChatRoomList(chatRoomList: List<ChatRoomDto>) {
-        _chatRoomList.value = chatRoomList
-    }
-    fun getChatRoomList(){
+    fun getChatRoomList() {
         _loading.value = true
         viewModelScope.launch {
             runCatching {
@@ -38,9 +33,9 @@ class ChatListViewModel : ViewModel() {
             }.onSuccess {
                 if (it.isSuccessful) {
                     it.body()?.data?.let { chatRoomList ->
-                        _chatRoomList.value = chatRoomList.sortedByDescending {  it.lastMessageTime }
+                        _chatRoomList.value = chatRoomList.sortedByDescending { it.lastMessageTime }
                     }
-                }else{
+                } else {
                     it.errorBody()?.let { it1 ->
                         networkUtil.getErrorResponse(it1)?.let { errorResponse ->
                         }
@@ -50,7 +45,6 @@ class ChatListViewModel : ViewModel() {
                 _loading.value = false
             }.onFailure {
                 it.printStackTrace()
-                Log.d(TAG, "getChatRoomList: ${_chatRoomList.value}")
                 _loading.value = false
             }
         }
@@ -63,8 +57,8 @@ class ChatListViewModel : ViewModel() {
 
         val tmpUserId = newMessage.userId
         val tmpreceiverId = newMessage.receiverId
-        if(tmpUserId!=sharedPreferences.getUser().userId) {
-            newMessage.userId= tmpreceiverId
+        if (tmpUserId != sharedPreferences.getUser().userId) {
+            newMessage.userId = tmpreceiverId
             newMessage.receiverId = tmpUserId
         }
 
@@ -73,7 +67,6 @@ class ChatListViewModel : ViewModel() {
         currentList.add(0, newMessage)
         _chatRoomList.postValue(currentList)
     }
-
 
 
 }
