@@ -48,16 +48,35 @@
 
 ## 🔧 기능소개
 
-- 😀 **회원관리**
+😀 **회원관리**
+<div>
+  <img src="https://github.com/user-attachments/assets/d164f7f6-5d82-411c-8018-60e6370fd476" width="25%">
+  <img src="https://github.com/user-attachments/assets/8f54bac0-40aa-48bc-8283-7f2fde0654f0" width="25%">
+   <img src="https://github.com/user-attachments/assets/918fc694-3a34-4665-afa8-533179c93ae3" width="25%">
+</div>
+<br/>
 
-- 📄 **특허 문서 업로드 및 자동 분석**  
+📄 **특허 문서 업로드 및 자동 분석**  
   PDF 특허 문서를 업로드하면 OCR로 구성 항목을 추출하고,유사 특허를 찾아 유사도를 비교합니다.
+<div>
+  <img src="https://github.com/user-attachments/assets/8f7ff537-f385-4002-911d-488019c0c32d" width="25%">
+  <img src="https://github.com/user-attachments/assets/c6538b0e-b022-4188-a70b-f80dd063b16f" width="25%">
+</div>
+<br/>
 
-- 📚 **특허 용어 학습 기능**  
+📚 **특허 용어 학습 기능**  
   어려운 특허 용어를 카드 형태로 학습할 수 있으며, 퀴즈를 통해 반복 학습도 가능합니다.
+<div>
+  <img src="https://github.com/user-attachments/assets/c19bd07b-a22c-4b03-9719-d64d18268751" width="25%">
+</div>
+<br/>
 
-- 👩‍💼 **변리사 상담 신청**  
+👩‍💼 **변리사와 상담 기능**  
    직접 변리사에게 질문하고 피드백을 받을 수 있는 상담이 가능합니다.
+<div>
+ <img src="https://github.com/user-attachments/assets/6e5e98eb-5c60-468f-9478-6e798a758eee" width="25%">
+</div>
+
 
 
 
@@ -69,21 +88,22 @@
 <img src="https://img.shields.io/badge/kotlin-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white"> <img src="https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white"> <img src="https://img.shields.io/badge/Android%20Studio-3DDC84.svg?style=for-the-badge&logo=android-studio&logoColor=white">
 
 #### 🔧 Backend
-<img src="https://img.shields.io/badge/java17-007396?style=for-the-badge&logo=java&logoColor=white"> <img src="https://img.shields.io/badge/springboot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Cloud%20AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white"> <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white"> <img src="https://img.shields.io/badge/socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white"> <img src="https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black"> <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi"> <img src="https://img.shields.io/badge/Apache%20Spark-FDEE21?style=flat-square&logo=apachespark&logoColor=black">
+<img src="https://img.shields.io/badge/java17-007396?style=for-the-badge&logo=java&logoColor=white"> <img src="https://img.shields.io/badge/springboot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white"> <img src="https://img.shields.io/badge/Spring%20Cloud%20AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white"> <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white">              
+<img src="https://img.shields.io/badge/socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white"> <img src="https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=black"> <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi"> <img src="https://img.shields.io/badge/Apache%20Spark-FDEE21?style=flat-square&logo=apachespark&logoColor=black">
 
 
 
 #### 🏗️ Build & Deployment
 <img src="https://img.shields.io/badge/gradle-02303A?style=for-the-badge&logo=gradle&logoColor=white"> <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white"> <img src="https://img.shields.io/badge/jenkins-%D24939.svg?style=for-the-badge&logo=jenkins&logoColor=white">
 
-#### 🗄️ Database & Cache
+#### 🗄️ Database
 <img src="https://img.shields.io/badge/mysql-4479A1?style=for-the-badge&logo=mysql&logoColor=white"> 
 
 #### ☁️ Infrastructure & Cloud
 <img src="https://img.shields.io/badge/Amazon%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white"> <img src="https://img.shields.io/badge/Amazon%20S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white"> <img src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white">
 <img src="https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white"> <img src="https://img.shields.io/badge/Let's%20Encrypt-003A70?style=for-the-badge&logo=letsencrypt&logoColor=white">
 
-#### 📡 External Services & APIs
+#### 📡 External Services
 <img src="https://img.shields.io/badge/firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=white"> <img src="https://img.shields.io/badge/FCM-FFCA28?style=for-the-badge&logo=firebase&logoColor=white">
 
 #### 🔍 Monitoring & Tools
@@ -93,16 +113,14 @@
 <br/>
 
 ## 🔍 시스템 아키텍처
-<div align="center">
-
+<div>
+<img src="https://github.com/user-attachments/assets/4a37c49a-5fa9-49c7-9372-a806f4706041" width=60%>
 </div>
-
 <br/>
 
 ## 💾 ERD 다이어그램
-
-<div align="center">
-
+<div>
+<img src="https://github.com/user-attachments/assets/758bc573-b55b-4e4c-9449-83b4a6e11fa7" width=60%>
 </div>
 
 <br/>
