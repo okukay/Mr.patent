@@ -15,8 +15,6 @@
 - [💾 ERD 다이어그램](#-erd-다이어그램)<br/>
 - [👥 팀 소개 및 역할](#-팀-소개-및-역할)<br/>
 
-📝 [회의록 보기](https)  <br/>
-
 ## ⏰ 개발 기간
  2025.03.03 ~ 2025.04.11 (6주)
 
@@ -47,7 +45,7 @@
 
 ## 🔧 기능 소개
 
-😀 **회원관리**
+### 😀 **회원관리**
 <div>
   <img src="https://github.com/user-attachments/assets/d164f7f6-5d82-411c-8018-60e6370fd476" width="25%">
   <img src="https://github.com/user-attachments/assets/8f54bac0-40aa-48bc-8283-7f2fde0654f0" width="25%">
@@ -55,23 +53,23 @@
 </div>
 <br/>
 
-📄 **특허 문서 업로드 및 자동 분석**  
-  PDF 특허 문서를 업로드하면 OCR로 구성 항목을 추출하고,유사 특허를 찾아 유사도를 비교합니다.
+### 📄 **특허 문서 업로드 및 자동 분석**  
+- PDF 특허 문서를 업로드하면 OCR로 구성 항목을 추출하고,유사 특허를 찾아 유사도를 비교합니다.
 <div>
   <img src="https://github.com/user-attachments/assets/8f7ff537-f385-4002-911d-488019c0c32d" width="25%">
   <img src="https://github.com/user-attachments/assets/c6538b0e-b022-4188-a70b-f80dd063b16f" width="25%">
 </div>
 <br/>
 
-📚 **특허 용어 학습 기능**  
-  어려운 특허 용어를 카드 형태로 학습할 수 있으며, 퀴즈를 통해 반복 학습도 가능합니다.
+### 📚 **특허 용어 학습 기능**  
+- 어려운 특허 용어를 카드 형태로 학습할 수 있으며, 퀴즈를 통해 반복 학습도 가능합니다.
 <div>
   <img src="https://github.com/user-attachments/assets/c19bd07b-a22c-4b03-9719-d64d18268751" width="25%">
 </div>
 <br/>
 
-👩‍💼 **변리사와 상담 기능**  
-   직접 변리사에게 질문하고 피드백을 받을 수 있는 상담이 가능합니다.
+### 👩‍💼 **변리사와 상담 기능**  
+ - 직접 변리사에게 질문하고 피드백을 받을 수 있는 상담이 가능합니다.
 <div>
  <img src="https://github.com/user-attachments/assets/6e5e98eb-5c60-468f-9478-6e798a758eee" width="25%">
 </div>
